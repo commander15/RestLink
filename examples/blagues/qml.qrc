@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>AppSettings.qml</file>
+        <file>BasicJokeView.qml</file>
+        <file>JokePage.qml</file>
+        <file>JokeView.qml</file>
+        <file>MyToolBar.qml</file>
+        <file>icons/blagues.svg</file>
+        <file>icons/logo.png</file>
+        <file>Joke.qml</file>
+        <file>qtquickcontrols2.conf</file>
+    </qresource>
+</RCC>

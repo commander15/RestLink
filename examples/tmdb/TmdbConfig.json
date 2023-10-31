@@ -1,0 +1,17 @@
+{
+    "api": "Tmdb",
+    "version": "3",
+    "url": "http://api.themoviedb.org/3",
+    "parameters": [
+        {
+            "name": "api_key",
+            "value": "3c900f42de5c8bb761bf22a679a9d901",
+            "scope": "URL_QUERY"
+        },
+        {
+            "name": "adult",
+            "value": "false",
+            "scope": "URL_QUERY"
+        }
+    ]
+}

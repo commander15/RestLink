@@ -1,0 +1,9 @@
+module RestLink
+
+Api                 1.0 Api.qml
+ApiRequest          1.0 ApiRequest.qml
+ApiRequestParameter 1.0 ApiRequestParameter.qml
+
+plugin    restlinkqml
+classname RestLinkPlugin
+typeinfo  RestLink.qmltypes
