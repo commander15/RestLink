@@ -10,6 +10,8 @@ RestLinkApiRequest::RestLinkApiRequest(QObject *parent) :
     m_reply(nullptr),
     m_api(nullptr)
 {
+    connect(this, &RestLinkApiRequest::responseChanged, this, &RestLinkApiRequest::runningChanged);
+    connect(this, &RestLinkApiRequest::finished, this, &RestLinkApiRequest::runningChanged);
 }
 
 RestLinkApiRequest::~RestLinkApiRequest()
@@ -56,11 +58,6 @@ void RestLinkApiRequest::setType(int type)
     }
 }
 
-QString RestLinkApiRequest::response() const
-{
-    return m_reply->downloadedData();
-}
-
 bool RestLinkApiRequest::isRunning() const
 {
     if (m_reply)
@@ -86,10 +83,10 @@ void RestLinkApiRequest::run()
     m_reply = m_api->run(request);
     connect(m_reply, &RestLink::ApiReply::finished, this, &RestLinkApiRequest::finished);
 
-    emit apiReplyChanged();
+    emit responseChanged();
 }
 
-RestLink::ApiReply *RestLinkApiRequest::apiReply() const
+RestLink::ApiReply *RestLinkApiRequest::response() const
 {
     return m_reply;
 }
@@ -164,7 +161,7 @@ int RestLinkApiRequestParameter::scope() const
 void RestLinkApiRequestParameter::setScope(int scope)
 {
     if (m_param.scope() != scope) {
-        m_param.setScope(static_cast<RestLink::ApiRequestParameter::ApiRequestParameterScope>(scope));
+        m_param.setScope(static_cast<RestLink::ApiRequestParameter::ParameterScope>(scope));
         emit scopeChanged();
     }
 }

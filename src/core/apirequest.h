@@ -23,7 +23,8 @@ public:
         PostRequest,
         PutRequest,
         PatchRequest,
-        DeleteRequest
+        DeleteRequest,
+        UnknownRequest
     };
 
     ApiRequest();
@@ -34,9 +35,10 @@ public:
     ApiRequest &operator=(const ApiRequest &other);
     ApiRequest &operator=(ApiRequest &&other);
 
-    QString endpoint() const;
+    QString endpoint(bool resolveParameters = false) const;
     void setEndpoint(const QString &endpoint);
 
+    bool hasParameter(const QString &name) const;
     ApiRequestParameter parameter(const QString &name) const;
     QStringList parameterList() const;
     QList<ApiRequestParameter> parameters() const;
@@ -53,6 +55,8 @@ public:
     RequestVerb verb() const;
     void setVerb(RequestVerb verb);
 
+    void loadFromJsonObject(const QJsonObject &object);
+
     void swap(ApiRequest &other);
 
     bool operator==(const ApiRequest &other) const;
@@ -62,18 +66,26 @@ public:
 private:
     QSharedDataPointer<ApiRequestPrivate> d;
 
-    friend class Api;
+    friend class ApiPrivate;
 };
 
 class ApiRequestParameterPrivate;
 class RESTLINK_EXPORT ApiRequestParameter
 {
 public:
-    enum ApiRequestParameterScope {
+    enum ParameterScope {
         UrlPathScope,
         UrlQueryScope,
-        HeaderScope
+        HeaderScope,
+        UnknownScope
     };
+
+    enum ParameterFlag {
+        NoFlag = 0x0,
+        AuthenticationFlag = 0x1,
+        SecretFlag = 0x128
+    };
+    Q_DECLARE_FLAGS(ParameterFlags, ParameterFlag)
 
     ApiRequestParameter();
     ApiRequestParameter(const ApiRequestParameter &other);
@@ -89,11 +101,18 @@ public:
     QVariant value() const;
     void setValue(const QVariant &value);
 
-    ApiRequestParameterScope scope() const;
-    void setScope(ApiRequestParameterScope scope);
+    ParameterScope scope() const;
+    void setScope(ParameterScope scope);
+
+    bool hasFlag(ParameterFlag flag) const;
+    ParameterFlags flags() const;
+    void setFlag(ParameterFlag flag, bool on = true);
+    void setFlags(const ParameterFlags &flags);
 
     bool isEnabled() const;
     void setEnabled(bool enabled = true);
+
+    void loadFromJsonObject(const QJsonObject &object);
 
     bool isValid() const;
 

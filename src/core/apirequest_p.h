@@ -14,6 +14,8 @@ public:
 
     bool equals(const ApiRequestPrivate *other) const;
 
+    static ApiRequest::RequestVerb nameVerb(const QString &name);
+
     QString endpoint;
     QVector<ApiRequestParameter> parameters;
     QByteArray data;
@@ -30,9 +32,16 @@ public:
 
     bool equals(const ApiRequestParameterPrivate *other) const;
 
+    void correctFlags();
+    void adaptToFlag(ApiRequestParameter::ParameterFlag flag);
+
+    //static QString scopeName(ApiRequestParameter::ApiRequestParameterScope scope);
+    static ApiRequestParameter::ParameterScope nameScope(const QString &name);
+
     QString name;
     QVariant value;
-    ApiRequestParameter::ApiRequestParameterScope scope;
+    ApiRequestParameter::ParameterScope scope;
+    ApiRequestParameter::ParameterFlags flags;
     bool enabled;
 };
 

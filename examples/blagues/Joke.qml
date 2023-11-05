@@ -18,12 +18,11 @@ QtObject {
         endpoint: "/random"
 
         api: Api {
-            id: api
-            apiConfigurationUrl: "https://commander-systems.000webhostapp.com/RestLink/APIs/Blagues.json"
+            apiConfigurationUrl: "https://commander-systems.000webhostapp.com/RestLink/APIs/Blagues/Blagues.json"
         }
 
         onFinished: function() {
-            var json = JSON.parse(response);
+            var json = JSON.parse(response.data);
             joke.jokeString = json.joke;
             joke.jokeAnswer = json.answer;
             joke.jokeType = json.type;

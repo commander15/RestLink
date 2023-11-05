@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qtquickcontrols2.conf</file>
+        <file>qml/main.qml</file>
+        <file>qml/AppToolBar.qml</file>
+        <file>qml/ApiConfigPage.qml</file>
+        <file>qml/ApiRequestPage.qml</file>
+        <file>icons/logo.png</file>
+        <file>qml/ApiRequestParameterDelegate.qml</file>
+        <file>qml/AppPage.qml</file>
+        <file>qml/MainPage.qml</file>
+    </qresource>
+</RCC>

@@ -1,6 +1,9 @@
 #include "apirequest.h"
 #include "apirequest_p.h"
 
+#include <QtCore/qjsonobject.h>
+#include <QtCore/qjsonarray.h>
+
 namespace RestLink {
 
 ApiRequest::ApiRequest() :
@@ -36,9 +39,17 @@ ApiRequest &ApiRequest::operator=(ApiRequest &&other)
     return *this;
 }
 
-QString ApiRequest::endpoint() const
+QString ApiRequest::endpoint(bool resolveParameters) const
 {
-    return d->endpoint;
+    if (resolveParameters) {
+        QStringList paths = d->endpoint.split('/');
+        for (QString &path : paths)
+            for (const ApiRequestParameter &param : d->parameters)
+                if (param.scope() == ApiRequestParameter::UrlPathScope && path == '{' + param.name() + '}')
+                    path = param.value().toString();
+        return paths.join('/');
+    } else
+        return d->endpoint;
 }
 
 void ApiRequest::setEndpoint(const QString &endpoint)
@@ -49,6 +60,14 @@ void ApiRequest::setEndpoint(const QString &endpoint)
         d->endpoint = '/' + endpoint;
     else
         d->endpoint = endpoint;
+}
+
+bool ApiRequest::hasParameter(const QString &name) const
+{
+    for (const ApiRequestParameter &parameter : d->parameters)
+        if (parameter.name() == name)
+            return true;
+    return false;
 }
 
 ApiRequestParameter ApiRequest::parameter(const QString &name) const
@@ -131,6 +150,32 @@ void ApiRequest::setVerb(RequestVerb verb)
     d->verb = verb;
 }
 
+void ApiRequest::loadFromJsonObject(const QJsonObject &object)
+{
+    ApiRequestPrivate *def = new ApiRequestPrivate;
+
+    d->endpoint = object.value("endpoint").toString();
+
+    QJsonArray parameters = object.value("parameters").toArray();
+    d->parameters.clear();
+    for (const QJsonValue &parameterValue : parameters) {
+        ApiRequestParameter requestParameter;
+        requestParameter.loadFromJsonObject(parameterValue.toObject());
+        d->parameters.append(requestParameter);
+    }
+
+    d->data = object.value("data").toString().toUtf8();
+
+    if (object.contains("verb"))
+        d->verb = d->nameVerb(object.value("verb").toString());
+    else
+        d->verb = def->verb;
+
+    // ToDo: verb loading
+
+    delete def;
+}
+
 void ApiRequest::swap(ApiRequest &other)
 {
     d.swap(other.d);
@@ -168,6 +213,22 @@ bool ApiRequestPrivate::equals(const ApiRequestPrivate *other) const
             && parameters == other->parameters
             && data == other->data
             && verb == other->verb;
+}
+
+ApiRequest::RequestVerb ApiRequestPrivate::nameVerb(const QString &name)
+{
+    if (name == "GET")
+        return ApiRequest::GetRequest;
+    else if (name == "POST")
+        return ApiRequest::PostRequest;
+    else if (name == "PUT")
+        return ApiRequest::PutRequest;
+    else if (name == "PATCH")
+        return ApiRequest::PatchRequest;
+    else if (name == "DELETE")
+        return ApiRequest::DeleteRequest;
+    else
+        return ApiRequest::UnknownRequest;
 }
 
 ApiRequestParameter::ApiRequestParameter() :
@@ -223,14 +284,34 @@ void ApiRequestParameter::setValue(const QVariant &value)
     d->value = value;
 }
 
-ApiRequestParameter::ApiRequestParameterScope ApiRequestParameter::scope() const
+ApiRequestParameter::ParameterScope ApiRequestParameter::scope() const
 {
     return d->scope;
 }
 
-void ApiRequestParameter::setScope(ApiRequestParameterScope scope)
+void ApiRequestParameter::setScope(ParameterScope scope)
 {
     d->scope = scope;
+}
+
+bool ApiRequestParameter::hasFlag(ParameterFlag flag) const
+{
+    return d->flags.testFlag(flag);
+}
+
+ApiRequestParameter::ParameterFlags ApiRequestParameter::flags() const
+{
+    return d->flags;
+}
+
+void ApiRequestParameter::setFlag(ParameterFlag flag, bool on)
+{
+    d->flags.setFlag(flag, on);
+}
+
+void ApiRequestParameter::setFlags(const ParameterFlags &flags)
+{
+    d->flags = flags;
 }
 
 bool ApiRequestParameter::isEnabled() const
@@ -241,6 +322,33 @@ bool ApiRequestParameter::isEnabled() const
 void ApiRequestParameter::setEnabled(bool enabled)
 {
     d->enabled = enabled;
+}
+
+void ApiRequestParameter::loadFromJsonObject(const QJsonObject &object)
+{
+    ApiRequestParameterPrivate *def = new ApiRequestParameterPrivate;
+
+    d->name = object.value("name").toString();
+    d->value = object.value("value").toVariant();
+
+    if (object.contains("scope"))
+        d->scope = d->nameScope(object.value("scope").toString());
+    else
+        d->scope = def->scope;
+
+    d->flags = def->flags;
+    if (object.contains("authentication"))
+        d->flags.setFlag(AuthenticationFlag, object.value("authentication").toBool());
+    else if (object.contains("secret"))
+        d->flags.setFlag(SecretFlag, object.value("secret").toBool());
+    d->correctFlags();
+
+    if (object.contains("enabled"))
+        d->enabled = object.value("enabled").toBool();
+    else
+        d->enabled = def->enabled;
+
+    delete def;
 }
 
 bool ApiRequestParameter::isValid() const
@@ -261,7 +369,8 @@ bool ApiRequestParameter::operator==(const ApiRequestParameter &other) const
 
 ApiRequestParameterPrivate::ApiRequestParameterPrivate() :
     scope(ApiRequestParameter::UrlQueryScope),
-    enabled(true)
+    enabled(true),
+    flags(ApiRequestParameter::NoFlag)
 {
 }
 
@@ -270,6 +379,7 @@ ApiRequestParameterPrivate::ApiRequestParameterPrivate(const ApiRequestParameter
     name(other.name),
     value(other.value),
     scope(other.scope),
+    flags(other.flags),
     enabled(other.enabled)
 {
 }
@@ -283,7 +393,38 @@ bool ApiRequestParameterPrivate::equals(const ApiRequestParameterPrivate *other)
     return name == other->name
             && value == other->value
             && scope == other->scope
+            && flags == other->flags
             && enabled == other->enabled;
+}
+
+void ApiRequestParameterPrivate::correctFlags()
+{
+    if (flags.testFlag(ApiRequestParameter::AuthenticationFlag))
+        adaptToFlag(ApiRequestParameter::AuthenticationFlag);
+}
+
+void ApiRequestParameterPrivate::adaptToFlag(ApiRequestParameter::ParameterFlag flag)
+{
+    switch (flag) {
+    case ApiRequestParameter::AuthenticationFlag:
+        flags |= ApiRequestParameter::SecretFlag;
+        break;
+
+    default:
+        break;
+    }
+}
+
+ApiRequestParameter::ParameterScope ApiRequestParameterPrivate::nameScope(const QString &name)
+{
+    if (name == "URL_PATH")
+        return ApiRequestParameter::UrlPathScope;
+    else if (name == "URL_QUERY")
+        return ApiRequestParameter::UrlQueryScope;
+    else if (name == "HEADER")
+        return ApiRequestParameter::HeaderScope;
+    else
+        return ApiRequestParameter::UnknownScope;
 }
 
 }

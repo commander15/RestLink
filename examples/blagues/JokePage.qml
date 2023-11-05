@@ -34,8 +34,6 @@ Item {
 
                 Joke {
                     id: joke
-
-                    onJokeStringChanged: indicator.running = false
                 }
             }
         }
@@ -65,7 +63,6 @@ Item {
                     highlighted = false
                 }
 
-                indicator.running = true
                 joke.request.run()
             }
 
@@ -84,7 +81,7 @@ Item {
 
     BusyIndicator {
         id: indicator
-        running: true
+        running: joke.loading
 
         x: (parent.width / 2) - (width / 2)
         y: (parent.height / 2) - (height / 2)

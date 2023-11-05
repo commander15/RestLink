@@ -30,6 +30,10 @@ public:
     void setReady(bool ready = true);
     Q_SIGNAL void readyChanged();
 
+    Q_INVOKABLE QString parameterName(int index) const;
+    Q_INVOKABLE QVariant parameterValue(int index) const;
+    Q_INVOKABLE int parameterScope(int index) const;
+    Q_INVOKABLE bool isParameterEnabled(int index) const;
     Q_INVOKABLE void registerParameters();
 
 private:

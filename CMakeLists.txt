@@ -9,6 +9,9 @@ project(RestLink
 option(RESTLINK_BUILD_QML_PLUGIN OFF "Build QML Plugin")
 option(RESTLINK_BUILD_EXAMPLES   OFF "Build Examples")
 
+set(CXX_STANDARD 17)
+set(CXX_STANDARD_REQUIRED TRUE)
+
 find_package(Cm REQUIRED COMPONENTS QtCore QtGui)
 find_package(Qt5 REQUIRED COMPONENTS Network ${CmQtModules})
 

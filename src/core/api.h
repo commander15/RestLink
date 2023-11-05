@@ -25,6 +25,7 @@ class RESTLINK_EXPORT Api : public QObject
     Q_PROPERTY(int apiVersion READ apiVersion WRITE setApiVersion NOTIFY apiVersionChanged)
     Q_PROPERTY(QUrl apiUrl READ apiUrl WRITE setApiUrl NOTIFY apiUrlChanged)
     Q_PROPERTY(QString userAgent READ userAgent WRITE setUserAgent NOTIFY userAgentChanged)
+    Q_PROPERTY(int apiParameterCount READ apiParameterCount NOTIFY apiParametersChanged)
 
 public:
     explicit Api(QObject *parent = nullptr);
@@ -49,8 +50,10 @@ public:
 
     ApiReply *run(const ApiRequest &request);
 
+    ApiRequestParameter apiParameter(int index) const;
+    int apiParameterCount() const;
     QList<ApiRequestParameter> apiParameters() const;
-    //void addParameter(const ApiRequestParameter &parameter);
+    int addParameter(const ApiRequestParameter &parameter);
     void addParameters(const QList<ApiRequestParameter> &parameters);
     void setApiParameters(const QList<ApiRequestParameter> &parameters);
     Q_SIGNAL void apiParametersChanged();

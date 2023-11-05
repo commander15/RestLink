@@ -16,12 +16,12 @@ class ApiReplyPrivate;
 class RESTLINK_EXPORT ApiReply : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QByteArray downloadedData READ downloadedData NOTIFY finished)
-    Q_PROPERTY(int networkError READ networkError NOTIFY networkErrorOccured)
-    Q_PROPERTY(QString networkErrorString READ networkErrorString NOTIFY networkErrorOccured)
+    Q_PROPERTY(QByteArray data READ data NOTIFY finished)
+    Q_PROPERTY(QByteArray defaultData READ defaultData WRITE setDefaultData)
     Q_PROPERTY(int httpStatusCode READ httpStatusCode NOTIFY finished)
     Q_PROPERTY(QString httpReasonPhrase READ httpReasonPhrase NOTIFY finished)
-    Q_PROPERTY(QUrl requestedUrl READ requestedUrl CONSTANT)
+    Q_PROPERTY(int networkError READ networkError NOTIFY networkErrorOccured)
+    Q_PROPERTY(QString networkErrorString READ networkErrorString NOTIFY networkErrorOccured)
 
 public:
     virtual ~ApiReply();
@@ -29,22 +29,25 @@ public:
     ApiRequest apiRequest() const;
     Api *api() const;
 
-    QByteArray downloadedData() const;
-    Q_SIGNAL void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
-    Q_SIGNAL void uploadProgress(qint64 bytesSent, qint64 bytesTotal);
-    Q_SIGNAL void finished();
+    QByteArray data() const;
 
-    int networkError() const;
-    QString networkErrorString() const;
-    Q_SIGNAL void networkErrorOccured(int error);
-
-    Q_SLOT void abort();
+    QByteArray defaultData() const;
+    void setDefaultData(const QByteArray &data);
 
     int httpStatusCode() const;
     QString httpReasonPhrase() const;
 
+    Q_SLOT void abort();
+    Q_SIGNAL void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
+    Q_SIGNAL void uploadProgress(qint64 bytesSent, qint64 bytesTotal);
+    Q_SIGNAL void finished();
+
     QUrl requestedUrl() const;
     QNetworkRequest networkRequest() const;
+
+    int networkError() const;
+    QString networkErrorString() const;
+    Q_SIGNAL void networkErrorOccured(int error);
 
     QNetworkReply *networkReply() const;
 

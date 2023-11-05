@@ -19,6 +19,8 @@ public:
 
     QNetworkReply *netReply;
     QByteArray netData;
+
+    QByteArray defaultData;
 };
 
 }

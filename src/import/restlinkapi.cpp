@@ -31,11 +31,10 @@ void RestLinkApi::setApiConfigurationUrl(const QUrl &url)
         m_apiConfigUrl = url;
         emit apiConfigurationUrlChanged(url);
 
-        RestLink::ApiConfigurationDownload *download = downloadApiConfiguration(url);
-        download->enableAutoconfiguration();
-        connect(download, &RestLink::ApiReply::finished, download, &QObject::deleteLater);
-
-        setReady(false);
+        if (url.isValid()) {
+            configureApi(url);
+            setReady(false);
+        }
     }
 }
 
@@ -76,6 +75,26 @@ void RestLinkApi::setReady(bool ready)
         m_ready = ready;
         emit readyChanged();
     }
+}
+
+QString RestLinkApi::parameterName(int index) const
+{
+    return apiParameter(index).name();
+}
+
+QVariant RestLinkApi::parameterValue(int index) const
+{
+    return apiParameter(index).value();
+}
+
+int RestLinkApi::parameterScope(int index) const
+{
+    return apiParameter(index).scope();
+}
+
+bool RestLinkApi::isParameterEnabled(int index) const
+{
+    return apiParameter(index).isEnabled();
 }
 
 void RestLinkApi::registerParameters()

@@ -57,7 +57,7 @@ void ApiConfigurationDownload::processData()
 
 ApiConfigurationDownloadPrivate::ApiConfigurationDownloadPrivate(ApiConfigurationDownload *qq) :
     ApiReplyPrivate(qq),
-    autoConfigure(true)
+    autoConfigure(false)
 {
 }
 

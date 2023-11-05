@@ -36,26 +36,22 @@ Api *ApiReply::api() const
     return d->api;
 }
 
-QByteArray ApiReply::downloadedData() const
+QByteArray ApiReply::data() const
 {
-    if (d->netReply->bytesAvailable() > 0)
-        d->netData.append(d->netReply->readAll());
-    return d->netData;
+    if (!d->netData.isEmpty())
+        return d->netData;
+    else
+        return d->defaultData;
 }
 
-int ApiReply::networkError() const
+QByteArray ApiReply::defaultData() const
 {
-    return d->netReply->error();
+    return d->defaultData;
 }
 
-QString ApiReply::networkErrorString() const
+void ApiReply::setDefaultData(const QByteArray &data)
 {
-    return d->netReply->errorString();
-}
-
-void ApiReply::abort()
-{
-    d->netReply->abort();
+    d->defaultData = data;
 }
 
 int ApiReply::httpStatusCode() const
@@ -68,6 +64,11 @@ QString ApiReply::httpReasonPhrase() const
     return d->netReply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
 }
 
+void ApiReply::abort()
+{
+    d->netReply->abort();
+}
+
 QUrl ApiReply::requestedUrl() const
 {
     return d->netReply->request().url();
@@ -76,6 +77,16 @@ QUrl ApiReply::requestedUrl() const
 QNetworkRequest ApiReply::networkRequest() const
 {
     return d->netReply->request();
+}
+
+int ApiReply::networkError() const
+{
+    return d->netReply->error();
+}
+
+QString ApiReply::networkErrorString() const
+{
+    return d->netReply->errorString();
 }
 
 QNetworkReply *ApiReply::networkReply() const

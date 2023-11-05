@@ -50,11 +50,11 @@ ApplicationWindow {
         id: request
 
         endpoint: "/search/multi"
-        api: api
+        api: restApi
 
         onFinished: function() {
-            if (apiReply.httpStatusCode == 200) {
-                var json = JSON.parse(response).results;
+            if (response.httpStatusCode == 200) {
+                var json = JSON.parse(response.data).results;
                 view.model = json;
                 json = json[0];
                 image.source = "http://image.tmdb.org/t/p/w500" + json.poster_path;
@@ -68,10 +68,38 @@ ApplicationWindow {
         }
     }
 
-    Api {
-        id: api
+    ApiRequest {
+        endpoint: "/tv/{id}/season/{season}/episode/{episode}"
+        api: restApi
 
-        apiConfigurationUrl: "https://commander-systems.000webhostapp.com/RestLink/APIs/TMDB.json"
+        onFinished: function() {
+            var json = JSON.parse(response.data);
+            console.log(json.overview);
+        }
+
+        ApiRequestParameter {
+            name: "id"
+            value: 1403
+            scope: ApiRequestParameter.UrlPath
+        }
+
+        ApiRequestParameter {
+            name: "season"
+            value: 1
+            scope: ApiRequestParameter.UrlPath
+        }
+
+        ApiRequestParameter {
+            name: "episode"
+            value: 2
+            scope: ApiRequestParameter.UrlPath
+        }
+    }
+
+    Api {
+        id: restApi
+
+        apiConfigurationUrl: "https://commander-systems.000webhostapp.com/RestLink/APIs/Marvel/Discovery/TMDB3.json"
 
         ApiRequestParameter {
             name: "language"
