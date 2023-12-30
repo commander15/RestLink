@@ -4,6 +4,8 @@
 #include <RestLink/apirequest.h>
 #include <RestLink/apireply.h>
 
+#include <QtQml/qqmlengine.h>
+
 #include <QtCore/qobject.h>
 
 #include "restlinkapi.h"
@@ -17,6 +19,7 @@ class RestLinkApiRequest : public QObject
     Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)
     Q_PROPERTY(RestLink::ApiReply* response READ response NOTIFY responseChanged)
     Q_PROPERTY(RestLinkApi* api READ api WRITE setApi)
+    QML_ELEMENT
 
 public:
     explicit RestLinkApiRequest(QObject *parent = nullptr);
@@ -37,6 +40,8 @@ public:
     bool isRunning() const;
     Q_SIGNAL void runningChanged();
     Q_SIGNAL void finished();
+    Q_SIGNAL void completed();
+    Q_SIGNAL void error();
 
     Q_SLOT void run();
 
@@ -64,6 +69,7 @@ class RestLinkApiRequestParameter : public QObject
     Q_PROPERTY(QVariant value READ value WRITE setValue NOTIFY valueChanged)
     Q_PROPERTY(int scope READ scope WRITE setScope NOTIFY scopeChanged)
     Q_PROPERTY(bool enabled READ isEnabled WRITE setEnabled NOTIFY enabledChanged)
+    QML_ELEMENT
 
 public:
     RestLinkApiRequestParameter(QObject *parent = nullptr);

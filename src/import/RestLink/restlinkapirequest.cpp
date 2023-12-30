@@ -81,7 +81,14 @@ void RestLinkApiRequest::run()
     request.setParameters(apiRequestParameters(this));
 
     m_reply = m_api->run(request);
-    connect(m_reply, &RestLink::ApiReply::finished, this, &RestLinkApiRequest::finished);
+    connect(m_reply, &RestLink::ApiReply::finished, this, [=] {
+        emit finished();
+
+        if (m_reply->networkReply()->error() == QNetworkReply::NoError)
+            emit completed();
+        else
+            emit error();
+    });
 
     emit responseChanged();
 }

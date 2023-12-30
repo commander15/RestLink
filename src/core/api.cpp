@@ -2,6 +2,7 @@
 #include "api_p.h"
 
 #include <RestLink/debug.h>
+#include <RestLink/apicache.h>
 #include <RestLink/apiconfigurationdownload.h>
 #include <RestLink/apirequest.h>
 #include <RestLink/private/apirequest_p.h>
@@ -15,6 +16,7 @@
 #include <QtCore/qjsonarray.h>
 #include <QtCore/qurl.h>
 #include <QtCore/qurlquery.h>
+#include <QtCore/qbuffer.h>
 #include <QtCore/qfile.h>
 
 namespace RestLink {
@@ -24,7 +26,8 @@ Api::Api(QObject *parent) :
     d(new ApiPrivate(this))
 {
     d->netMan = new QNetworkAccessManager(this);
-    d->netMan->setRedirectPolicy(QNetworkRequest::NoLessSafeRedirectPolicy);
+    d->netMan->setRedirectPolicy(QNetworkRequest::SameOriginRedirectPolicy);
+    d->netMan->setCache(new ApiCache(this));
     d->registerNetworkManager(d->netMan);
 }
 
@@ -103,13 +106,16 @@ ApiReply *Api::run(const ApiRequest &request)
 {
     d->logRequest(request);
 
-    const QByteArray verb = d->httpVerbFromRequestVerb(request.verb());
-    QNetworkRequest netReq = createNetworkRequest(request);
+    const int verb = request.verb();
+    const QNetworkRequest netReq = createNetworkRequest(request);
     QNetworkReply *netReply = createNetworkReply(verb, netReq, request.data(), request.dataType());
 
     ApiReply *reply = new ApiReply(this);
     reply->setApiRequest(request);
     reply->setNetworkReply(netReply);
+    connect(reply, &ApiReply::finished, this, [this, reply] {
+        d->logReply(reply);
+    });
     return reply;
 }
 
@@ -136,9 +142,16 @@ QList<ApiRequestParameter> Api::apiParameters() const
 
 int Api::addParameter(const ApiRequestParameter &parameter)
 {
-    d->parameters.append(parameter);
+    int index = d->parameterIndex(parameter);
+
+    if (index == -1) {
+        d->parameters.append(parameter);
+        index = d->parameters.size() - 1;
+    } else
+        d->parameters.replace(index, parameter);
     emit apiParametersChanged();
-    return d->parameters.size() - 1;
+
+    return index;
 }
 
 void Api::addParameters(const QList<ApiRequestParameter> &parameters)
@@ -186,9 +199,6 @@ void Api::configureApi(const QJsonObject &config)
     setApiVersion(config.value("version").toInt());
     setApiUrl(config.value("url").toString());
 
-    d->parameters.clear();
-    emit apiParametersChanged();
-
     const QJsonArray params = config.value("parameters").toArray();
     for (const QJsonValue &param : params) {
         ApiRequestParameter parameter;
@@ -196,13 +206,12 @@ void Api::configureApi(const QJsonObject &config)
         addParameter(parameter);
     }
 
-    d->requests.clear();
-
     const QJsonArray requests = config.value("requests").toArray();
     for (const QJsonValue &req : requests) {
         ApiRequest request;
         request.loadFromJsonObject(req.toObject());
-        d->requests.append(request);
+        if (!d->hasRequest(request))
+            d->requests.append(request);
     }
 
 #ifdef RESTLINK_D
@@ -230,6 +239,11 @@ QNetworkAccessManager *Api::networkAccessManager() const
     return d->netMan;
 }
 
+QAbstractNetworkCache *Api::networkCache() const
+{
+    return d->netMan->cache();
+}
+
 void Api::processSslErrors(QNetworkReply *reply, const QList<QSslError> &errors)
 {
 #ifdef RESTLINK_DEBUG
@@ -243,8 +257,11 @@ void Api::processSslErrors(QNetworkReply *reply, const QList<QSslError> &errors)
 QNetworkRequest Api::createNetworkRequest(const ApiRequest &request)
 {
     QNetworkRequest netReq(d->requestUrl(request, true));
+    netReq.setOriginatingObject(this);
     netReq.setHeader(QNetworkRequest::UserAgentHeader, d->userAgent);
-    netReq.setRawHeader("Connection", "keep-alive");
+    //netReq.setRawHeader("Connection", "keep-alive");
+    netReq.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
+    netReq.setAttribute(QNetworkRequest::CacheSaveControlAttribute, true);
 
     const QList<ApiRequestParameter> parameters = d->requestParameters(request, ApiPrivate::HeaderContext);
     for (const ApiRequestParameter &parameter : parameters)
@@ -253,22 +270,56 @@ QNetworkRequest Api::createNetworkRequest(const ApiRequest &request)
     return netReq;
 }
 
-QNetworkReply *Api::createNetworkReply(const QByteArray &verb, const QNetworkRequest &request, const QByteArray &data, int dataType)
+QNetworkReply *Api::createNetworkReply(int verb, const QNetworkRequest &request, const QByteArray &data, int dataType)
 {
-    QNetworkReply *reply = nullptr;
+    QIODevice *dataDevice;
+    switch (dataType) {
+    case ApiRequest::RawData:
+        dataDevice = new QBuffer();
+        static_cast<QBuffer *>(dataDevice)->setData(data);
+        break;
 
-    if (dataType == ApiRequest::RawData)
-        reply = d->netMan->sendCustomRequest(request, verb, data);
-    else if (dataType == ApiRequest::FileData) {
-        QFile *file = new QFile(data);
-        if (file->open(QIODevice::ReadOnly)) {
-            reply = d->netMan->sendCustomRequest(request, verb, file);
-            file->setParent(reply);
-        } else {
-            delete file;
-            file = nullptr;
-        }
+    case ApiRequest::FileData:
+        dataDevice = new QFile(data);
+        break;
+
+    default:
+        dataDevice = nullptr;
+        break;
     }
+
+    if (dataDevice)
+        dataDevice->open(QIODevice::ReadOnly);
+
+    QNetworkReply *reply;
+    switch (verb) {
+    case ApiRequest::GetRequest:
+        reply = d->netMan->get(request);
+        break;
+
+    case ApiRequest::PostRequest:
+        reply = d->netMan->post(request, dataDevice);
+        break;
+
+    case ApiRequest::PutRequest:
+        reply = d->netMan->put(request, dataDevice);
+        break;
+
+    case ApiRequest::PatchRequest:
+        reply = d->netMan->sendCustomRequest(request, QByteArrayLiteral("PATCH"), dataDevice);
+        break;
+
+    case ApiRequest::DeleteRequest:
+        reply = d->netMan->deleteResource(request);
+        break;
+
+    default:
+        reply = nullptr;
+        break;
+    }
+
+    if (dataDevice)
+        dataDevice->setParent(reply);
 
     return reply;
 }
@@ -296,6 +347,24 @@ void ApiPrivate::logRequest(const ApiRequest &request)
 {
     restlinkInfo() << httpVerbFromRequestVerb(request.verb())
                    << ' ' << requestUrl(request, false).toString();
+}
+
+void ApiPrivate::logReply(ApiReply *reply)
+{
+    Q_UNUSED(reply);
+}
+
+bool ApiPrivate::hasRequest(const ApiRequest &request) const
+{
+    for (const ApiRequest &req : requests)
+        if (req.endpoint() == request.endpoint())
+            return true;
+    return false;
+}
+
+ApiRequest ApiPrivate::mergeRequest(const ApiRequest &req0, const ApiRequest &req1)
+{
+    return req0;
 }
 
 QUrl ApiPrivate::requestUrl(const ApiRequest &request, bool includeSecrets) const
@@ -344,6 +413,19 @@ ApiRequest ApiPrivate::remoteRequest(const ApiRequest &request) const
         if (req.endpoint() == request.endpoint())
             return req;
     return ApiRequest();
+}
+
+bool ApiPrivate::hasParameter(const ApiRequestParameter &param) const
+{
+    return parameterIndex(param) >= 0;
+}
+
+int ApiPrivate::parameterIndex(const ApiRequestParameter &param) const
+{
+    for (int i(0); i < parameters.size(); ++i)
+        if (parameters.at(i).name() == param.name())
+            return i;
+    return -1;
 }
 
 bool ApiPrivate::isUseableParameter(const ApiRequestParameter &parameter, bool secret) const

@@ -1,0 +1,21 @@
+@PACKAGE_INIT@
+
+# Computing paths
+set(RestLink_ROOT "@PACKAGE_ROOT@")
+set(RestLink_LIB_DIR "${RestLink_ROOT}/lib")
+
+# Find components
+foreach (Module ${RestLink_FIND_COMPONENTS})
+    set(FILE "${CMAKE_CURRENT_LIST_DIR}/RestLink${Module}.cmake")
+    if (EXISTS ${FILE})
+        include(${FILE})
+        set(RestLink_${Module}_FOUND TRUE)
+    else()
+        set(RestLink_${Module}_FOUND TRUE)
+    endif()
+endforeach()
+
+check_required_components(RestLink)
+
+# Importing targets
+include(${CMAKE_CURRENT_LIST_DIR}/RestLinkTargets.cmake)

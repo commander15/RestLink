@@ -1,6 +1,6 @@
-import RestLink 1.0
+import RestLink
 
-import QtQml 2.14
+import QtQml
 
 RestLinkApiRequestParameter {
     id: parameter

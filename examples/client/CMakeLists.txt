@@ -2,7 +2,7 @@ cm_add_executable(client main.cpp qml.qrc)
 
 set_target_properties(client PROPERTIES
     ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android
-    ANDROID_EXTRA_LIBS         "${SSL_LIBS}"
+    ANDROID_EXTRA_LIBS         "${SSL_LIBS};${RestLink_LIBRARIES}"
     ANDROID_VERSION_NAME       "${RestLink_VERSION}"
     ANDROID_VERSION_CODE       1
 )

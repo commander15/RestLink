@@ -119,19 +119,19 @@ void ApiReply::processData()
 
 void ApiReply::downloadPart()
 {
-    d->netData.append(d->netReply->readAll());
+    //d->netData.append(d->netReply->readAll());
 }
 
 void ApiReply::completeDownload()
 {
     if (networkError() != QNetworkReply::NoError)
         restlinkWarning() << networkErrorString();
-    else if (httpStatusCode() != 200)
-        restlinkWarning() << "HTTP " << httpStatusCode() << ' '
-                          << httpReasonPhrase();
 
-    if (!d->netData.isEmpty())
+    d->netData = d->netReply->readAll();
+    if (!d->netData.isEmpty()) {
         processData();
+        emit completed();
+    }
 
     emit finished();
 }

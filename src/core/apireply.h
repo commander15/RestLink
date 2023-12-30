@@ -41,6 +41,7 @@ public:
     Q_SIGNAL void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
     Q_SIGNAL void uploadProgress(qint64 bytesSent, qint64 bytesTotal);
     Q_SIGNAL void finished();
+    Q_SIGNAL void completed();
 
     QUrl requestedUrl() const;
     QNetworkRequest networkRequest() const;

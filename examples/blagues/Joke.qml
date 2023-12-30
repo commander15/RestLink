@@ -12,27 +12,43 @@ QtObject {
     property bool allowDev: false
     property alias loading: request.running
 
+    signal jokeChanged()
+
     property ApiRequest request: ApiRequest {
         id: request
 
-        endpoint: "/random"
+        endpoint: (!joke.allowDev ? "/random" : "/type/dev/random")
 
         api: Api {
-            apiConfigurationUrl: "https://commander-systems.000webhostapp.com/RestLink/APIs/Blagues/Blagues.json"
+            configurationUrl: "https://commander-systems.000webhostapp.com/RestLink?app_id=47cb8b8c-7efc-11ee-905d-836d044cadfc&app_version=2.0"
         }
 
-        onFinished: function() {
+        onCompleted: function() {
             var json = JSON.parse(response.data);
             joke.jokeString = json.joke;
             joke.jokeAnswer = json.answer;
             joke.jokeType = json.type;
+            joke.jokeChanged();
+        }
+
+        onError: function() {
+            console.log("Error !");
         }
 
         ApiRequestParameter {
             name: "disallow"
             value: "dev"
             scope: ApiRequestParameter.UrlQuery
-            enabled: !view.allowDev
+            enabled: !joke.allowDev
         }
+    }
+
+    property ApiRequest apiReq: ApiRequest {
+        endpoint: "/discover/movie"
+        api: Api {
+            configurationUrl: "file:///home/commander/Downloads/Tmdb3.json"
+        }
+
+        onCompleted: console.log(JSON.parse(response.data).total_pages)
     }
 }

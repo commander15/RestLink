@@ -1,7 +1,10 @@
 #ifndef RESTLINK_API_H
 #define RESTLINK_API_H
 
+#include "qabstractnetworkcache.h"
 #include <RestLink/global.h>
+
+#include <QtNetwork/qsslerror.h>
 
 #include <QtCore/qobject.h>
 #include <QtCore/qurl.h>
@@ -67,12 +70,13 @@ public:
     ApiConfigurationDownload *downloadApiConfiguration(const QUrl &url);
 
     QNetworkAccessManager *networkAccessManager() const;
+    QAbstractNetworkCache *networkCache() const;
 
 protected:
     Q_SLOT virtual void processSslErrors(QNetworkReply *reply, const QList<QSslError> &errors);
 
     virtual QNetworkRequest createNetworkRequest(const ApiRequest &request);
-    QNetworkReply *createNetworkReply(const QByteArray &verb, const QNetworkRequest &request, const QByteArray &data, int dataType);
+    QNetworkReply *createNetworkReply(int verb, const QNetworkRequest &request, const QByteArray &data, int dataType);
 
     QScopedPointer<ApiPrivate> d;
 

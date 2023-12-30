@@ -10,5 +10,9 @@
         <file>icons/logo.png</file>
         <file>Joke.qml</file>
         <file>qtquickcontrols2.conf</file>
+        <file>icons/share.png</file>
+        <file>icons/share_image.png</file>
+        <file>icons/share_text.png</file>
+        <file>ShareOption.qml</file>
     </qresource>
 </RCC>

@@ -1,4 +1,4 @@
-set(Modules ${Qt5_FIND_COMPONENTS})
+set(Modules ${Qt6_FIND_COMPONENTS})
 
 if (RESTLINK_BUILD_QML_PLUGIN)
     list(APPEND Modules Qml)
@@ -8,4 +8,4 @@ if (RESTLINK_BUILD_QML_PLUGIN)
     endif()
 endif()
 
-find_package(Qt5 CONFIG REQUIRED COMPONENTS ${Modules})
+find_package(Qt6 CONFIG REQUIRED COMPONENTS ${Modules})

@@ -1,14 +1,40 @@
-cm_add_executable(blagues main.cpp qml.qrc)
+qt_add_executable(blagues main.cpp)
 
-set_target_properties(blagues PROPERTIES
-    ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android
-    ANDROID_EXTRA_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/libs/libcrypto_1_1.so;${CMAKE_CURRENT_SOURCE_DIR}/libs/libssl_1_1.so"
-    ANDROID_VERSION_NAME "2.0"
-    ANDROID_VERSION_CODE 7
+qt_add_qml_module(blagues
+    URI Blagues
+    QML_FILES
+        main.qml
+        AppSettings.qml
+        BasicJokeView.qml
+        JokeView.qml
+        Joke.qml
+        JokePage.qml
+        MyToolBar.qml
+        ShareOption.qml
+    RESOURCES
+        icons/blagues.svg
+        icons/logo.png
+        icons/share.png
+        icons/share_image.png
+        icons/share_text.png
+    RESOURCE_PREFIX /
 )
 
-target_link_libraries(blagues PRIVATE Qt::Quick)
+qt_target_qml_sources(blagues
+    RESOURCES
+        qtquickcontrols2.conf
+    PREFIX "/"
+)
 
-cm_install(TARGETS blagues
+set_target_properties(blagues PROPERTIES
+    QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android
+    QT_ANDROID_EXTRA_LIBS "${SSL_LIBS};${RestLink_LIBRARIES}"
+    QT_ANDROID_VERSION_NAME "2.0"
+    QT_ANDROID_VERSION_CODE 7
+)
+
+target_link_libraries(blagues PRIVATE Qt::Quick restlink)
+
+install(TARGETS blagues
     RUNTIME DESTINATION bin
 )

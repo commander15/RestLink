@@ -4,16 +4,17 @@
 
 int main(int argc, char *argv[])
 {
-    QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication app(argc, argv);
     app.setApplicationName("Blagues");
     app.setApplicationVersion("2.0");
     app.setOrganizationName("Commander Systems");
 
-    const QUrl url("qrc:/main.qml");
+    const QUrl url("qrc:/Blagues/main.qml");
 
     QQmlApplicationEngine engine;
-    engine.addImportPath(app.applicationDirPath() + "/../qml");
+#ifdef Q_OS_LINUX
+    engine.addImportPath("/opt/Commander/gcc_64/qml");
+#endif
     engine.load(url);
 
     return app.exec();

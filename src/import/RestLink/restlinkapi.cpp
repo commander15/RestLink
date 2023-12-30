@@ -1,23 +1,38 @@
 #include "restlinkapi.h"
 #include "restlinkapirequest.h"
 
+#include <RestLink/debug.h>
 #include <RestLink/apirequest.h>
 #include <RestLink/apiconfigurationdownload.h>
+#include <RestLink/apicache.h>
 
 #include <QtNetwork/qnetworkaccessmanager.h>
 
 #include <QtCore/qcoreevent.h>
+#include <QtCore/qstandardpaths.h>
+#include <QtCore/qfile.h>
 
 RestLinkApi::RestLinkApi(QObject *parent) :
     RestLink::Api(parent),
     m_ready(true),
-    m_cache(nullptr)
+    m_net(networkAccessManager()),
+    m_cache(static_cast<RestLink::ApiCache*>(networkCache()))
 {
+    //connect(this, &RestLink::Api::apiNameChanged, this, &RestLinkApi::updateCacheDir);
     connect(this, &RestLink::Api::apiConfigured, this, [this] {setReady(true);});
+    connect(this, &RestLink::Api::apiConfigurationFailed, this, [this](const QString &error) {
+        restlinkWarning() << error;
+        configureApi(m_apiConfigUrl);
+    });
 }
 
 RestLinkApi::~RestLinkApi()
 {
+}
+
+void RestLinkApi::init()
+{
+    registerParameters();
 }
 
 QUrl RestLinkApi::apiConfigurationUrl() const
@@ -38,30 +53,15 @@ void RestLinkApi::setApiConfigurationUrl(const QUrl &url)
     }
 }
 
-QString RestLinkApi::cacheDir() const
+int RestLinkApi::cacheSize() const
 {
-    return (m_cache ? m_cache->cacheDirectory() : QString());
+    return m_cache->maximumCacheSize() / (1024 * 1024);
 }
 
-void RestLinkApi::setCacheDir(const QString &dir)
+void RestLinkApi::setCacheSize(int size)
 {
-    if (!dir.isEmpty()) {
-        if (!m_cache) {
-            m_cache = new QNetworkDiskCache(this);
-            networkAccessManager()->setCache(m_cache);
-        }
-
-        if (m_cache->cacheDirectory() != dir) {
-            m_cache->setCacheDirectory(dir);
-            emit cacheDirChanged();
-        }
-    } else if (m_cache) {
-        networkAccessManager()->setCache(nullptr);
-        delete m_cache;
-        m_cache = nullptr;
-
-        emit cacheDirChanged();
-    }
+    m_cache->setMaximumCacheSize(size * 1024 * 1024);
+    emit cacheSizeChanged();
 }
 
 bool RestLinkApi::isReady() const

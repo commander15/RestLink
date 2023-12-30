@@ -1,6 +1,6 @@
-import RestLink 1.0
+import RestLink
 
-import QtQml 2.14
+import QtQml
 
 RestLinkApiRequest {
     id: request
@@ -14,8 +14,6 @@ RestLinkApiRequest {
     }
 
     property int verb: ApiRequest.GetRequest
-
-    readonly property bool finished: !running
 
     default property list<QtObject> data;
 

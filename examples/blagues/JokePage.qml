@@ -13,29 +13,68 @@ Item {
         anchors.fill: parent
         spacing: 5
 
-        ColumnLayout {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 300
-            Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
-            Layout.margins: 12
+        ListView {
+            id: view
 
-            JokeView {
-                id: view
-
+            delegate: JokeView {
                 label: "Blague" + (jokeType === "dev" ? " de développeurs" : "")
-                allowDev: page.settings.devEnabled
 
-                jokeString: joke.jokeString
-                jokeAnswer: joke.jokeAnswer
-                jokeType: joke.jokeType
+                jokeString: model.jokeString
+                jokeAnswer: model.jokeAnswer
+                jokeType: model.jokeType
 
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignTop
+                width: view.width - (view.leftMargin + view.rightMargin)
+            }
 
-                Joke {
-                    id: joke
+            leftMargin: 6
+            rightMargin: 6
+            topMargin: 6
+            bottomMargin: 6
+            spacing: 9
+
+            model: ListModel {
+                id: jokeModel
+
+                onCountChanged: view.positionViewAtEnd()
+
+                Component.onCompleted: function() {
+                    var jokes = JSON.parse(page.settings.jokeModel);
+                    for (var i = 0; i < jokes.length; ++i)
+                        append(jokes[i]);
+                }
+
+                Component.onDestruction: function() {
+                    var jokes = Array();
+                    for (var i = 0; i < count; ++i)
+                        jokes.push(get(i));
+                    page.settings.jokeModel = JSON.stringify(jokes);
                 }
             }
+
+            clip: true
+
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+
+            Layout.bottomMargin: 6
+
+            Joke {
+                id: joke
+
+                allowDev: page.settings.devEnabled
+
+                onJokeChanged: function() {
+                    var object = Object();
+                    object.jokeString = jokeString;
+                    object.jokeAnswer = jokeAnswer;
+                    object.jokeType = jokeType;
+                    jokeModel.append(object);
+
+                    if (jokeModel.count > 30)
+                        jokeModel.remove(0);
+                }
+            }
+
         }
 
         Label {
@@ -73,7 +112,7 @@ Item {
 
                 interval: 500
                 repeat: true
-                running: true
+                running: page.settings.firstRun
                 onTriggered: reloadButton.highlighted = (color = !color)
             }
         }
@@ -92,14 +131,13 @@ Item {
 
     RoundButton {
         text: "Dev"
-        highlighted: view.allowDev
+        highlighted: joke.allowDev
 
         x: page.width - width - 32
         y: reloadButton.y
 
         onClicked: function () {
-            view.allowDev = !view.allowDev
-            page.settings.devEnabled = highlighted
+            page.settings.devEnabled = !page.settings.devEnabled
         }
     }
 }
