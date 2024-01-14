@@ -259,7 +259,8 @@ QNetworkRequest Api::createNetworkRequest(const ApiRequest &request)
     QNetworkRequest netReq(d->requestUrl(request, true));
     netReq.setOriginatingObject(this);
     netReq.setHeader(QNetworkRequest::UserAgentHeader, d->userAgent);
-    //netReq.setRawHeader("Connection", "keep-alive");
+    netReq.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    netReq.setRawHeader("Connection", "keep-alive");
     netReq.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
     netReq.setAttribute(QNetworkRequest::CacheSaveControlAttribute, true);
 
