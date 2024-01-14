@@ -228,6 +228,8 @@ ApiConfigurationDownload *Api::downloadApiConfiguration(const QUrl &url)
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::UserAgentHeader, d->userAgent);
     request.setRawHeader("Accept", "application/json");
+    request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferNetwork);
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
 
     ApiConfigurationDownload *download = new ApiConfigurationDownload(this);
     download->setNetworkReply(d->netMan->get(request));
