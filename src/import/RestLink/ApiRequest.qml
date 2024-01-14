@@ -6,16 +6,16 @@ RestLinkApiRequest {
     id: request
 
     enum RequestType {
-        GetRequest,
-        PostRequest,
-        PutRequest,
-        PatchRequest,
-        DeleteRequest
+        GetRequest = 0,
+        PostRequest = 1,
+        PutRequest = 2,
+        PatchRequest = 3,
+        DeleteRequest = 4
     }
 
-    property int verb: ApiRequest.GetRequest
+    property alias verb: request.type
 
-    default property list<QtObject> data;
+    default property list<QtObject> resources;
 
     Component.onCompleted: run()
 }

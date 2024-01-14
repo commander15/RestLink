@@ -11,5 +11,5 @@ RestLinkApiRequestParameter {
         Header = 2
     }
 
-    default property list<QtObject> data;
+    default property list<QtObject> resources;
 }
