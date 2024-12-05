@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
 
     QQmlApplicationEngine engine;
 #ifdef Q_OS_LINUX
-    engine.addImportPath("/opt/Commander/gcc_64/qml");
+    engine.addImportPath(app.applicationDirPath() + "/../qml");
 #endif
     engine.load(url);
 

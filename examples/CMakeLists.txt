@@ -1,4 +1,8 @@
-set(${PROJECT_NAME}-MultiAbiBuild TRUE CACHE BOOL "" FORCE)
+set(CMAKE_AUTORCC ON)
+
+link_libraries(RestLink)
+
+add_subdirectory(tmdb-desktop)
 
 if (RESTLINK_BUILD_QML_PLUGIN)
     set(QML_IMPORT_PATH
@@ -12,6 +16,6 @@ if (RESTLINK_BUILD_QML_PLUGIN)
     set(RestLink_LIBRARIES ${RestLink_BINARY_DIR}/lib/libRestLink.so)
 
     #add_subdirectory(client)
-    #add_subdirectory(tmdb)
+    add_subdirectory(tmdb)
     add_subdirectory(blagues)
 endif()

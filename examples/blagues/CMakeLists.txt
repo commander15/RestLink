@@ -33,8 +33,6 @@ set_target_properties(blagues PROPERTIES
     QT_ANDROID_VERSION_CODE 7
 )
 
-target_link_libraries(blagues PRIVATE Qt::Quick restlink)
+target_link_libraries(blagues PRIVATE Qt::Quick)
 
-install(TARGETS blagues
-    RUNTIME DESTINATION bin
-)
+install(TARGETS blagues RUNTIME DESTINATION bin)

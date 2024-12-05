@@ -20,7 +20,7 @@ ApplicationWindow {
         text: "Halo"
         placeholderText: "Query..."
 
-        onAccepted: request.exec()
+        onAccepted: request.run()
 
         Layout.fillWidth: true
     }
@@ -53,12 +53,14 @@ ApplicationWindow {
         api: restApi
 
         onFinished: function() {
-            if (response.httpStatusCode == 200) {
-                var json = JSON.parse(response.data).results;
+            if (response.success) {
+                var json = JSON.parse(response.readBody()).results;
                 view.model = json;
                 json = json[0];
                 image.source = "http://image.tmdb.org/t/p/w500" + json.poster_path;
                 label.text = "        " + json.overview;
+            } else {
+                console.log(response.readBody());
             }
         }
 
@@ -73,8 +75,10 @@ ApplicationWindow {
         api: restApi
 
         onFinished: function() {
-            var json = JSON.parse(response.data);
-            console.log(json.overview);
+            if (response.success) {
+                var json = JSON.parse(response.readBody());
+                console.log(json.overview);
+            }
         }
 
         ApiRequestParameter {
@@ -99,7 +103,7 @@ ApplicationWindow {
     Api {
         id: restApi
 
-        apiConfigurationUrl: "https://commander-systems.000webhostapp.com/RestLink/APIs/Marvel/Discovery/TMDB3.json"
+        configurationUrl: "file:///home/commander/Downloads/TmdbConfig.json"
 
         ApiRequestParameter {
             name: "language"

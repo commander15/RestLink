@@ -12,6 +12,10 @@ QtObject {
     property bool allowDev: false
     property alias loading: request.running
 
+    property Api api: Api {
+        configurationUrl: "https://commander-systems.000webhostapp.com/RestLink?app_id=47cb8b8c-7efc-11ee-905d-836d044cadfc&app_version=2.0"
+    }
+
     signal jokeChanged()
 
     property ApiRequest request: ApiRequest {
@@ -19,9 +23,7 @@ QtObject {
 
         endpoint: (!joke.allowDev ? "/random" : "/type/dev/random")
 
-        api: Api {
-            configurationUrl: "https://commander-systems.000webhostapp.com/RestLink?app_id=47cb8b8c-7efc-11ee-905d-836d044cadfc&app_version=2.0"
-        }
+        api: joke.api
 
         onCompleted: function() {
             var json = JSON.parse(response.data);
@@ -45,9 +47,7 @@ QtObject {
 
     property ApiRequest apiReq: ApiRequest {
         endpoint: "/discover/movie"
-        api: Api {
-            configurationUrl: "file:///home/commander/Downloads/Tmdb3.json"
-        }
+        api: joke.api
 
         onCompleted: console.log(JSON.parse(response.data).total_pages)
     }
