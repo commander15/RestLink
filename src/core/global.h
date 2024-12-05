@@ -13,6 +13,6 @@
 #   define RESTLINK_EXPORT
 #endif
 
-#define RESTLINK_D(ClassName) ClassName##Private *d = static_cast<ClassName##Private *>(qGetPtrHelper(this->d))
+#define RESTLINK_D(ClassName) ClassName##Private *d = static_cast<ClassName##Private *>(qGetPtrHelper(d_ptr))
 
 #endif // RESTLINK_GLOBAL_H

@@ -4,40 +4,98 @@
 #include <RestLink/debug.h>
 
 #include <QtCore/qstandardpaths.h>
-#include <QtCore/qdatetime.h>
-#include <QtCore/qfiledevice.h>
+#include <QtCore/qurl.h>
+#include <QtCore/qurlquery.h>
 
 RestLink::ApiCache::ApiCache(QObject *parent) :
-    QNetworkDiskCache(parent),
+    QAbstractNetworkCache(parent),
     d(new ApiCachePrivate(this))
 {
-    static int index = 0;
-    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-    cacheDir.append("/RestLink/API" + QString::number(index++));
-
-    setCacheDirectory(cacheDir);
-    setMaximumCacheSize(5242880LL);
 }
 
 RestLink::ApiCache::~ApiCache()
 {
 }
 
+qint64 RestLink::ApiCache::maxCacheSize() const
+{
+    return d->maximumCacheSize();
+}
+
+void RestLink::ApiCache::setMaxCacheSize(qint64 size)
+{
+    if (d->maximumCacheSize() != size) {
+        d->setMaximumCacheSize(size);
+        emit maxCacheSizeChanged(size);
+    }
+}
+
+QNetworkCacheMetaData RestLink::ApiCache::metaData(const QUrl &url)
+{
+    return d->metaData(d->cacheUrl(url));
+}
+
+void RestLink::ApiCache::updateMetaData(const QNetworkCacheMetaData &metaData)
+{
+    d->updateMetaData(d->cacheMetaData(metaData));
+}
+
+QIODevice *RestLink::ApiCache::data(const QUrl &url)
+{
+    return d->data(d->cacheUrl(url));
+}
+
+bool RestLink::ApiCache::remove(const QUrl &url)
+{
+    return d->remove(d->cacheUrl(url));
+}
+
+qint64 RestLink::ApiCache::cacheSize() const
+{
+    return d->cacheSize();
+}
+
 QIODevice *RestLink::ApiCache::prepare(const QNetworkCacheMetaData &metaData)
 {
-    QIODevice *device = QNetworkDiskCache::prepare(metaData);
-    d->logCacheItem(metaData, device);
-    return device;
+    return d->prepare(d->cacheMetaData(metaData));
+}
+
+void RestLink::ApiCache::insert(QIODevice *device)
+{
+    d->insert(device);
+}
+
+void RestLink::ApiCache::clear()
+{
+    d->clear();
 }
 
 RestLink::ApiCachePrivate::ApiCachePrivate(ApiCache *qq) :
     q(qq)
 {
+    static int index = 0;
+    setCacheDirectory(generateCacheDir(QString::number(index++)));
+
+    setMaximumCacheSize(5242880LL);
 }
 
-void RestLink::ApiCachePrivate::logCacheItem(const QNetworkCacheMetaData &meta, QIODevice *device)
+QNetworkCacheMetaData RestLink::ApiCachePrivate::cacheMetaData(QNetworkCacheMetaData metaData) const
 {
-    return;
-    restlinkInfo() << meta.url().toString() << " cached until " << meta.expirationDate()
-                   << (device ? " on " + static_cast<QFileDevice *>(device)->fileName() : "");
+    metaData.setUrl(cacheUrl(metaData.url()));
+    // ToDo: Handle in header secrets
+    return metaData;
+}
+
+QUrl RestLink::ApiCachePrivate::cacheUrl(QUrl url) const
+{
+    QUrlQuery query(url.query());
+    // ToDo: Handle in url secrets
+    url.setQuery(query);
+    return url;
+}
+
+QString RestLink::ApiCachePrivate::generateCacheDir(const QString &name)
+{
+    static const QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/RestLink/API/";
+    return cacheDir + name;
 }

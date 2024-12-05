@@ -14,13 +14,10 @@ public:
 
     bool equals(const ApiRequestPrivate *other) const;
 
-    static ApiRequest::RequestVerb nameVerb(const QString &name);
-
     QString endpoint;
     QVector<ApiRequestParameter> parameters;
-    QByteArray data;
-    ApiRequest::DataType dataType;
-    ApiRequest::RequestVerb verb;
+
+    bool cache;
 };
 
 class ApiRequestParameterPrivate : public QSharedData

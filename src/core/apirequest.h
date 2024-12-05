@@ -13,20 +13,6 @@ class ApiRequestPrivate;
 class RESTLINK_EXPORT ApiRequest
 {
 public:
-    enum DataType {
-        RawData,
-        FileData
-    };
-
-    enum RequestVerb {
-        GetRequest,
-        PostRequest,
-        PutRequest,
-        PatchRequest,
-        DeleteRequest,
-        UnknownRequest
-    };
-
     ApiRequest();
     ApiRequest(const ApiRequest &other);
     ApiRequest(ApiRequest &&other);
@@ -35,7 +21,7 @@ public:
     ApiRequest &operator=(const ApiRequest &other);
     ApiRequest &operator=(ApiRequest &&other);
 
-    QString endpoint(bool resolveParameters = false) const;
+    QString endpoint() const;
     void setEndpoint(const QString &endpoint);
 
     bool hasParameter(const QString &name) const;
@@ -46,16 +32,12 @@ public:
     void removeParameter(const QString &name);
     void setParameters(const QList<ApiRequestParameter> &parameters);
 
-    QByteArray data() const;
-    DataType dataType() const;
-    void setRawData(const QByteArray &data);
-    void setFileName(const QString &fileName);
-    void setData(const QByteArray &data, DataType type);
+    bool isCacheable() const;
+    void setCacheable(bool cache = true);
 
-    RequestVerb verb() const;
-    void setVerb(RequestVerb verb);
+    QString urlPath() const;
 
-    void loadFromJsonObject(const QJsonObject &object);
+    void loadFromJsonObject(const QJsonObject &object, QByteArray *data = nullptr);
 
     void swap(ApiRequest &other);
 
@@ -63,10 +45,12 @@ public:
     inline bool operator!=(const ApiRequest &other) const
     {return !operator==(other);}
 
+    static ApiRequest mergeRequests(const ApiRequest &r1, const ApiRequest &r2);
+
 private:
     QSharedDataPointer<ApiRequestPrivate> d;
 
-    friend class ApiPrivate;
+    friend class ApiBase;
 };
 
 class ApiRequestParameterPrivate;
@@ -76,23 +60,23 @@ public:
     enum ParameterScope {
         UrlPathScope,
         UrlQueryScope,
-        HeaderScope,
-        UnknownScope
+        HeaderScope
     };
 
     enum ParameterFlag {
         NoFlag = 0x0,
         AuthenticationFlag = 0x1,
-        SecretFlag = 0x128
+        SecretFlag = 0x2
     };
     Q_DECLARE_FLAGS(ParameterFlags, ParameterFlag)
 
     ApiRequestParameter();
+    ApiRequestParameter(const QString &name, const QVariant &value, ParameterScope scope = UrlQueryScope);
     ApiRequestParameter(const ApiRequestParameter &other);
     ApiRequestParameter(ApiRequestParameter &&other);
     ~ApiRequestParameter();
 
-    ApiRequestParameter &operator =(const ApiRequestParameter &other);
+    ApiRequestParameter &operator=(const ApiRequestParameter &other);
     ApiRequestParameter &operator=(ApiRequestParameter &&other);
 
     QString name() const;
@@ -121,6 +105,8 @@ public:
     bool operator==(const ApiRequestParameter &other) const;
     inline bool operator!=(const ApiRequestParameter &other) const
     {return !operator==(other);}
+
+    static ApiRequestParameter mergeParameters(const ApiRequestParameter &p1, const ApiRequestParameter &p2);
 
 private:
     QSharedDataPointer<ApiRequestParameterPrivate> d;

@@ -39,17 +39,9 @@ ApiRequest &ApiRequest::operator=(ApiRequest &&other)
     return *this;
 }
 
-QString ApiRequest::endpoint(bool resolveParameters) const
+QString ApiRequest::endpoint() const
 {
-    if (resolveParameters) {
-        QStringList paths = d->endpoint.split('/');
-        for (QString &path : paths)
-            for (const ApiRequestParameter &param : d->parameters)
-                if (param.scope() == ApiRequestParameter::UrlPathScope && path == '{' + param.name() + '}')
-                    path = param.value().toString();
-        return paths.join('/');
-    } else
-        return d->endpoint;
+    return d->endpoint;
 }
 
 void ApiRequest::setEndpoint(const QString &endpoint)
@@ -93,18 +85,24 @@ QList<ApiRequestParameter> ApiRequest::parameters() const
 
 void ApiRequest::addParameter(const ApiRequestParameter &parameter)
 {
-    if (!parameter.name().isEmpty())
+    if (!parameter.isValid())
+        return;
+
+    auto it = std::find_if(d->parameters.begin(), d->parameters.end(), [&parameter](const ApiRequestParameter &p) {
+        return p.name() == parameter.name();
+    });
+
+    if (it == d->parameters.constEnd())
         d->parameters.append(parameter);
+    else
+        *it = parameter;
 }
 
 void ApiRequest::removeParameter(const QString &name)
 {
-    for (const ApiRequestParameter &parameter : d->parameters) {
-        if (parameter.name() == name) {
-            d->parameters.removeOne(parameter);
-            break;
-        }
-    }
+    d->parameters.removeIf([&name](const ApiRequestParameter &p) {
+        return p.name() == name;
+    });
 }
 
 void ApiRequest::setParameters(const QList<ApiRequestParameter> &parameters)
@@ -112,48 +110,28 @@ void ApiRequest::setParameters(const QList<ApiRequestParameter> &parameters)
     d->parameters = parameters.toVector();
 }
 
-QByteArray ApiRequest::data() const
+bool ApiRequest::isCacheable() const
 {
-    return d->data;
+    return d->cache;
 }
 
-ApiRequest::DataType ApiRequest::dataType() const
+void ApiRequest::setCacheable(bool cache)
 {
-    return d->dataType;
+    d->cache = cache;
 }
 
-void ApiRequest::setRawData(const QByteArray &data)
+QString ApiRequest::urlPath() const
 {
-    d->data = data;
-    d->dataType = RawData;
+    QStringList paths = d->endpoint.split('/');
+    for (QString &path : paths)
+        for (const ApiRequestParameter &param : d->parameters)
+            if (param.scope() == ApiRequestParameter::UrlPathScope && path == '{' + param.name() + '}')
+                path = param.value().toString();
+    return paths.join('/');
 }
 
-void ApiRequest::setFileName(const QString &fileName)
+void ApiRequest::loadFromJsonObject(const QJsonObject &object, QByteArray *data)
 {
-    d->data = fileName.toUtf8();
-    d->dataType = FileData;
-}
-
-void ApiRequest::setData(const QByteArray &data, DataType type)
-{
-    d->data = data;
-    d->dataType = type;
-}
-
-ApiRequest::RequestVerb ApiRequest::verb() const
-{
-    return d->verb;
-}
-
-void ApiRequest::setVerb(RequestVerb verb)
-{
-    d->verb = verb;
-}
-
-void ApiRequest::loadFromJsonObject(const QJsonObject &object)
-{
-    ApiRequestPrivate *def = new ApiRequestPrivate;
-
     d->endpoint = object.value("endpoint").toString();
 
     QJsonArray parameters = object.value("parameters").toArray();
@@ -164,16 +142,8 @@ void ApiRequest::loadFromJsonObject(const QJsonObject &object)
         d->parameters.append(requestParameter);
     }
 
-    d->data = object.value("data").toString().toUtf8();
-
-    if (object.contains("verb"))
-        d->verb = d->nameVerb(object.value("verb").toString());
-    else
-        d->verb = def->verb;
-
-    // ToDo: verb loading
-
-    delete def;
+    if (data)
+        *data = object.value("data").toString().toUtf8();
 }
 
 void ApiRequest::swap(ApiRequest &other)
@@ -189,8 +159,24 @@ bool ApiRequest::operator==(const ApiRequest &other) const
         return d->equals(other.d);
 }
 
+ApiRequest ApiRequest::mergeRequests(const ApiRequest &r1, const ApiRequest &r2)
+{
+    ApiRequest r = r1;
+
+    // add parameters of r2 while keeping r1 parameters, r2 override r1 parameters whenever possible
+    const QList<ApiRequestParameter> parameters = r2.parameters();
+    for (const ApiRequestParameter &parameter : parameters) {
+        if (!r.hasParameter(parameter.name()))
+            r.addParameter(parameter);
+        else
+            r.addParameter(ApiRequestParameter::mergeParameters(r.parameter(parameter.name()), parameter));
+    }
+
+    return r;
+}
+
 ApiRequestPrivate::ApiRequestPrivate() :
-    verb(ApiRequest::GetRequest)
+    cache(true)
 {
 }
 
@@ -198,8 +184,7 @@ ApiRequestPrivate::ApiRequestPrivate(const ApiRequestPrivate &other) :
     QSharedData(other),
     endpoint(other.endpoint),
     parameters(other.parameters),
-    data(other.data),
-    verb(other.verb)
+    cache(other.cache)
 {
 }
 
@@ -211,29 +196,20 @@ bool ApiRequestPrivate::equals(const ApiRequestPrivate *other) const
 {
     return endpoint == other->endpoint
             && parameters == other->parameters
-            && data == other->data
-            && verb == other->verb;
-}
-
-ApiRequest::RequestVerb ApiRequestPrivate::nameVerb(const QString &name)
-{
-    if (name == "GET")
-        return ApiRequest::GetRequest;
-    else if (name == "POST")
-        return ApiRequest::PostRequest;
-    else if (name == "PUT")
-        return ApiRequest::PutRequest;
-    else if (name == "PATCH")
-        return ApiRequest::PatchRequest;
-    else if (name == "DELETE")
-        return ApiRequest::DeleteRequest;
-    else
-        return ApiRequest::UnknownRequest;
+            && cache == other->cache;
 }
 
 ApiRequestParameter::ApiRequestParameter() :
     d(new ApiRequestParameterPrivate)
 {
+}
+
+ApiRequestParameter::ApiRequestParameter(const QString &name, const QVariant &value, ParameterScope scope) :
+    d(new ApiRequestParameterPrivate)
+{
+    d->name = name;
+    d->value = value;
+    d->scope = scope;
 }
 
 ApiRequestParameter::ApiRequestParameter(const ApiRequestParameter &other) :
@@ -307,11 +283,13 @@ ApiRequestParameter::ParameterFlags ApiRequestParameter::flags() const
 void ApiRequestParameter::setFlag(ParameterFlag flag, bool on)
 {
     d->flags.setFlag(flag, on);
+    d->adaptToFlag(flag);
 }
 
 void ApiRequestParameter::setFlags(const ParameterFlags &flags)
 {
     d->flags = flags;
+    d->correctFlags();
 }
 
 bool ApiRequestParameter::isEnabled() const
@@ -326,35 +304,29 @@ void ApiRequestParameter::setEnabled(bool enabled)
 
 void ApiRequestParameter::loadFromJsonObject(const QJsonObject &object)
 {
-    ApiRequestParameterPrivate *def = new ApiRequestParameterPrivate;
-
     d->name = object.value("name").toString();
     d->value = object.value("value").toVariant();
 
     if (object.contains("scope"))
         d->scope = d->nameScope(object.value("scope").toString());
     else
-        d->scope = def->scope;
+        d->scope = UrlQueryScope;
 
-    d->flags = def->flags;
+    d->flags = NoFlag;
     if (object.contains("authentication"))
         d->flags.setFlag(AuthenticationFlag, object.value("authentication").toBool());
     else if (object.contains("secret"))
         d->flags.setFlag(SecretFlag, object.value("secret").toBool());
-    d->correctFlags();
 
     if (object.contains("enabled"))
         d->enabled = object.value("enabled").toBool();
     else
-        d->enabled = def->enabled;
-
-    delete def;
+        d->enabled = true;
 }
 
 bool ApiRequestParameter::isValid() const
 {
-    return !d->name.isEmpty()
-            && !d->value.isNull();
+    return !d->name.isEmpty() && !d->value.isNull();
 }
 
 void ApiRequestParameter::swap(ApiRequestParameter &other)
@@ -365,6 +337,26 @@ void ApiRequestParameter::swap(ApiRequestParameter &other)
 bool ApiRequestParameter::operator==(const ApiRequestParameter &other) const
 {
     return d->equals(other.d);
+}
+
+ApiRequestParameter ApiRequestParameter::mergeParameters(const ApiRequestParameter &p1, const ApiRequestParameter &p2)
+{
+    ApiRequestParameter p = p1;
+
+    // p2 value is prioritary if not null
+    if (!p2.value().isNull())
+        p.setValue(p2.value());
+
+    // adding flags from p2 while keeping those of p1
+    const QList<ParameterFlag> flags = { AuthenticationFlag, SecretFlag };
+    for (const ParameterFlag &flag : flags)
+    if (p2.hasFlag(flag))
+        p.setFlag(flag);
+
+    // enabled state of p1 is overriden by p2 one
+    p.setEnabled(p2.isEnabled());
+
+    return p;
 }
 
 ApiRequestParameterPrivate::ApiRequestParameterPrivate() :
@@ -424,7 +416,7 @@ ApiRequestParameter::ParameterScope ApiRequestParameterPrivate::nameScope(const 
     else if (name == "HEADER")
         return ApiRequestParameter::HeaderScope;
     else
-        return ApiRequestParameter::UnknownScope;
+        return ApiRequestParameter::UrlQueryScope;
 }
 
 }

@@ -3,9 +3,13 @@
 
 #include "api.h"
 
+#include <RestLink/apirequest.h>
+
+#include <RestLink/private/apibase_p.h>
+
 namespace RestLink {
 
-class ApiPrivate
+class ApiPrivate : public ApiBasePrivate
 {
 public:
     enum ParameterContext {
@@ -14,39 +18,27 @@ public:
     };
 
     ApiPrivate(Api *qq);
-    ~ApiPrivate();
 
     void registerNetworkManager(QNetworkAccessManager *manager);
 
-    void logRequest(const ApiRequest &request);
-    void logReply(ApiReply *reply);
-
-    bool hasRequest(const ApiRequest &request) const;
-    ApiRequest mergeRequest(const ApiRequest &req0, const ApiRequest &req1);
-
-    QUrl requestUrl(const ApiRequest &request, bool includeSecrets = true) const;
-    QList<ApiRequestParameter> requestParameters(const ApiRequest &request, ParameterContext context) const;
+    bool hasRemoteRequest(const ApiRequest &request) const;
     ApiRequest remoteRequest(const ApiRequest &request) const;
-
-    bool hasParameter(const ApiRequestParameter &param) const;
-    int parameterIndex(const ApiRequestParameter &param) const;
-    bool isUseableParameter(const ApiRequestParameter &parameter, bool secret = true) const;
-    bool isParameterMatchContext(const ApiRequestParameter &parameter, ParameterContext context) const;
-
-    static QByteArray httpVerbFromRequestVerb(int verb);
+    QByteArray remoteRequestData(const ApiRequest &request) const;
 
     Api *q;
 
     QString name;
     int version;
     QUrl url;
-
+    QVector<ApiRequestParameter> parameters;
     QString userAgent;
 
-    QVector<ApiRequestParameter> parameters;
-    QVector<ApiRequest> requests;
+    struct RemoteRequest {
+        ApiRequest request;
+        QByteArray data;
+    };
 
-    QNetworkAccessManager *netMan;
+    QVector<RemoteRequest> remoteRequests;
 };
 
 }

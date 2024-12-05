@@ -3,7 +3,6 @@
 
 #include <RestLink/debug.h>
 #include <RestLink/apirequest.h>
-#include <RestLink/apiconfigurationdownload.h>
 #include <RestLink/apicache.h>
 
 #include <QtNetwork/qnetworkaccessmanager.h>
@@ -14,16 +13,9 @@
 
 RestLinkApi::RestLinkApi(QObject *parent) :
     RestLink::Api(parent),
-    m_ready(true),
-    m_net(networkAccessManager()),
-    m_cache(static_cast<RestLink::ApiCache*>(networkCache()))
+    m_cache(nullptr)
 {
-    //connect(this, &RestLink::Api::apiNameChanged, this, &RestLinkApi::updateCacheDir);
-    connect(this, &RestLink::Api::apiConfigured, this, [this] {setReady(true);});
-    connect(this, &RestLink::Api::apiConfigurationFailed, this, [this](const QString &error) {
-        restlinkWarning() << error;
-        configureApi(m_apiConfigUrl);
-    });
+    connect(this, &RestLink::Api::configurationCompleted, this, &RestLinkApi::ready);
 }
 
 RestLinkApi::~RestLinkApi()
@@ -33,6 +25,16 @@ RestLinkApi::~RestLinkApi()
 void RestLinkApi::init()
 {
     registerParameters();
+
+    if (m_apiConfigUrl.isValid())
+        configureApi(m_apiConfigUrl);
+    else if (isReady())
+        emit ready();
+}
+
+bool RestLinkApi::isReady() const
+{
+    return apiUrl().isValid();
 }
 
 QUrl RestLinkApi::apiConfigurationUrl() const
@@ -45,35 +47,20 @@ void RestLinkApi::setApiConfigurationUrl(const QUrl &url)
     if (m_apiConfigUrl != url) {
         m_apiConfigUrl = url;
         emit apiConfigurationUrlChanged(url);
-
-        if (url.isValid()) {
-            configureApi(url);
-            setReady(false);
-        }
     }
 }
 
-int RestLinkApi::cacheSize() const
+RestLink::ApiCache *RestLinkApi::cache() const
 {
-    return m_cache->maximumCacheSize() / (1024 * 1024);
+    return m_cache;
 }
 
-void RestLinkApi::setCacheSize(int size)
+void RestLinkApi::setCache(RestLink::ApiCache *cache)
 {
-    m_cache->setMaximumCacheSize(size * 1024 * 1024);
-    emit cacheSizeChanged();
-}
-
-bool RestLinkApi::isReady() const
-{
-    return m_ready;
-}
-
-void RestLinkApi::setReady(bool ready)
-{
-    if (m_ready != ready) {
-        m_ready = ready;
-        emit readyChanged();
+    if (m_cache != cache) {
+        networkAccessManager()->setCache(cache);
+        m_cache = cache;
+        emit cacheChanged();
     }
 }
 

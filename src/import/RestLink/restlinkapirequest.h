@@ -14,11 +14,11 @@ class RestLinkApiRequest : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString endpoint READ endpoint WRITE setEndpoint NOTIFY endpointChanged)
-    Q_PROPERTY(QString data READ data WRITE setData NOTIFY dataChanged)
-    Q_PROPERTY(int type READ type WRITE setType NOTIFY typeChanged)
+    Q_PROPERTY(QVariant body READ body WRITE setBody NOTIFY bodyChanged)
+    Q_PROPERTY(int operation READ operation WRITE setOperation NOTIFY operationChanged)
     Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)
     Q_PROPERTY(RestLink::ApiReply* response READ response NOTIFY responseChanged)
-    Q_PROPERTY(RestLinkApi* api READ api WRITE setApi)
+    Q_PROPERTY(RestLinkApi* api READ api WRITE setApi NOTIFY apiChanged)
     QML_ELEMENT
 
 public:
@@ -26,37 +26,34 @@ public:
     ~RestLinkApiRequest();
 
     QString endpoint() const;
-    Q_SLOT void setEndpoint(const QString &newEndpoint);
+    void setEndpoint(const QString &newEndpoint);
     Q_SIGNAL void endpointChanged();
 
-    QString data() const;
-    Q_SLOT void setData(const QString &data);
-    Q_SIGNAL void dataChanged(const QString &data);
+    QVariant body() const;
+    void setBody(const QVariant &data);
+    Q_SIGNAL void bodyChanged();
 
-    int type() const;
-    Q_SLOT void setType(int type);
-    Q_SIGNAL void typeChanged(int type);
+    int operation() const;
+    void setOperation(int operation);
+    Q_SIGNAL void operationChanged();
 
     bool isRunning() const;
-    Q_SIGNAL void runningChanged();
-    Q_SIGNAL void finished();
-    Q_SIGNAL void completed();
-    Q_SIGNAL void error();
-
     Q_SLOT void run();
+    Q_SIGNAL void runningChanged();
 
     RestLink::ApiReply *response() const;
     Q_SIGNAL void responseChanged();
 
     RestLinkApi *api() const;
     void setApi(RestLinkApi *api);
+    Q_SIGNAL void apiChanged();
 
     static QList<RestLink::ApiRequestParameter> apiRequestParameters(const QObject *request);
 
 private:
     QString m_endpoint;
-    QString m_data;
-    int m_type;
+    QVariant m_body;
+    int m_operation;
 
     RestLink::ApiReply *m_reply;
     RestLinkApi *m_api;
@@ -90,6 +87,8 @@ public:
     bool isEnabled() const;
     Q_SLOT void setEnabled(bool enabled);
     Q_SIGNAL void enabledChanged();
+
+    Q_SIGNAL void parameterChanged();
 
     RestLink::ApiRequestParameter requestParameter() const;
 

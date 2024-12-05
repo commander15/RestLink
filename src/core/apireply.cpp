@@ -6,6 +6,10 @@
 
 #include <QtNetwork/qnetworkreply.h>
 
+#include <QtCore/qjsondocument.h>
+#include <QtCore/qjsonobject.h>
+#include <QtCore/qjsonarray.h>
+
 namespace RestLink {
 
 ApiReply::ApiReply(Api *api) :
@@ -26,9 +30,35 @@ ApiReply::~ApiReply()
 {
 }
 
+QString ApiReply::endpoint() const
+{
+    return d->apiRequest.endpoint();
+}
+
 ApiRequest ApiReply::apiRequest() const
 {
     return d->apiRequest;
+}
+
+ApiBase::Operation ApiReply::operation() const
+{
+    switch (d->netReply->operation()) {
+    case QNetworkAccessManager::GetOperation:
+        return Api::GetOperation;
+
+    case QNetworkAccessManager::PostOperation:
+        return Api::PostOperation;
+
+    case QNetworkAccessManager::PutOperation:
+        return Api::PutOperation;
+
+    case QNetworkAccessManager::DeleteOperation:
+        return Api::DeleteOperation;
+
+    case QNetworkAccessManager::CustomOperation:
+    default:
+        return Api::PatchOperation;
+    }
 }
 
 Api *ApiReply::api() const
@@ -36,22 +66,20 @@ Api *ApiReply::api() const
     return d->api;
 }
 
-QByteArray ApiReply::data() const
+QUrl ApiReply::url() const
 {
-    if (!d->netData.isEmpty())
-        return d->netData;
-    else
-        return d->defaultData;
+    return d->netReply->request().url();
 }
 
-QByteArray ApiReply::defaultData() const
+QNetworkRequest ApiReply::networkRequest() const
 {
-    return d->defaultData;
+    return d->netReply->request();
 }
 
-void ApiReply::setDefaultData(const QByteArray &data)
+bool ApiReply::isHttpStatusSuccess() const
 {
-    d->defaultData = data;
+    const int code = httpStatusCode();
+    return (code >= 200 && code <= 299);
 }
 
 int ApiReply::httpStatusCode() const
@@ -64,19 +92,98 @@ QString ApiReply::httpReasonPhrase() const
     return d->netReply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
 }
 
+bool ApiReply::hasHeader(QNetworkRequest::KnownHeaders header) const
+{
+    return !d->netReply->header(header).isNull();
+}
+
+QVariant ApiReply::header(QNetworkRequest::KnownHeaders header) const
+{
+    return d->netReply->header(header);
+}
+
+bool ApiReply::hasRawHeader(const QByteArray &name) const
+{
+    return d->netReply->hasRawHeader(name);
+}
+
+QByteArray ApiReply::rawHeader(const QByteArray &header) const
+{
+    return d->netReply->rawHeader(header);
+}
+
+QByteArrayList ApiReply::rawHeaderList() const
+{
+    return d->netReply->rawHeaderList();
+}
+
+bool ApiReply::isRunning() const
+{
+    return d->netReply->isRunning();
+}
+
+bool ApiReply::isFinished() const
+{
+    return d->netReply->isFinished();
+}
+
 void ApiReply::abort()
 {
     d->netReply->abort();
 }
 
-QUrl ApiReply::requestedUrl() const
+bool ApiReply::isSuccess() const
 {
-    return d->netReply->request().url();
+    if (isFinished())
+        return !hasNetworkError() && isHttpStatusSuccess();
+    else
+        return false;
 }
 
-QNetworkRequest ApiReply::networkRequest() const
+QJsonObject ApiReply::readJsonObject(QJsonParseError *error)
 {
-    return d->netReply->request();
+    const QJsonDocument doc = QJsonDocument::fromJson(readBody(), error);
+    return doc.object();
+}
+
+QJsonArray ApiReply::readJsonArray(QJsonParseError *error)
+{
+    const QJsonDocument doc = QJsonDocument::fromJson(readBody(), error);
+    return doc.array();
+}
+
+QJsonValue ApiReply::readJson(QJsonParseError *error)
+{
+    const QJsonDocument doc = QJsonDocument::fromJson(readBody(), error);
+    if (doc.isObject())
+        return doc.object();
+    else if (doc.isArray())
+        return doc.array();
+    else
+        return QJsonValue();
+}
+
+QString ApiReply::readString()
+{
+    return readBody();
+}
+
+QByteArray ApiReply::readBody()
+{
+    if (d->netReply->bytesAvailable() > 0)
+        return d->netReply->readAll();
+    else
+        return QByteArray();
+}
+
+void ApiReply::ignoreSslErros(const QList<QSslError> &errors)
+{
+    d->netReply->ignoreSslErrors(errors);
+}
+
+bool ApiReply::hasNetworkError() const
+{
+    return d->netReply->error() != QNetworkReply::NoError;
 }
 
 int ApiReply::networkError() const
@@ -106,34 +213,9 @@ void ApiReply::setNetworkReply(QNetworkReply *reply)
 
     connect(reply, &QNetworkReply::downloadProgress, this, &ApiReply::downloadProgress);
     connect(reply, &QNetworkReply::uploadProgress, this, &ApiReply::uploadProgress);
-    connect(reply, &QNetworkReply::finished, this, &ApiReply::completeDownload);
+    connect(reply, &QNetworkReply::sslErrors, this, &ApiReply::sslErrorsOccured);
+    connect(reply, &QNetworkReply::finished, this, &ApiReply::finished);
     connect(reply, &QNetworkReply::errorOccurred, this, &ApiReply::networkErrorOccured);
-    connect(reply, &QIODevice::readyRead, this, &ApiReply::downloadPart);
-}
-
-void ApiReply::processData()
-{
-    if (d->netData.isEmpty())
-        restlinkWarning() << "received an empty response";
-}
-
-void ApiReply::downloadPart()
-{
-    //d->netData.append(d->netReply->readAll());
-}
-
-void ApiReply::completeDownload()
-{
-    if (networkError() != QNetworkReply::NoError)
-        restlinkWarning() << networkErrorString();
-
-    d->netData = d->netReply->readAll();
-    if (!d->netData.isEmpty()) {
-        processData();
-        emit completed();
-    }
-
-    emit finished();
 }
 
 ApiReplyPrivate::ApiReplyPrivate(ApiReply *qq) :

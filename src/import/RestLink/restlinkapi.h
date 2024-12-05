@@ -14,9 +14,9 @@ class RestLinkApi : public RestLink::Api
 {
     Q_OBJECT
     QML_ELEMENT
+    Q_PROPERTY(bool ready READ isReady NOTIFY ready)
     Q_PROPERTY(QUrl configurationUrl READ apiConfigurationUrl WRITE setApiConfigurationUrl NOTIFY apiConfigurationUrlChanged)
-    Q_PROPERTY(int cacheSize READ cacheSize WRITE setCacheSize NOTIFY cacheSizeChanged)
-    Q_PROPERTY(bool ready READ isReady NOTIFY readyChanged)
+    Q_PROPERTY(RestLink::ApiCache* cache READ cache WRITE setCache NOTIFY cacheChanged FINAL)
 
 public:
     explicit RestLinkApi(QObject *parent = nullptr);
@@ -24,17 +24,16 @@ public:
 
     Q_INVOKABLE void init();
 
+    bool isReady() const;
+    Q_SIGNAL void ready();
+
     QUrl apiConfigurationUrl() const;
     Q_SLOT void setApiConfigurationUrl(const QUrl &url);
     Q_SIGNAL void apiConfigurationUrlChanged(const QUrl &url);
 
-    int cacheSize() const;
-    void setCacheSize(int size);
-    Q_SIGNAL void cacheSizeChanged();
-
-    bool isReady() const;
-    void setReady(bool ready = true);
-    Q_SIGNAL void readyChanged();
+    RestLink::ApiCache *cache() const;
+    void setCache(RestLink::ApiCache *cache);
+    Q_SIGNAL void cacheChanged();
 
     Q_INVOKABLE QString parameterName(int index) const;
     Q_INVOKABLE QVariant parameterValue(int index) const;
@@ -44,9 +43,7 @@ public:
 
 private:
     QUrl m_apiConfigUrl;
-    bool m_ready;
 
-    QNetworkAccessManager *m_net;
     RestLink::ApiCache *m_cache;
 };
 

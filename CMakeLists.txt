@@ -16,6 +16,8 @@ set(CMAKE_AUTOMOC ON)
 set(CXX_STANDARD 17)
 set(CXX_STANDARD_REQUIRED TRUE)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 list(PREPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 find_package(Qt6 REQUIRED COMPONENTS Network Quick)
@@ -25,6 +27,8 @@ qt_policy(SET QTP0001 NEW)
 include(cmake/Utils.cmake)
 
 add_subdirectory(src)
+
+#add_subdirectory(test)
 
 if (RESTLINK_BUILD_EXAMPLES)
     add_subdirectory(examples)

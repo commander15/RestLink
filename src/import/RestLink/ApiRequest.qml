@@ -5,17 +5,35 @@ import QtQml
 RestLinkApiRequest {
     id: request
 
-    enum RequestType {
-        GetRequest = 0,
-        PostRequest = 1,
-        PutRequest = 2,
-        PatchRequest = 3,
-        DeleteRequest = 4
+    enum Operation {
+        Get = 0,
+        Post = 1,
+        Put = 2,
+        Patch = 3,
+        Delete = 4
     }
 
-    property alias verb: request.type
+    property bool autoRun: true
 
     default property list<QtObject> resources;
 
-    Component.onCompleted: run()
+    readonly property Connections _apiConnections: Connections {
+        target: request.api
+
+        function onReady() {
+            if (request.autoRun)
+                request.run();
+        }
+    }
+
+    signal finished()
+    signal error()
+
+    onRunningChanged: function() {
+        if (response.finished)
+            finished();
+
+        if (response.networkError !== 0)
+            error();
+    }
 }

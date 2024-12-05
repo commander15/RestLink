@@ -18,9 +18,6 @@ public:
     Api *api;
 
     QNetworkReply *netReply;
-    QByteArray netData;
-
-    QByteArray defaultData;
 };
 
 }

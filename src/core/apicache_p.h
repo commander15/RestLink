@@ -3,16 +3,25 @@
 
 #include "apicache.h"
 
+#include <QtNetwork/qnetworkdiskcache.h>
+
 namespace RestLink {
 
-class ApiCachePrivate
+class ApiCachePrivate : public QNetworkDiskCache
 {
+    Q_OBJECT
+
 public:
     ApiCachePrivate(ApiCache *qq);
 
-    void logCacheItem(const QNetworkCacheMetaData &meta, QIODevice *device);
+    QNetworkCacheMetaData cacheMetaData(QNetworkCacheMetaData metaData) const;
+    QUrl cacheUrl(QUrl url) const;
+
+    static QString generateCacheDir(const QString &name);
 
     ApiCache *q;
+
+
 };
 
 }

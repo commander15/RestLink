@@ -1,4 +1,4 @@
-qt_add_qml_module(restlinkqml
+qt_add_qml_module(RestLinkQml
     URI    RestLink
     VERSION ${RestLink_VERSION_MAJOR}.${RestLink_VERSION_MINOR}
     QML_FILES
@@ -9,13 +9,13 @@ qt_add_qml_module(restlinkqml
         restlinkplugin.cpp
         restlinkapi.cpp
         restlinkapirequest.cpp
-    PLUGIN_TARGET restlinkqml
+    PLUGIN_TARGET RestLinkQml
     NO_GENERATE_PLUGIN_SOURCE
 )
 
-target_link_libraries(restlinkqml PRIVATE Qt::Qml restlink)
+target_link_libraries(RestLinkQml PRIVATE Qt::Qml RestLink)
 
-qt_query_qml_module(restlinkqml
+qt_query_qml_module(RestLinkQml
     QMLDIR        DIR
     QML_FILES     FILES
     TYPEINFO      TYPES
