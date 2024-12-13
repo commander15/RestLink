@@ -31,6 +31,8 @@ if (${CMAKE_BUILD_TYPE} STREQUAL "Debug" AND FALSE)
     string(PREPEND CMAKE_SHARED_MODULE_SUFFIX  "d")
 endif()
 
+find_package(ZLIB)
+
 add_subdirectory(core)
 
 if (RESTLINK_BUILD_QML_PLUGIN)

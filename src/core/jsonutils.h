@@ -9,14 +9,14 @@ class QJsonValue;
 
 namespace RestLink {
 
-class JsonUtils
+class RESTLINK_EXPORT JsonUtils
 {
 public:
-    static RESTLINK_EXPORT QString jsonToString(const QJsonObject &object);
-    static RESTLINK_EXPORT QString jsonToString(const QJsonArray &array);
-    static RESTLINK_EXPORT QString jsonToString(const QJsonValue &value);
+    static QString jsonToString(const QJsonObject &object);
+    static QString jsonToString(const QJsonArray &array);
+    static QString jsonToString(const QJsonValue &value);
 
-    static RESTLINK_EXPORT QByteArray jsonToByteArray(const QJsonValue &value);
+    static QByteArray jsonToByteArray(const QJsonValue &value);
 };
 
 }

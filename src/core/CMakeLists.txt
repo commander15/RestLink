@@ -14,12 +14,17 @@ target_compile_definitions(RestLink
 
 target_link_libraries(RestLink PUBLIC Qt::Network)
 
+if (ZLIB_FOUND)
+    target_compile_definitions(RestLink PRIVATE ZLIB_LIB)
+    target_link_libraries(RestLink PRIVATE ZLIB::ZLIB)
+endif()
+
 configure_file(config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h @ONLY)
 
 target_headers(RestLink
     PUBLIC
         global.h config.h debug.h
-        jsonutils.h
+        jsonutils.h compressionutils.h
         apibase.h api.h apicache.h
         apirequest.h apireply.h
     PRIVATE
@@ -30,7 +35,7 @@ target_headers(RestLink
 target_sources(RestLink
     PRIVATE
         debug.cpp
-        jsonutils.cpp
+        jsonutils.cpp compressionutils.cpp
         apibase.cpp api.cpp apicache.cpp
         apirequest.cpp apireply.cpp
 )
