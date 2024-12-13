@@ -11,6 +11,7 @@
 #include <QtNetwork/qnetworkrequest.h>
 #include <QtNetwork/qnetworkreply.h>
 
+#include <QtCore/qmimedatabase.h>
 #include <QtCore/qjsondocument.h>
 #include <QtCore/qjsonobject.h>
 #include <QtCore/qjsonarray.h>
@@ -163,84 +164,84 @@ ApiReply *ApiBase::get(const ApiRequest &request)
 
 ApiReply *ApiBase::post(const ApiRequest &request, QIODevice *device)
 {
-    const QNetworkRequest netRequest = createNetworkRequest(request);
+    const QNetworkRequest netRequest = createNetworkRequest(request, device, DeviceData);
     QNetworkReply *netReply = d_ptr->netMan()->post(netRequest, device);
     return createApiReply(request, netReply);
 }
 
 ApiReply *ApiBase::post(const ApiRequest &request, const QByteArray &data)
 {
-    const QNetworkRequest netRequest = createNetworkRequest(request);
+    const QNetworkRequest netRequest = createNetworkRequest(request, &data, RawData);
     QNetworkReply *netReply = d_ptr->netMan()->post(netRequest, data);
     return createApiReply(request, netReply);
 }
 
 ApiReply *ApiBase::post(const ApiRequest &request, QHttpMultiPart *data)
 {
-    const QNetworkRequest netRequest = createNetworkRequest(request);
+    const QNetworkRequest netRequest = createNetworkRequest(request, data, MultiPartData);
     QNetworkReply *netReply = d_ptr->netMan()->post(netRequest, data);
     return createApiReply(request, netReply);
 }
 
 ApiReply *ApiBase::post(const ApiRequest &request, const QJsonValue &data)
 {
-    const QNetworkRequest netRequest = createNetworkRequest(request);
+    const QNetworkRequest netRequest = createNetworkRequest(request, &data, JsonData);
     QNetworkReply *netReply = d_ptr->netMan()->post(netRequest, JsonUtils::jsonToByteArray(data));
     return createApiReply(request, netReply);
 }
 
 ApiReply *ApiBase::put(const ApiRequest &request, QIODevice *device)
 {
-    const QNetworkRequest netRequest = createNetworkRequest(request);
+    const QNetworkRequest netRequest = createNetworkRequest(request, device, DeviceData);
     QNetworkReply *netReply = d_ptr->netMan()->put(netRequest, device);
     return createApiReply(request, netReply);
 }
 
 ApiReply *ApiBase::put(const ApiRequest &request, const QByteArray &data)
 {
-    const QNetworkRequest netRequest = createNetworkRequest(request);
+    const QNetworkRequest netRequest = createNetworkRequest(request, &data, RawData);
     QNetworkReply *netReply = d_ptr->netMan()->put(netRequest, data);
     return createApiReply(request, netReply);
 }
 
 ApiReply *ApiBase::put(const ApiRequest &request, QHttpMultiPart *data)
 {
-    const QNetworkRequest netRequest = createNetworkRequest(request);
+    const QNetworkRequest netRequest = createNetworkRequest(request, data, MultiPartData);
     QNetworkReply *netReply = d_ptr->netMan()->put(netRequest, data);
     return createApiReply(request, netReply);
 }
 
 ApiReply *ApiBase::put(const ApiRequest &request, const QJsonValue &data)
 {
-    const QNetworkRequest netRequest = createNetworkRequest(request);
+    const QNetworkRequest netRequest = createNetworkRequest(request, &data, JsonData);
     QNetworkReply *netReply = d_ptr->netMan()->put(netRequest, JsonUtils::jsonToByteArray(data));
     return createApiReply(request, netReply);
 }
 
 ApiReply *ApiBase::patch(const ApiRequest &request, QIODevice *device)
 {
-    const QNetworkRequest netRequest = createNetworkRequest(request);
+    const QNetworkRequest netRequest = createNetworkRequest(request, device, DeviceData);
     QNetworkReply *netReply = d_ptr->netMan()->sendCustomRequest(netRequest, "PATCH", device);
     return createApiReply(request, netReply);
 }
 
 ApiReply *ApiBase::patch(const ApiRequest &request, const QByteArray &data)
 {
-    const QNetworkRequest netRequest = createNetworkRequest(request);
+    const QNetworkRequest netRequest = createNetworkRequest(request, &data, RawData);
     QNetworkReply *netReply = d_ptr->netMan()->sendCustomRequest(netRequest, "PATCH", data);
     return createApiReply(request, netReply);
 }
 
 ApiReply *ApiBase::patch(const ApiRequest &request, QHttpMultiPart *data)
 {
-    const QNetworkRequest netRequest = createNetworkRequest(request);
+    const QNetworkRequest netRequest = createNetworkRequest(request, data, MultiPartData);
     QNetworkReply *netReply = d_ptr->netMan()->sendCustomRequest(netRequest, "PATCH", data);
     return createApiReply(request, netReply);
 }
 
 ApiReply *ApiBase::patch(const ApiRequest &request, const QJsonValue &data)
 {
-    const QNetworkRequest netRequest = createNetworkRequest(request);
+    const QNetworkRequest netRequest = createNetworkRequest(request, &data, JsonData);
     QNetworkReply *netReply = d_ptr->netMan()->sendCustomRequest(netRequest, "PATCH", JsonUtils::jsonToByteArray(data));
     return createApiReply(request, netReply);
 }
@@ -262,10 +263,46 @@ void ApiBase::setNetworkAccessManager(QNetworkAccessManager *manager)
     d_ptr->setNetMan(manager);
 }
 
-QNetworkRequest ApiBase::createNetworkRequest(const ApiRequest &request)
+QNetworkRequest ApiBase::createNetworkRequest(const ApiRequest &request, const void *data, DataType dataType)
 {
     QNetworkRequest netReq;
     netReq.setOriginatingObject(this);
+
+    netReq.setHeader(QNetworkRequest::UserAgentHeader, userAgent());
+    if (!request.contentType().isEmpty()) {
+        netReq.setHeader(QNetworkRequest::ContentTypeHeader, request.contentType());
+    } else {
+        static QMimeDatabase db;
+        QMimeType type;
+
+        switch (dataType) {
+        case DeviceData:
+            type = db.mimeTypeForData(static_cast<QIODevice *>(const_cast<void *>(data)));
+            break;
+
+        case RawData:
+            type = db.mimeTypeForData(*static_cast<const QByteArray *>(data));
+            break;
+
+        case MultiPartData:
+            break;
+
+        case JsonData:
+            type = db.mimeTypeForName("application/json; charset=UTF-8");
+            break;
+
+        default:
+            break;
+        }
+
+        if (type.isValid())
+            netReq.setHeader(QNetworkRequest::ContentTypeHeader, type.name().toLatin1());
+    }
+
+    netReq.setRawHeader("Accept", "*/*");
+    netReq.setRawHeader("Accept-Encoding", "gzip, deflate");
+    //netReq.setRawHeader("Accept-Language", QLocale().bcp47Name().toLatin1());
+    netReq.setRawHeader("Connection", "keep-alive");
 
     if (request.isCacheable()) {
         netReq.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
@@ -274,9 +311,6 @@ QNetworkRequest ApiBase::createNetworkRequest(const ApiRequest &request)
         netReq.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
         netReq.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
     }
-
-    netReq.setHeader(QNetworkRequest::UserAgentHeader, userAgent());
-    netReq.setRawHeader("Connection", "keep-alive");
 
     QUrl url = apiUrl();
     QString urlPath = url.path() + request.endpoint();
@@ -306,12 +340,6 @@ QNetworkRequest ApiBase::createNetworkRequest(const ApiRequest &request)
     url.setQuery(urlQuery);
 
     netReq.setUrl(url);
-
-#ifdef RESTLINK_DEBUG
-    restlinkDebug() << d_ptr->httpVerbFromOperation(GetOperation) << ' '
-                    << url.toString();
-#endif
-
     return netReq;
 }
 

@@ -16,8 +16,6 @@ class QNetworkReply;
 class QSslError;
 
 namespace RestLink {
-class ApiReply;
-class ApiConfigurationDownload;
 
 class ApiPrivate;
 class RESTLINK_EXPORT Api : public ApiBase
@@ -64,7 +62,7 @@ public:
 
 protected:
     ApiReply *createApiReply(const ApiRequest &request, QNetworkReply *netReply) override;
-    QNetworkRequest createNetworkRequest(const ApiRequest &request) override;
+    QNetworkRequest createNetworkRequest(const ApiRequest &request, const void *data, DataType dataType) override;
 
     Q_SLOT virtual void processSslErrors(QNetworkReply *reply, const QList<QSslError> &errors);
 

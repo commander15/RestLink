@@ -26,6 +26,7 @@ class RESTLINK_EXPORT ApiReply : public QObject
     Q_PROPERTY(bool success READ isSuccess NOTIFY finished)
     Q_PROPERTY(int httpStatusCode READ httpStatusCode NOTIFY finished)
     Q_PROPERTY(QString httpReasonPhrase READ httpReasonPhrase NOTIFY finished)
+    Q_PROPERTY(QByteArrayList headerList READ headerList NOTIFY finished)
     Q_PROPERTY(int networkError READ networkError NOTIFY networkErrorOccured)
     Q_PROPERTY(QString networkErrorString READ networkErrorString NOTIFY networkErrorOccured)
 
@@ -54,18 +55,16 @@ public:
     int httpStatusCode() const;
     QString httpReasonPhrase() const;
 
-    bool hasHeader(QNetworkRequest::KnownHeaders header) const;
-    QVariant header(QNetworkRequest::KnownHeaders header) const;
-
-    bool hasRawHeader(const QByteArray &name) const;
-    QByteArray rawHeader(const QByteArray &header) const;
-    QByteArrayList rawHeaderList() const;
+    bool hasHeader(const QByteArray &name) const;
+    Q_INVOKABLE QByteArray header(const QByteArray &header) const;
+    QByteArrayList headerList() const;
 
     QJsonObject readJsonObject(QJsonParseError *error = nullptr);
     QJsonArray readJsonArray(QJsonParseError *error = nullptr);
     QJsonValue readJson(QJsonParseError *error = nullptr);
     QString readString();
     Q_INVOKABLE QByteArray readBody();
+    Q_SIGNAL void readyRead();
 
     Q_SLOT void ignoreSslErros(const QList<QSslError> &errors);
     Q_SIGNAL void sslErrorsOccured(const QList<QSslError> &errors);

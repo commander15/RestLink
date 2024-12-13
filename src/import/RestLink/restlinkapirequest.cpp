@@ -128,7 +128,7 @@ void RestLinkApiRequest::run()
 
     emit responseChanged();
 
-    connect(m_reply, &RestLink::ApiReply::finished, this, &RestLinkApiRequest::runningChanged);
+    connect(m_reply, &RestLink::ApiReply::finished, this, &RestLinkApiRequest::finished);
 }
 
 RestLink::ApiReply *RestLinkApiRequest::response() const

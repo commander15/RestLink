@@ -85,10 +85,19 @@ public:
     void setNetworkAccessManager(QNetworkAccessManager *manager);
 
 protected:
+    enum DataType {
+        DeviceData,
+        RawData,
+        MultiPartData,
+        JsonData,
+
+        NoData = -1
+    };
+
     ApiBase(ApiBasePrivate *d, QObject *parent);
 
     virtual ApiReply *createApiReply(const ApiRequest &request, QNetworkReply *netReply) = 0;
-    virtual QNetworkRequest createNetworkRequest(const ApiRequest &request);
+    virtual QNetworkRequest createNetworkRequest(const ApiRequest &request, const void *data = nullptr, DataType dataType = NoData);
 
     QScopedPointer<ApiBasePrivate> d_ptr;
 

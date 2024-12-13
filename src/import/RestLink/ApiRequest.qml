@@ -26,13 +26,9 @@ RestLinkApiRequest {
         }
     }
 
-    signal finished()
     signal error()
 
     onRunningChanged: function() {
-        if (response.finished)
-            finished();
-
         if (response.networkError !== 0)
             error();
     }

@@ -149,6 +149,7 @@ void Api::configureApi(const QUrl &url)
     RESTLINK_D(Api);
 
     QNetworkRequest request(url);
+    request.setPriority(QNetworkRequest::HighPriority);
     request.setTransferTimeout(3000);
 
     ApiReply *reply = new ApiReply(this);
@@ -215,15 +216,16 @@ ApiReply *Api::createApiReply(const ApiRequest &request, QNetworkReply *netReply
     return apiReply;
 }
 
-QNetworkRequest Api::createNetworkRequest(const ApiRequest &request)
+QNetworkRequest Api::createNetworkRequest(const ApiRequest &request, const void *data, DataType dataType)
 {
     RESTLINK_D(Api);
 
     if (d->hasRemoteRequest(request)) {
         const ApiRequest remote = d->remoteRequest(request);
-        return ApiBase::createNetworkRequest(ApiRequest::mergeRequests(request, remote));
-    } else
-        return ApiBase::createNetworkRequest(request);
+        return ApiBase::createNetworkRequest(ApiRequest::mergeRequests(request, remote), data, dataType);
+    } else {
+        return ApiBase::createNetworkRequest(request, data, dataType);
+    }
 }
 
 void Api::processSslErrors(QNetworkReply *reply, const QList<QSslError> &errors)

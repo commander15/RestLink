@@ -17,6 +17,8 @@ public:
     QString endpoint;
     QVector<ApiRequestParameter> parameters;
 
+    QString contentType;
+
     bool cache;
 };
 

@@ -110,6 +110,16 @@ void ApiRequest::setParameters(const QList<ApiRequestParameter> &parameters)
     d->parameters = parameters.toVector();
 }
 
+QString ApiRequest::contentType() const
+{
+    return d->contentType;
+}
+
+void ApiRequest::setContentType(const QString &type)
+{
+    d->contentType = type;
+}
+
 bool ApiRequest::isCacheable() const
 {
     return d->cache;

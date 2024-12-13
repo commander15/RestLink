@@ -3,6 +3,7 @@
 
 #include <RestLink/debug.h>
 #include <RestLink/api.h>
+#include <RestLink/compressionutils.h>
 
 #include <QtNetwork/qnetworkreply.h>
 
@@ -92,27 +93,17 @@ QString ApiReply::httpReasonPhrase() const
     return d->netReply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
 }
 
-bool ApiReply::hasHeader(QNetworkRequest::KnownHeaders header) const
-{
-    return !d->netReply->header(header).isNull();
-}
-
-QVariant ApiReply::header(QNetworkRequest::KnownHeaders header) const
-{
-    return d->netReply->header(header);
-}
-
-bool ApiReply::hasRawHeader(const QByteArray &name) const
+bool ApiReply::hasHeader(const QByteArray &name) const
 {
     return d->netReply->hasRawHeader(name);
 }
 
-QByteArray ApiReply::rawHeader(const QByteArray &header) const
+QByteArray ApiReply::header(const QByteArray &header) const
 {
     return d->netReply->rawHeader(header);
 }
 
-QByteArrayList ApiReply::rawHeaderList() const
+QByteArrayList ApiReply::headerList() const
 {
     return d->netReply->rawHeaderList();
 }
@@ -142,14 +133,12 @@ bool ApiReply::isSuccess() const
 
 QJsonObject ApiReply::readJsonObject(QJsonParseError *error)
 {
-    const QJsonDocument doc = QJsonDocument::fromJson(readBody(), error);
-    return doc.object();
+    return readJson(error).toObject();
 }
 
 QJsonArray ApiReply::readJsonArray(QJsonParseError *error)
 {
-    const QJsonDocument doc = QJsonDocument::fromJson(readBody(), error);
-    return doc.array();
+    return readJson(error).toArray();
 }
 
 QJsonValue ApiReply::readJson(QJsonParseError *error)
@@ -165,14 +154,18 @@ QJsonValue ApiReply::readJson(QJsonParseError *error)
 
 QString ApiReply::readString()
 {
-    return readBody();
+    return QString::fromUtf8(readBody());
 }
 
 QByteArray ApiReply::readBody()
 {
-    if (d->netReply->bytesAvailable() > 0)
-        return d->netReply->readAll();
-    else
+    if (d->netReply->bytesAvailable() > 0) {
+        const QByteArray data = d->netReply->readAll();
+        if (d->netReply->hasRawHeader("Content-Encoding"))
+            return CompressionUtils::decompress(data, d->netReply->rawHeader("Content-Encoding"));
+        else
+            return data;
+    } else
         return QByteArray();
 }
 
@@ -211,11 +204,12 @@ void ApiReply::setNetworkReply(QNetworkReply *reply)
     d->netReply = reply;
     d->netReply->setParent(this);
 
+    connect(reply, &QNetworkReply::readyRead, this, &ApiReply::readyRead);
     connect(reply, &QNetworkReply::downloadProgress, this, &ApiReply::downloadProgress);
     connect(reply, &QNetworkReply::uploadProgress, this, &ApiReply::uploadProgress);
     connect(reply, &QNetworkReply::sslErrors, this, &ApiReply::sslErrorsOccured);
-    connect(reply, &QNetworkReply::finished, this, &ApiReply::finished);
     connect(reply, &QNetworkReply::errorOccurred, this, &ApiReply::networkErrorOccured);
+    connect(reply, &QNetworkReply::finished, this, &ApiReply::finished);
 }
 
 ApiReplyPrivate::ApiReplyPrivate(ApiReply *qq) :

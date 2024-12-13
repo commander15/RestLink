@@ -16,7 +16,7 @@ class RestLinkApiRequest : public QObject
     Q_PROPERTY(QString endpoint READ endpoint WRITE setEndpoint NOTIFY endpointChanged)
     Q_PROPERTY(QVariant body READ body WRITE setBody NOTIFY bodyChanged)
     Q_PROPERTY(int operation READ operation WRITE setOperation NOTIFY operationChanged)
-    Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)
+    Q_PROPERTY(bool running READ isRunning NOTIFY finished)
     Q_PROPERTY(RestLink::ApiReply* response READ response NOTIFY responseChanged)
     Q_PROPERTY(RestLinkApi* api READ api WRITE setApi NOTIFY apiChanged)
     QML_ELEMENT
@@ -39,7 +39,7 @@ public:
 
     bool isRunning() const;
     Q_SLOT void run();
-    Q_SIGNAL void runningChanged();
+    Q_SIGNAL void finished();
 
     RestLink::ApiReply *response() const;
     Q_SIGNAL void responseChanged();

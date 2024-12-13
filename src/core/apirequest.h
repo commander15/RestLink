@@ -32,6 +32,9 @@ public:
     void removeParameter(const QString &name);
     void setParameters(const QList<ApiRequestParameter> &parameters);
 
+    QString contentType() const;
+    void setContentType(const QString &type);
+
     bool isCacheable() const;
     void setCacheable(bool cache = true);
 
