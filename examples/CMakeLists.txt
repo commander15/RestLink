@@ -2,6 +2,8 @@ set(CMAKE_AUTORCC ON)
 
 link_libraries(RestLink)
 
+message("QML: ${QT_QML_ROOT_PATH}")
+
 add_subdirectory(tmdb-desktop)
 
 if (RESTLINK_BUILD_QML_PLUGIN)
@@ -17,5 +19,5 @@ if (RESTLINK_BUILD_QML_PLUGIN)
 
     #add_subdirectory(client)
     add_subdirectory(tmdb)
-    add_subdirectory(blagues)
+    #add_subdirectory(blagues)
 endif()

@@ -51,10 +51,14 @@ ApplicationWindow {
 
         endpoint: "/search/multi"
         api: restApi
+        autoRun: false
 
         onFinished: function() {
             if (response.success) {
-                var json = JSON.parse(response.readBody()).results;
+                const rawJson = response.readBody();
+                console.log(rawJson);
+
+                var json = JSON.parse(rawJson).results;
                 view.model = json;
                 json = json[0];
                 image.source = "http://image.tmdb.org/t/p/w500" + json.poster_path;
@@ -71,13 +75,20 @@ ApplicationWindow {
     }
 
     ApiRequest {
+        id: episode
+
         endpoint: "/tv/{id}/season/{season}/episode/{episode}"
         api: restApi
 
-        onFinished: function() {
-            if (response.success) {
-                var json = JSON.parse(response.readBody());
-                console.log(json.overview);
+        Connections {
+            target: episode.response
+
+            function onDownloadProgress(d, t) {
+                console.log(d + " / " + t);
+            }
+
+            function onFinished() {
+                console.log(episode.response.readBody());
             }
         }
 
@@ -103,7 +114,7 @@ ApplicationWindow {
     Api {
         id: restApi
 
-        configurationUrl: "file:///home/commander/Downloads/TmdbConfig.json"
+        configurationUrl: "file:///home/commander/Downloads/TmdbConfig (1).json"
 
         ApiRequestParameter {
             name: "language"

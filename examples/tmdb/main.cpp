@@ -5,12 +5,11 @@
 
 int main(int argc, char *argv[])
 {
-    QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication app(argc, argv);
 
     QLoggingCategory::setFilterRules("restlink.info=true");
 
-    const QUrl url("qrc:/main.qml");
+    const QUrl url("qrc:/qt/qml/TmdbApp/main.qml");
 
     QQmlApplicationEngine engine;
     engine.addImportPath(app.applicationDirPath() + "/../qml");

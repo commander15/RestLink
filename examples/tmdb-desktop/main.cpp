@@ -16,7 +16,7 @@ using namespace RestLink;
 
 void runRequest(const QString &endpoint, const QList<ApiRequestParameter> &parameters, Api *api)
 {
-    static QDir folder("/home/commander/Desktop/TMDB3");
+    static QDir folder("/home/commander/Desktop/" + api->apiName());
     if (!folder.exists())
         folder.mkpath(".");
 
