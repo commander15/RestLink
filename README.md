@@ -120,33 +120,11 @@ ApplicationWindow {
         url: "https://api.example.com"
         userAgent: "MyApp/1.0"
         
+        // Adding parameter that must be present on each request
         ApiRequestParameter {
             name: "key"
             value: "value"
             scope: ApiRequestParameter.UrlQuery
-        }
-
-        // Example of adding parameters
-        function addParameter() {
-            var param = new ApiRequestParameter("key", "value");
-            api.addParameter(param);
-        }
-
-        // Example of sending a request
-        function sendRequest() {
-            var request = new ApiRequest();
-            request.endpoint = "/data";
-            request.httpMethod = ApiRequest.HttpMethod.GET;
-
-            api.sendRequest(request);
-        }
-
-        onResponseReceived: {
-            if (apiReply.isSuccessful) {
-                console.log("Response: " + apiReply.data);
-            } else {
-                console.log("Error: " + apiReply.errorMessage);
-            }
         }
     }
     
