@@ -67,7 +67,6 @@ protected:
     Q_SLOT virtual void processSslErrors(QNetworkReply *reply, const QList<QSslError> &errors);
 
     friend class ApiPrivate;
-    friend class ApiConfigurationDownload;
 };
 
 }
