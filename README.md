@@ -15,7 +15,7 @@ RestLink is a C++ library designed to facilitate easy integration with RESTful A
 1. Clone the repository:
 
     ```bash
-    git clone https://github.com/yourusername/RestLink.git
+    git clone https://github.com/commander15/RestLink.git
     ```
 
 2. Add `RestLink` to your project by including the necessary headers in your CMake file.
@@ -102,7 +102,7 @@ RestLink can also be integrated into QML-based applications, making it easy to u
 
 ### Example Code (QML)
 
-```
+```qml
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import RestLink 1.0
@@ -138,11 +138,13 @@ ApplicationWindow {
         onFinished: function() {
             if (response.success) {
                 var data = JSON.parse(response.readBody());
-                // ...
+                console.log(data);
             } else if (response.networkError !== 0) {
                 // Handle network error
+                console.log(response.networkErrorString)
             } else if (response.httpStatusCode != 200) {
                 // Handle HTTP error
+                console.log(response.httpReasonPhrase);
             }
         }
     }
@@ -158,8 +160,8 @@ ApplicationWindow {
 ### Key Points in the QML Example:
 
 The Api object is configured with the necessary properties such as apiUrl, apiName, and apiVersion.
-The sendRequest method sends a GET request to the /data endpoint.
-The onResponseReceived signal handles the API response. If the request is successful, it logs the response data; otherwise, it logs the error message.
+The ApiRequest object is configured with the endpoint, api object and autoRun disabled to make the request run only after the button press.
+The onFinished signal handles the API response. If the request is successful, it logs the response data; otherwise, it logs the error message.
 The Button allows triggering the API request.
 
 ## Contact
