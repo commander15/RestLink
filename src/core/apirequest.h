@@ -56,6 +56,8 @@ private:
     friend class ApiBase;
 };
 
+typedef QList<ApiRequest> ApiRequestList;
+
 class ApiRequestParameterPrivate;
 class RESTLINK_EXPORT ApiRequestParameter
 {
@@ -115,6 +117,11 @@ private:
     QSharedDataPointer<ApiRequestParameterPrivate> d;
 };
 
+typedef QList<ApiRequestParameter> ApiRequestParameterList;
+
 }
+
+Q_DECLARE_METATYPE(RestLink::ApiRequest);
+Q_DECLARE_METATYPE(RestLink::ApiRequestParameter);
 
 #endif // RESTLINK_APIREQUEST_H

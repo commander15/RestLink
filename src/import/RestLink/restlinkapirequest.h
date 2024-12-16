@@ -12,14 +12,15 @@
 
 class RestLinkApiRequest : public QObject
 {
+    QML_ELEMENT
+    QML_ADDED_IN_VERSION(1, 0)
+
     Q_OBJECT
     Q_PROPERTY(QString endpoint READ endpoint WRITE setEndpoint NOTIFY endpointChanged)
     Q_PROPERTY(QVariant body READ body WRITE setBody NOTIFY bodyChanged)
     Q_PROPERTY(int operation READ operation WRITE setOperation NOTIFY operationChanged)
     Q_PROPERTY(bool running READ isRunning NOTIFY finished)
-    Q_PROPERTY(RestLink::ApiReply* response READ response NOTIFY responseChanged)
     Q_PROPERTY(RestLinkApi* api READ api WRITE setApi NOTIFY apiChanged)
-    QML_ELEMENT
 
 public:
     explicit RestLinkApiRequest(QObject *parent = nullptr);
@@ -39,10 +40,7 @@ public:
 
     bool isRunning() const;
     Q_SLOT void run();
-    Q_SIGNAL void finished();
-
-    RestLink::ApiReply *response() const;
-    Q_SIGNAL void responseChanged();
+    Q_SIGNAL void finished(RestLink::ApiReply *response);
 
     RestLinkApi *api() const;
     void setApi(RestLinkApi *api);
@@ -61,12 +59,14 @@ private:
 
 class RestLinkApiRequestParameter : public QObject
 {
+    QML_ELEMENT
+    QML_ADDED_IN_VERSION(1, 0)
+
     Q_OBJECT
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
     Q_PROPERTY(QVariant value READ value WRITE setValue NOTIFY valueChanged)
     Q_PROPERTY(int scope READ scope WRITE setScope NOTIFY scopeChanged)
     Q_PROPERTY(bool enabled READ isEnabled WRITE setEnabled NOTIFY enabledChanged)
-    QML_ELEMENT
 
 public:
     RestLinkApiRequestParameter(QObject *parent = nullptr);

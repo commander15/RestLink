@@ -38,8 +38,10 @@ public:
 
     virtual ~ApiBase();
 
-    virtual QUrl apiUrl() const = 0;
-    virtual QList<ApiRequestParameter> apiParameters() const = 0;
+    virtual QUrl url() const = 0;
+    virtual QList<ApiRequestParameter> parameters() const = 0;
+
+    virtual QLocale locale() const;
 
     void get(const ApiRequest &request, std::function<ApiRunCallback> callback);
 

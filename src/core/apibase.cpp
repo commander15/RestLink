@@ -29,6 +29,11 @@ ApiBase::~ApiBase()
 {
 }
 
+QLocale ApiBase::locale() const
+{
+    return QLocale::system();
+}
+
 void ApiBase::get(const ApiRequest &request, std::function<ApiRunCallback> callback)
 {
     ApiReply *reply = get(request);
@@ -300,8 +305,22 @@ QNetworkRequest ApiBase::createNetworkRequest(const ApiRequest &request, const v
     }
 
     netReq.setRawHeader("Accept", "*/*");
-    netReq.setRawHeader("Accept-Encoding", "gzip, deflate");
-    //netReq.setRawHeader("Accept-Language", QLocale().bcp47Name().toLatin1());
+
+    {
+        QByteArrayList algorithms;
+#ifdef ZLIB_LIB
+        algorithms << "gzip" << "deflate";
+#endif
+
+        if (!algorithms.isEmpty())
+            netReq.setRawHeader("Accept-Encoding", algorithms.join(", "));
+    }
+
+    {
+        const QLocale locale = this->locale();
+        netReq.setRawHeader("Accept-Language", QStringLiteral("%1,%2;q=0.5").arg(locale.name(QLocale::TagSeparator::Dash), locale.bcp47Name()).toUtf8());
+    }
+
     netReq.setRawHeader("Connection", "keep-alive");
 
     if (request.isCacheable()) {
@@ -312,11 +331,11 @@ QNetworkRequest ApiBase::createNetworkRequest(const ApiRequest &request, const v
         netReq.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
     }
 
-    QUrl url = apiUrl();
+    QUrl url = this->url();
     QString urlPath = url.path() + request.endpoint();
     QUrlQuery urlQuery(url.query());
 
-    const QList<ApiRequestParameter> parameters = apiParameters() + request.parameters();
+    const QList<ApiRequestParameter> parameters = this->parameters() + request.parameters();
     for (const ApiRequestParameter &parameter : parameters) {
         if (!parameter.isValid() || !parameter.isEnabled())
             continue;

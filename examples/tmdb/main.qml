@@ -4,7 +4,7 @@ import QtQuick 2.14
 import QtQuick.Controls 2.14
 import QtQuick.Layouts 1.14
 
-import RestLink 1.0
+import "file:///home/commander/Projects/RestLink/build/Desktop_6_8_1-Debug/qml/RestLink"
 
 ApplicationWindow {
     id: win
@@ -29,14 +29,16 @@ ApplicationWindow {
         id: view
 
         delegate: MediaDelegate {
-            poster: modelData.poster_path
+            readonly property var media: model
+
+            poster: (modelData.poster_path ? modelData.poster_path : "")
             title: (modelData.title ? modelData.title : modelData.name)
-            overview: modelData.overview
-            popularity: modelData.popularity
+            overview: (modelData.overview ? modelData.overview : "")
+            popularity: (modelData.popularity ? modelData.popularity : 0.0)
             year: 2021
 
             accentColor: "pink"
-            width: view.width
+            width: ListView.view.width
             height: 96
         }
 
@@ -51,20 +53,16 @@ ApplicationWindow {
 
         endpoint: "/search/multi"
         api: restApi
-        autoRun: false
 
-        onFinished: function() {
+        onFinished: function(response) {
             if (response.success) {
                 const rawJson = response.readBody();
-                console.log(rawJson);
+                //console.log(rawJson);
 
                 var json = JSON.parse(rawJson).results;
                 view.model = json;
-                json = json[0];
-                image.source = "http://image.tmdb.org/t/p/w500" + json.poster_path;
-                label.text = "        " + json.overview;
-            } else {
-                console.log(response.readBody());
+
+                console.log(response.header('Content-Encoding'));
             }
         }
 
@@ -74,51 +72,25 @@ ApplicationWindow {
         }
     }
 
-    ApiRequest {
-        id: episode
-
-        endpoint: "/tv/{id}/season/{season}/episode/{episode}"
-        api: restApi
-
-        Connections {
-            target: episode.response
-
-            function onDownloadProgress(d, t) {
-                console.log(d + " / " + t);
-            }
-
-            function onFinished() {
-                console.log(episode.response.readBody());
-            }
-        }
-
-        ApiRequestParameter {
-            name: "id"
-            value: 1403
-            scope: ApiRequestParameter.UrlPath
-        }
-
-        ApiRequestParameter {
-            name: "season"
-            value: 1
-            scope: ApiRequestParameter.UrlPath
-        }
-
-        ApiRequestParameter {
-            name: "episode"
-            value: 2
-            scope: ApiRequestParameter.UrlPath
-        }
-    }
-
     Api {
         id: restApi
 
-        configurationUrl: "file:///home/commander/Downloads/TmdbConfig (1).json"
+        name: "TMDB"
+        //version: "3"
+        url: "https://api.themoviedb.org/3"
+
+        locale: Qt.locale("fr-FR")
+
+        ApiRequestParameter {
+            name: "api_key"
+            value: TMDB_API_KEY
+            scope: ApiRequestParameter.UrlQuery
+        }
 
         ApiRequestParameter {
             name: "language"
-            value: "fr"
+            value: restApi.locale.name.substring(0, 2);
+            scope: ApiRequestParameter.UrlQuery
         }
     }
 }

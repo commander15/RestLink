@@ -90,7 +90,7 @@ Api::~Api()
  *
  * \return A QString containing the name of the API.
  */
-QString Api::apiName() const
+QString Api::name() const
 {
     RESTLINK_D(const Api);
     return d->name;
@@ -103,23 +103,23 @@ QString Api::apiName() const
  *
  * \param name The new name of the API.
  */
-void Api::setApiName(const QString &name)
+void Api::setName(const QString &name)
 {
     RESTLINK_D(Api);
     if (d->name != name) {
         d->name = name;
-        emit apiNameChanged(name);
+        emit nameChanged(name);
     }
 }
 
 /*!
  * \brief Returns the version of the API.
  *
- * This method retrieves the current version of the API. The version is represented as an integer and can be used to manage different versions of the API.
+ * This method retrieves the current version of the API. The version is represented as an QVersionNumber and can be used to manage different versions of the API.
  *
  * \return The integer version number of the API.
  */
-int Api::apiVersion() const
+QVersionNumber Api::version() const
 {
     RESTLINK_D(const Api);
     return d->version;
@@ -132,12 +132,12 @@ int Api::apiVersion() const
  *
  * \param version The new version number for the API.
  */
-void Api::setApiVersion(int version)
+void Api::setVersion(const QVersionNumber &version)
 {
     RESTLINK_D(Api);
     if (d->version != version) {
         d->version = version;
-        emit apiVersionChanged(version);
+        emit versionChanged(version);
     }
 }
 
@@ -148,7 +148,7 @@ void Api::setApiVersion(int version)
  *
  * \return A QUrl representing the API URL.
  */
-QUrl Api::apiUrl() const
+QUrl Api::url() const
 {
     RESTLINK_D(const Api);
     return d->url;
@@ -161,7 +161,7 @@ QUrl Api::apiUrl() const
  *
  * \param url The new URL of the API.
  */
-void Api::setApiUrl(const QUrl &url)
+void Api::setUrl(const QUrl &url)
 {
     RESTLINK_D(Api);
 
@@ -169,7 +169,7 @@ void Api::setApiUrl(const QUrl &url)
         return;
 
     d->url = url;
-    emit apiUrlChanged(url);
+    emit urlChanged(url);
 }
 
 /*!
@@ -180,7 +180,7 @@ void Api::setApiUrl(const QUrl &url)
  * \param index The index of the desired API parameter.
  * \return The ApiRequestParameter at the specified index.
  */
-ApiRequestParameter Api::apiParameter(int index) const
+ApiRequestParameter Api::parameter(int index) const
 {
     RESTLINK_D(const Api);
     if (index < d->parameters.size())
@@ -198,7 +198,7 @@ ApiRequestParameter Api::apiParameter(int index) const
  *
  * \return The number of parameters in the API configuration.
  */
-int Api::apiParameterCount() const
+int Api::parameterCount() const
 {
     RESTLINK_D(const Api);
     return d->parameters.size();
@@ -212,7 +212,7 @@ int Api::apiParameterCount() const
  *
  * \return A list of ApiRequestParameter objects representing the parameters.
  */
-QList<ApiRequestParameter> Api::apiParameters() const
+ApiRequestParameterList Api::parameters() const
 {
     RESTLINK_D(const Api);
     return d->parameters.toList();
@@ -236,7 +236,7 @@ int Api::addParameter(const ApiRequestParameter &parameter)
         index = d->parameters.size() - 1;
     } else
         d->parameters.replace(index, parameter);
-    emit apiParametersChanged();
+    emit parametersChanged();
 
     return index;
 }
@@ -253,7 +253,7 @@ void Api::addParameters(const QList<ApiRequestParameter> &parameters)
     RESTLINK_D(Api);
     if (!parameters.isEmpty()) {
         d->parameters.append(parameters.toVector());
-        emit apiParametersChanged();
+        emit parametersChanged();
     }
 }
 
@@ -264,7 +264,7 @@ void Api::addParameters(const QList<ApiRequestParameter> &parameters)
  *
  * \param parameters A list of ApiRequestParameter objects to set as the API parameters.
  */
-void Api::setApiParameters(const QList<ApiRequestParameter> &parameters)
+void Api::setParameters(const QList<ApiRequestParameter> &parameters)
 {
     RESTLINK_D(Api);
     const QList<ApiRequestParameter> currentParameters = d->parameters.toList();
@@ -272,7 +272,22 @@ void Api::setApiParameters(const QList<ApiRequestParameter> &parameters)
         return;
 
     d->parameters = parameters.toVector();
-    emit apiParametersChanged();
+    emit parametersChanged();
+}
+
+QLocale Api::locale() const
+{
+    RESTLINK_D(const Api);
+    return d->locale;
+}
+
+void Api::setLocale(const QLocale &locale)
+{
+    RESTLINK_D(Api);
+    if (d->locale != locale) {
+        d->locale = locale;
+        emit localeChanged(locale);
+    }
 }
 
 /*!
@@ -311,24 +326,33 @@ void Api::setUserAgent(const QString &agent)
  *
  * \param url The URL to be set for the API.
  */
-void Api::configureApi(const QUrl &url)
+void Api::configure(const QUrl &url)
 {
     RESTLINK_D(Api);
 
-    QNetworkRequest request(url);
+    QNetworkRequest request = createNetworkRequest(ApiRequest(), nullptr, NoData);
+    request.setUrl(url);
     request.setPriority(QNetworkRequest::HighPriority);
     request.setTransferTimeout(3000);
+    request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferNetwork);
 
     ApiReply *reply = new ApiReply(this);
     reply->setNetworkReply(d->netMan()->get(request));
     connect(reply, &ApiReply::finished, this, [reply, this] {
-        if (configureApi(reply->readJsonObject())) {
+        if (reply->isSuccess() && configure(reply->readJsonObject())) {
 #ifdef RESTLINK_DEBUG
             restlinkInfo() << "API configured from " << reply->networkReply()->url().toString();
 #endif
             emit configurationCompleted();
         } else {
             emit configurationFailed();
+
+            if (reply->hasNetworkError())
+                restlinkWarning() << reply->networkErrorString();
+            else if (!reply->isHttpStatusSuccess())
+                restlinkWarning() << reply->httpReasonPhrase();
+            else
+                restlinkWarning() << "Unknown error during configuration file download";
         }
 
         reply->deleteLater();
@@ -343,34 +367,56 @@ void Api::configureApi(const QUrl &url)
  * \param config A QJsonObject containing the configuration data for the API.
  * \return Returns true if the configuration was successful, false otherwise.
  */
-bool Api::configureApi(const QJsonObject &config)
+bool Api::configure(const QJsonObject &config)
 {
     if (!config.contains("name") || !config.contains("version") || !config.contains("url"))
         return false;
 
     RESTLINK_D(Api);
 
-    setApiName(config.value("name").toString());
-    setApiVersion(config.value("version").toInt());
-    setApiUrl(config.value("url").toString());
+    if (config.contains("name"))
+        setName(config.value("name").toString());
 
-    const QJsonArray params = config.value("parameters").toArray();
-    for (const QJsonValue &param : params) {
-        ApiRequestParameter parameter;
-        parameter.loadFromJsonObject(param.toObject());
-        addParameter(parameter);
+    if (config.contains("version")) {
+        const QJsonValue version = config.value("version");
+        switch (version.type()) {
+        case QJsonValue::String:
+            setVersion(QVersionNumber::fromString(version.toString()));
+            break;
+
+        case QJsonValue::Double:
+            setVersion(QVersionNumber(version.toInt()));
+            break;
+
+        default:
+            setVersion(QVersionNumber(1));
+        }
     }
 
-    const QJsonArray requestArray = config.value("requests").toArray();
-    for (const QJsonValue &requestValue : requestArray) {
-        const QJsonObject requestObject = requestValue.toObject();
-        ApiPrivate::RemoteRequest remote;
-        remote.request.loadFromJsonObject(requestObject, &remote.data);
-        d->remoteRequests.append(remote);
+    if (config.contains("url"))
+        setUrl(config.value("url").toString());
+
+    if (config.contains("parameters")) {
+        const QJsonArray params = config.value("parameters").toArray();
+        for (const QJsonValue &param : params) {
+            ApiRequestParameter parameter;
+            parameter.loadFromJsonObject(param.toObject());
+            addParameter(parameter);
+        }
     }
 
-#ifdef RESTLINK_D
-    restlinkInfo() << "API '" << d->name << "' version " << d->version << " configured with "
+    if (config.contains("requests")) {
+        const QJsonArray requestArray = config.value("requests").toArray();
+        for (const QJsonValue &requestValue : requestArray) {
+            const QJsonObject requestObject = requestValue.toObject();
+            ApiPrivate::RemoteRequest remote;
+            remote.request.loadFromJsonObject(requestObject, &remote.data);
+            d->remoteRequests.append(remote);
+        }
+    }
+
+#ifdef RESTLINK_DEBUG
+    restlinkInfo() << "API '" << d->name << "' version " << d->version.toString() << " configured with "
                    << d->parameters.size() << " parameter(s) and "
                    << d->remoteRequests.size() << " remote request(s)";
 #endif
@@ -416,7 +462,8 @@ void Api::processSslErrors(QNetworkReply *reply, const QList<QSslError> &errors)
 ApiPrivate::ApiPrivate(Api *qq) :
     ApiBasePrivate(qq),
     version(0),
-    userAgent(QStringLiteral("libRestLink/") + QStringLiteral(RESTLINK_VERSION_STR))
+    locale(QLocale::system()),
+    userAgent(QStringLiteral("RestLink/") + QStringLiteral(RESTLINK_VERSION_STR))
 {
     if (!QSslSocket::supportsSsl())
         restlinkWarning() << "SSL support not found";

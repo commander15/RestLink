@@ -126,14 +126,9 @@ void RestLinkApiRequest::run()
     if (file)
         file->setParent(m_reply);
 
-    emit responseChanged();
-
-    connect(m_reply, &RestLink::ApiReply::finished, this, &RestLinkApiRequest::finished);
-}
-
-RestLink::ApiReply *RestLinkApiRequest::response() const
-{
-    return m_reply;
+    connect(m_reply, &RestLink::ApiReply::finished, this, [this] {
+        emit finished(m_reply);
+    });
 }
 
 RestLinkApi *RestLinkApiRequest::api() const
@@ -146,9 +141,6 @@ void RestLinkApiRequest::setApi(RestLinkApi *api)
     if (m_api != api) {
         m_api = api;
         emit apiChanged();
-
-        if (api && api->isReady() && !m_reply)
-            run();
     }
 }
 

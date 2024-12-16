@@ -1,6 +1,7 @@
 qt_add_qml_module(RestLinkQml
     URI    RestLink
     VERSION ${RestLink_VERSION_MAJOR}.${RestLink_VERSION_MINOR}
+    TYPEINFO RestLink.qmltypes
     QML_FILES
         Api.qml
         ApiRequest.qml

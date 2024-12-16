@@ -1,5 +1,3 @@
-import QtQuick 2.14
-
 import RestLink 1.0
 
 Api {
@@ -12,7 +10,7 @@ Api {
 
     property int version: 3
 
-    apiUrl: "http" + (secure ? 's' : '') + "://api.themoviedb.org/" + version
+    url: "http" + (secure ? 's' : '') + "://api.themoviedb.org/" + version
 
     ApiRequestParameter {
         name: "api_key"

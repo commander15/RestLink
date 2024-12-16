@@ -72,11 +72,11 @@ ItemDelegate {
 
                     function reducedTitle() {
                         var t;
-                        var idealLength = availableWidth / font.pixelSize * 1.4;
-                        if (title.length > idealLength)
-                            o = overview.substring(0, idealLength) + "...";
+                        var idealLength = delegate.availableWidth / font.pixelSize * 1.4;
+                        if (delegate.title.length > idealLength)
+                            o = delegate.overview.substring(0, idealLength) + "...";
                         else
-                            o = overview;
+                            o = delegate.overview;
                         return o;
                     }
                 }
@@ -90,11 +90,11 @@ ItemDelegate {
 
                     function reducedOverview() {
                         var o;
-                        var idealLength = availableWidth / font.pixelSize * 1.4;
+                        var idealLength = delegate.availableWidth / font.pixelSize * 1.4;
                         if (delegate.overview.length > idealLength)
-                            o = overview.substring(0, idealLength) + "...";
+                            o = delegate.overview.substring(0, idealLength) + "...";
                         else
-                            o = overview;
+                            o = delegate.overview;
                         return o;
                     }
                 }

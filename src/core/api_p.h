@@ -28,9 +28,11 @@ public:
     Api *q;
 
     QString name;
-    int version;
+    QVersionNumber version;
     QUrl url;
     QVector<ApiRequestParameter> parameters;
+
+    QLocale locale;
     QString userAgent;
 
     struct RemoteRequest {

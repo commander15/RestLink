@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import RestLink
 
 import QtQml
@@ -24,12 +26,5 @@ RestLinkApiRequest {
             if (request.autoRun)
                 request.run();
         }
-    }
-
-    signal error()
-
-    onRunningChanged: function() {
-        if (response.networkError !== 0)
-            error();
     }
 }

@@ -12,8 +12,10 @@
 
 class RestLinkApi : public RestLink::Api
 {
-    Q_OBJECT
     QML_ELEMENT
+    QML_ADDED_IN_VERSION(1, 0)
+
+    Q_OBJECT
     Q_PROPERTY(bool ready READ isReady NOTIFY ready)
     Q_PROPERTY(QUrl configurationUrl READ apiConfigurationUrl WRITE setApiConfigurationUrl NOTIFY apiConfigurationUrlChanged)
     Q_PROPERTY(RestLink::ApiCache* cache READ cache WRITE setCache NOTIFY cacheChanged FINAL)

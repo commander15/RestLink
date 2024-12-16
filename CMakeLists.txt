@@ -24,6 +24,8 @@ list(PREPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package(Qt6 REQUIRED COMPONENTS Network Quick)
 
 qt_policy(SET QTP0001 NEW)
+qt_policy(SET QTP0005 NEW)
+qt_standard_project_setup()
 
 include(cmake/Utils.cmake)
 

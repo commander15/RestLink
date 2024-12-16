@@ -27,14 +27,14 @@ void RestLinkApi::init()
     registerParameters();
 
     if (m_apiConfigUrl.isValid())
-        configureApi(m_apiConfigUrl);
+        configure(m_apiConfigUrl);
     else if (isReady())
         emit ready();
 }
 
 bool RestLinkApi::isReady() const
 {
-    return apiUrl().isValid();
+    return url().isValid();
 }
 
 QUrl RestLinkApi::apiConfigurationUrl() const
@@ -66,22 +66,22 @@ void RestLinkApi::setCache(RestLink::ApiCache *cache)
 
 QString RestLinkApi::parameterName(int index) const
 {
-    return apiParameter(index).name();
+    return parameter(index).name();
 }
 
 QVariant RestLinkApi::parameterValue(int index) const
 {
-    return apiParameter(index).value();
+    return parameter(index).value();
 }
 
 int RestLinkApi::parameterScope(int index) const
 {
-    return apiParameter(index).scope();
+    return parameter(index).scope();
 }
 
 bool RestLinkApi::isParameterEnabled(int index) const
 {
-    return apiParameter(index).isEnabled();
+    return parameter(index).isEnabled();
 }
 
 void RestLinkApi::registerParameters()

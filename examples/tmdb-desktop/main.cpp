@@ -16,7 +16,7 @@ using namespace RestLink;
 
 void runRequest(const QString &endpoint, const QList<ApiRequestParameter> &parameters, Api *api)
 {
-    static QDir folder("/home/commander/Desktop/" + api->apiName());
+    static QDir folder("/home/commander/Desktop/" + api->name());
     if (!folder.exists())
         folder.mkpath(".");
 
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 
     Api api;
     api.setNetworkAccessManager(&manager);
-    api.configureApi(QUrl::fromLocalFile("/home/commander/Downloads/TmdbConfig.json"));
+    api.configure(QUrl::fromLocalFile("/home/commander/Downloads/TmdbConfig.json"));
     QObject::connect(&api, &Api::configurationCompleted, &app, [&api] { run(&api); });
     QObject::connect(&api, &Api::configurationFailed, &app, &QCoreApplication::quit);
 
