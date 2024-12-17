@@ -44,6 +44,12 @@ ApiRequest::ApiRequest(const char *endpoint) :
     d->endpoint = endpoint;
 }
 
+ApiRequest::ApiRequest(const QString &endpoint) :
+    d(new ApiRequestPrivate)
+{
+    d->endpoint = endpoint;
+}
+
 /**
  * @brief Constructs an ApiRequest object with a specified endpoint and parameters.
  *
