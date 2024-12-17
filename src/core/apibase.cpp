@@ -293,7 +293,7 @@ QNetworkRequest ApiBase::createNetworkRequest(const ApiRequest &request, const v
             break;
 
         case JsonData:
-            type = db.mimeTypeForName("application/json; charset=UTF-8");
+            type = db.mimeTypeForName("application/json");
             break;
 
         default:
