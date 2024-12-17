@@ -27,6 +27,45 @@ ApiRequest::ApiRequest() :
 {
 }
 
+/**
+ * @brief Constructs an ApiRequest object with a specified endpoint.
+ *
+ * This constructor initializes the ApiRequest object with the given API endpoint.
+ * The endpoint will be used for making requests. Other parameters (such as headers
+ * or query parameters) will be empty by default.
+ *
+ * @param endpoint The API endpoint as a C-style string (const char*).
+ *
+ * \note endpoint must not include full path, only the url path relative to the base url provided on Api object.
+ */
+ApiRequest::ApiRequest(const char *endpoint) :
+    d(new ApiRequestPrivate)
+{
+    d->endpoint = endpoint;
+}
+
+/**
+ * @brief Constructs an ApiRequest object with a specified endpoint and parameters.
+ *
+ * This constructor initializes the ApiRequest object with the given API endpoint and
+ * a list of parameters. The parameters will be used to send query parameters or
+ * request body data depending on the API's requirements.
+ *
+ * @param endpoint The API endpoint as a QString.
+ * @param parameters A QList of ApiRequestParameter objects that represent the
+ *                   parameters to be sent with the request. These could be
+ *                   query parameters, form data, or other request data depending
+ *                   on the API design.
+ *
+ * \note endpoint must not include full path, only the url path relative to the base url provided on Api object.
+ */
+ApiRequest::ApiRequest(const QString &endpoint, const QList<ApiRequestParameter> &parameters) :
+    d(new ApiRequestPrivate)
+{
+    d->endpoint = endpoint;
+    d->parameters = parameters;
+}
+
 /*!
  * \brief Copy constructor for ApiRequest.
  *

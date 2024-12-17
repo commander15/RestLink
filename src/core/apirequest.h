@@ -14,6 +14,8 @@ class RESTLINK_EXPORT ApiRequest
 {
 public:
     ApiRequest();
+    ApiRequest(const char *endpoint);
+    ApiRequest(const QString &endpoint, const QList<ApiRequestParameter> &parameters);
     ApiRequest(const ApiRequest &other);
     ApiRequest(ApiRequest &&other);
     ~ApiRequest();
