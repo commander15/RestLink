@@ -5,6 +5,8 @@ set_target_properties(RestLink PROPERTIES
     VERSION     ${RestLink_VERSION}
 )
 
+target_include_directories(RestLink PUBLIC $<INSTALL_INTERFACE:include>)
+
 target_compile_definitions(RestLink
     PUBLIC
         RESTLINK_LIB RESTLINK_${RestLink_LIBRARY_TYPE}
