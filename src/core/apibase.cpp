@@ -318,7 +318,7 @@ QNetworkRequest ApiBase::createNetworkRequest(const ApiRequest &request, const v
 
     {
         const QLocale locale = this->locale();
-        netReq.setRawHeader("Accept-Language", QStringLiteral("%1,%2;q=0.5").arg(locale.name(QLocale::TagSeparator::Dash), locale.bcp47Name()).toUtf8());
+        netReq.setRawHeader("Accept-Language", QStringLiteral("%1,%2;q=0.5").arg(locale.name(), locale.bcp47Name()).toUtf8());
     }
 
     netReq.setRawHeader("Connection", "keep-alive");
