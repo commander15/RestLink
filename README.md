@@ -27,7 +27,7 @@ RestLink is a C++ library designed to facilitate easy integration with RESTful A
 3. Link the `RestLink` library with your project.
 
     ```cmake
-    target_link_libraries(YourProjectName RestLink)
+    target_link_libraries(YourProjectName RestLink::RestLink)
     ```
 
 ## C++ Example
