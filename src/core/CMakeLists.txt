@@ -29,6 +29,7 @@ target_headers(RestLink
         jsonutils.h compressionutils.h
         apibase.h api.h apicache.h
         apirequest.h apireply.h
+        apirequestinterceptor.h
     PRIVATE
         apibase_p.h api_p.h
         apirequest_p.h apireply_p.h
@@ -40,6 +41,7 @@ target_sources(RestLink
         jsonutils.cpp compressionutils.cpp
         apibase.cpp api.cpp apicache.cpp
         apirequest.cpp apireply.cpp
+        apirequestinterceptor.cpp
 )
 
 qt_extract_metatypes(RestLink

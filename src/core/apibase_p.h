@@ -19,6 +19,8 @@ public:
 
     ApiBase *q_ptr;
 
+    QVector<ApiRequestInterceptor *> requestInterceptors;
+
 private:
     mutable QNetworkAccessManager *m_netMan;
 };

@@ -16,6 +16,7 @@ namespace RestLink {
 class ApiRequest;
 class ApiRequestParameter;
 class ApiReply;
+class ApiRequestInterceptor;
 
 typedef void(ApiRunCallback)(ApiReply *);
 

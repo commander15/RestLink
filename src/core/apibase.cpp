@@ -4,6 +4,7 @@
 #include <RestLink/debug.h>
 #include <RestLink/apirequest.h>
 #include <RestLink/apireply.h>
+#include <RestLink/apirequestinterceptor.h>
 #include <RestLink/jsonutils.h>
 
 #include <RestLink/private/apirequest_p.h>
@@ -268,8 +269,12 @@ void ApiBase::setNetworkAccessManager(QNetworkAccessManager *manager)
     d_ptr->setNetMan(manager);
 }
 
-QNetworkRequest ApiBase::createNetworkRequest(const ApiRequest &request, const void *data, DataType dataType)
+QNetworkRequest ApiBase::createNetworkRequest(const ApiRequest &req, const void *data, DataType dataType)
 {
+    ApiRequest request = req;
+    for (ApiRequestInterceptor *interceptor : d_ptr->requestInterceptors)
+        request = interceptor->interceptApiRequest(request, data, dataType);
+
     QNetworkRequest netReq;
     netReq.setOriginatingObject(this);
 
@@ -359,6 +364,9 @@ QNetworkRequest ApiBase::createNetworkRequest(const ApiRequest &request, const v
     url.setQuery(urlQuery);
 
     netReq.setUrl(url);
+
+    for (ApiRequestInterceptor *interceptor : d_ptr->requestInterceptors)
+        netReq = interceptor->interceptNetworkRequest(netReq, data, dataType);
     return netReq;
 }
 
