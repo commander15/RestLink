@@ -1,5 +1,5 @@
-#ifndef RESTLINK_APIREPLY_H
-#define RESTLINK_APIREPLY_H
+#ifndef RESPONSE_H
+#define RESPONSE_H
 
 #include <RestLink/global.h>
 #include <RestLink/api.h>
@@ -8,14 +8,16 @@
 
 class QNetworkRequest;
 class QNetworkReply;
+class QSslError;
 
 class QJsonParseError;
 
 namespace RestLink {
-class ApiRequest;
 
-class ApiReplyPrivate;
-class RESTLINK_EXPORT ApiReply : public QObject
+class Request;
+
+class ResponsePrivate;
+class RESTLINK_EXPORT Response : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString endpoint READ endpoint CONSTANT)
@@ -29,12 +31,13 @@ class RESTLINK_EXPORT ApiReply : public QObject
     Q_PROPERTY(QByteArrayList headerList READ headerList NOTIFY finished)
     Q_PROPERTY(int networkError READ networkError NOTIFY networkErrorOccured)
     Q_PROPERTY(QString networkErrorString READ networkErrorString NOTIFY networkErrorOccured)
+    Q_PROPERTY(QByteArray body READ body NOTIFY finished)
 
 public:
-    virtual ~ApiReply();
+    ~Response();
 
     QString endpoint() const;
-    ApiRequest apiRequest() const;
+    Request request() const;
 
     Api::Operation operation() const;
     Api *api() const;
@@ -44,14 +47,11 @@ public:
 
     bool isRunning() const;
     bool isFinished() const;
-    Q_SLOT void abort();
-    Q_SIGNAL void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
-    Q_SIGNAL void uploadProgress(qint64 bytesSent, qint64 bytesTotal);
-    Q_SIGNAL void finished();
 
     bool isSuccess() const;
 
     bool isHttpStatusSuccess() const;
+    bool hasHttpStatusCode() const;
     int httpStatusCode() const;
     QString httpReasonPhrase() const;
 
@@ -64,30 +64,37 @@ public:
     QJsonValue readJson(QJsonParseError *error = nullptr);
     QString readString();
     Q_INVOKABLE QByteArray readBody();
-    Q_SIGNAL void readyRead();
-
-    Q_SLOT void ignoreSslErros(const QList<QSslError> &errors);
-    Q_SIGNAL void sslErrorsOccured(const QList<QSslError> &errors);
 
     bool hasNetworkError() const;
     int networkError() const;
     QString networkErrorString() const;
-    Q_SIGNAL void networkErrorOccured(int error);
 
     QNetworkReply *networkReply() const;
 
 protected:
-    ApiReply(Api *api);
-    ApiReply(ApiReplyPrivate *dd, Api *api);
+    Response(const Request &request, QNetworkReply *reply, Api *api);
 
-    void setApiRequest(const ApiRequest &request);
-    void setNetworkReply(QNetworkReply *reply);
+public slots:
+    void ignoreSslErrors();
+    void abort();
 
-    QScopedPointer<ApiReplyPrivate> d;
+signals:
+    void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
+    void uploadProgress(qint64 bytesSent, qint64 bytesTotal);
+    void networkErrorOccured(int error);
+    void readyRead();
+    void finished();
+
+    void sslErrorsOccured(const QList<QSslError> &errors);
+
+private:
+    QByteArray body();
+
+    QScopedPointer<ResponsePrivate> d_ptr;
 
     friend class Api;
 };
 
 }
 
-#endif // RESTLINK_APIREPLY_H
+#endif // RESPONSE_H

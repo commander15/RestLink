@@ -26,22 +26,30 @@ configure_file(config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h @ONLY)
 target_headers(RestLink
     PUBLIC
         global.h config.h debug.h
+        apibase.h api.h
+        requestinterface.h pathparameter.h queryparameter.h
+        request.h response.h
+        header.h body.h
+        networkmanager.h cache.h
         jsonutils.h compressionutils.h
-        apibase.h api.h apicache.h
-        apirequest.h apireply.h
-        apirequestinterceptor.h
+        requestinterceptor.h
     PRIVATE
         apibase_p.h api_p.h
-        apirequest_p.h apireply_p.h
+        queryparameter_p.h
+        request_p.h response_p.h
+        cache_p.h
 )
 
 target_sources(RestLink
     PRIVATE
         debug.cpp
+        apibase.cpp api.cpp
+        requestinterface.cpp pathparameter.cpp queryparameter.cpp
+        request.cpp response.cpp
+        header.cpp body.cpp
+        networkmanager.cpp cache.cpp
         jsonutils.cpp compressionutils.cpp
-        apibase.cpp api.cpp apicache.cpp
-        apirequest.cpp apireply.cpp
-        apirequestinterceptor.cpp
+        requestinterceptor.cpp
 )
 
 qt_extract_metatypes(RestLink

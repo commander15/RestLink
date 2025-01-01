@@ -3,6 +3,9 @@
 
 #include "apibase.h"
 
+#include <RestLink/request.h>
+#include <RestLink/requestinterceptor.h>
+
 namespace RestLink {
 
 class ApiReply;
@@ -19,7 +22,8 @@ public:
 
     ApiBase *q_ptr;
 
-    QVector<ApiRequestInterceptor *> requestInterceptors;
+    Request internalRequest;
+    QVector<RequestInterceptor *> requestInterceptors;
 
 private:
     mutable QNetworkAccessManager *m_netMan;

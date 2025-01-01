@@ -2,20 +2,24 @@
 #include "apibase_p.h"
 
 #include <RestLink/debug.h>
-#include <RestLink/apirequest.h>
-#include <RestLink/apireply.h>
-#include <RestLink/apirequestinterceptor.h>
-#include <RestLink/jsonutils.h>
+#include <RestLink/request.h>
+#include <RestLink/pathparameter.h>
+#include <RestLink/queryparameter.h>
+#include <RestLink/header.h>
+#include <RestLink/body.h>
+#include <RestLink/response.h>
+#include <RestLink/requestinterceptor.h>
+#include <RestLink/compressionutils.h>
+#include <RestLink/networkmanager.h>
 
-#include <RestLink/private/apirequest_p.h>
+#include <RestLink/private/request_p.h>
 
+#include <QtNetwork/qnetworkproxy.h>
 #include <QtNetwork/qnetworkrequest.h>
 #include <QtNetwork/qnetworkreply.h>
+#include <QtNetwork/qhttpmultipart.h>
 
-#include <QtCore/qmimedatabase.h>
-#include <QtCore/qjsondocument.h>
-#include <QtCore/qjsonobject.h>
-#include <QtCore/qjsonarray.h>
+#include <QtCore/qurl.h>
 #include <QtCore/qurlquery.h>
 
 namespace RestLink {
@@ -28,6 +32,8 @@ ApiBase::ApiBase(ApiBasePrivate *d, QObject *parent) :
 
 ApiBase::~ApiBase()
 {
+    for (RequestInterceptor *interceptor : d_ptr->requestInterceptors)
+        delete interceptor;
 }
 
 QLocale ApiBase::locale() const
@@ -35,288 +41,190 @@ QLocale ApiBase::locale() const
     return QLocale::system();
 }
 
-void ApiBase::get(const ApiRequest &request, std::function<ApiRunCallback> callback)
+void ApiBase::head(const Request &request, std::function<ApiRunCallback> callback)
 {
-    ApiReply *reply = get(request);
-    connect(reply, &ApiReply::finished, this, [callback, reply] {
-        callback(reply);
-        reply->deleteLater();
-    });
+    Response *response = head(request);
+    connect(response, &Response::finished, this, [callback, response] { callback(response); });
+    connect(response, &Response::finished, response, &QObject::deleteLater);
 }
 
-void ApiBase::post(const ApiRequest &request, QIODevice *device, std::function<ApiRunCallback> callback)
+Response *ApiBase::head(const Request &request)
 {
-    ApiReply *reply = post(request, device);
-    connect(reply, &ApiReply::finished, this, [callback, reply] {
-        callback(reply);
-        reply->deleteLater();
-    });
+    const Api::Operation operation = Api::HeadOperation;
+    const Body body;
+    const QNetworkRequest netRequest = createNetworkRequest(request, body, operation);
+    QNetworkReply *netReply = createNetworkReply(netRequest, body, operation);
+    return createResponse(request, netReply);
 }
 
-void ApiBase::post(const ApiRequest &request, const QByteArray &data, std::function<ApiRunCallback> callback)
+void ApiBase::get(const Request &request, std::function<ApiRunCallback> callback)
 {
-    ApiReply *reply = post(request, data);
-    connect(reply, &ApiReply::finished, this, [callback, reply] {
-        callback(reply);
-        reply->deleteLater();
-    });
+    Response *response = get(request);
+    connect(response, &Response::finished, this, [callback, response] { callback(response); });
+    connect(response, &Response::finished, response, &QObject::deleteLater);
 }
 
-void ApiBase::post(const ApiRequest &request, QHttpMultiPart *data, std::function<ApiRunCallback> callback)
+Response *ApiBase::get(const Request &request)
 {
-    ApiReply *reply = post(request, data);
-    connect(reply, &ApiReply::finished, this, [callback, reply] {
-        callback(reply);
-        reply->deleteLater();
-    });
+    const Api::Operation operation = Api::GetOperation;
+    const Body body;
+    const QNetworkRequest netRequest = createNetworkRequest(request, body, operation);
+    QNetworkReply *netReply = createNetworkReply(netRequest, body, operation);
+    return createResponse(request, netReply);
 }
 
-void ApiBase::post(const ApiRequest &request, const QJsonValue &data, std::function<ApiRunCallback> callback)
+void ApiBase::post(const Request &request, const Body &body, std::function<ApiRunCallback> callback)
 {
-    ApiReply *reply = post(request, data);
-    connect(reply, &ApiReply::finished, this, [callback, reply] {
-        callback(reply);
-        reply->deleteLater();
-    });
+    Response *response = post(request, body);
+    connect(response, &Response::finished, this, [callback, response] { callback(response); });
+    connect(response, &Response::finished, response, &QObject::deleteLater);
 }
 
-void ApiBase::put(const ApiRequest &request, QIODevice *device, std::function<ApiRunCallback> callback)
+Response *ApiBase::post(const Request &request, const Body &body)
 {
-    ApiReply *reply = put(request, device);
-    connect(reply, &ApiReply::finished, this, [callback, reply] {
-        callback(reply);
-        reply->deleteLater();
-    });
+    const Api::Operation operation = Api::PostOperation;
+    const QNetworkRequest netRequest = createNetworkRequest(request, body, operation);
+    QNetworkReply *netReply = createNetworkReply(netRequest, body, operation);
+    return createResponse(request, netReply);
 }
 
-void ApiBase::put(const ApiRequest &request, const QByteArray &data, std::function<ApiRunCallback> callback)
+void ApiBase::put(const Request &request, const Body &body, std::function<ApiRunCallback> callback)
 {
-    ApiReply *reply = put(request, data);
-    connect(reply, &ApiReply::finished, this, [callback, reply] {
-        callback(reply);
-        reply->deleteLater();
-    });
+    Response *response = put(request, body);
+    connect(response, &Response::finished, this, [callback, response] { callback(response); });
+    connect(response, &Response::finished, response, &QObject::deleteLater);
 }
 
-void ApiBase::put(const ApiRequest &request, QHttpMultiPart *data, std::function<ApiRunCallback> callback)
+Response *ApiBase::put(const Request &request, const Body &body)
 {
-    ApiReply *reply = put(request, data);
-    connect(reply, &ApiReply::finished, this, [callback, reply] {
-        callback(reply);
-        reply->deleteLater();
-    });
+    const Api::Operation operation = Api::PutOperation;
+    const QNetworkRequest netRequest = createNetworkRequest(request, body, operation);
+    QNetworkReply *netReply = createNetworkReply(netRequest, body, operation);
+    return createResponse(request, netReply);
 }
 
-void ApiBase::put(const ApiRequest &request, const QJsonValue &data, std::function<ApiRunCallback> callback)
+void ApiBase::patch(const Request &request, const Body &body, std::function<ApiRunCallback> callback)
 {
-    ApiReply *reply = put(request, data);
-    connect(reply, &ApiReply::finished, this, [callback, reply] {
-        callback(reply);
-        reply->deleteLater();
-    });
+    Response *response = patch(request, body);
+    connect(response, &Response::finished, this, [callback, response] { callback(response); });
+    connect(response, &Response::finished, response, &QObject::deleteLater);
 }
 
-void ApiBase::patch(const ApiRequest &request, QIODevice *device, std::function<ApiRunCallback> callback)
+Response *ApiBase::patch(const Request &request, const Body &body)
 {
-    ApiReply *reply = patch(request, device);
-    connect(reply, &ApiReply::finished, this, [callback, reply] {
-        callback(reply);
-        reply->deleteLater();
-    });
+    const Api::Operation operation = Api::PatchOperation;
+    const QNetworkRequest netRequest = createNetworkRequest(request, body, operation);
+    QNetworkReply *netReply = createNetworkReply(netRequest, body, operation);
+    return createResponse(request, netReply);
 }
 
-void ApiBase::patch(const ApiRequest &request, const QByteArray &data, std::function<ApiRunCallback> callback)
+void ApiBase::deleteResource(const Request &request, std::function<ApiRunCallback> callback)
 {
-    ApiReply *reply = patch(request, data);
-    connect(reply, &ApiReply::finished, this, [callback, reply] {
-        callback(reply);
-        reply->deleteLater();
-    });
+    Response *response = deleteResource(request);
+    connect(response, &Response::finished, this, [callback, response] { callback(response); });
+    connect(response, &Response::finished, response, &QObject::deleteLater);
 }
 
-void ApiBase::patch(const ApiRequest &request, QHttpMultiPart *data, std::function<ApiRunCallback> callback)
+Response *ApiBase::deleteResource(const Request &request)
 {
-    ApiReply *reply = patch(request, data);
-    connect(reply, &ApiReply::finished, this, [callback, reply] {
-        callback(reply);
-        reply->deleteLater();
-    });
+    const Api::Operation operation = Api::DeleteOperation;
+    const Body body;
+    const QNetworkRequest netRequest = createNetworkRequest(request, body, operation);
+    QNetworkReply *netReply = createNetworkReply(netRequest, body, operation);
+    return createResponse(request, netReply);
 }
 
-void ApiBase::patch(const ApiRequest &request, const QJsonValue &data, std::function<ApiRunCallback> callback)
+QString ApiBase::userAgent() const
 {
-    ApiReply *reply = patch(request, data);
-    connect(reply, &ApiReply::finished, this, [callback, reply] {
-        callback(reply);
-        reply->deleteLater();
-    });
+    return QStringLiteral("libRestLink/") + QStringLiteral(RESTLINK_VERSION_STR);
 }
 
-void ApiBase::deleteResource(const ApiRequest &request, std::function<ApiRunCallback> callback)
+QList<RequestInterceptor *> ApiBase::requestInterceptors() const
 {
-    ApiReply *reply = deleteResource(request);
-    connect(reply, &ApiReply::finished, this, [callback, reply] {
-        callback(reply);
-        reply->deleteLater();
-    });
+    return d_ptr->requestInterceptors;
 }
 
-ApiReply *ApiBase::get(const ApiRequest &request)
+void ApiBase::addRequestInterceptor(RequestInterceptor *interceptor)
 {
-    const QNetworkRequest netRequest = createNetworkRequest(request);
-    QNetworkReply *netReply = d_ptr->netMan()->get(netRequest);
-    return createApiReply(request, netReply);
+    if (!d_ptr->requestInterceptors.contains(interceptor))
+        d_ptr->requestInterceptors.append(interceptor);
 }
 
-ApiReply *ApiBase::post(const ApiRequest &request, QIODevice *device)
+void ApiBase::removeRequestInterceptor(RequestInterceptor *interceptor)
 {
-    const QNetworkRequest netRequest = createNetworkRequest(request, device, DeviceData);
-    QNetworkReply *netReply = d_ptr->netMan()->post(netRequest, device);
-    return createApiReply(request, netReply);
+    d_ptr->requestInterceptors.removeOne(interceptor);
 }
 
-ApiReply *ApiBase::post(const ApiRequest &request, const QByteArray &data)
+QAbstractNetworkCache *ApiBase::cache() const
 {
-    const QNetworkRequest netRequest = createNetworkRequest(request, &data, RawData);
-    QNetworkReply *netReply = d_ptr->netMan()->post(netRequest, data);
-    return createApiReply(request, netReply);
+    return d_ptr->netMan()->cache();
 }
 
-ApiReply *ApiBase::post(const ApiRequest &request, QHttpMultiPart *data)
+void ApiBase::setCache(QAbstractNetworkCache *cache)
 {
-    const QNetworkRequest netRequest = createNetworkRequest(request, data, MultiPartData);
-    QNetworkReply *netReply = d_ptr->netMan()->post(netRequest, data);
-    return createApiReply(request, netReply);
+    d_ptr->netMan()->setCache(cache);
 }
 
-ApiReply *ApiBase::post(const ApiRequest &request, const QJsonValue &data)
+QNetworkCookieJar *ApiBase::cookieJar() const
 {
-    const QNetworkRequest netRequest = createNetworkRequest(request, &data, JsonData);
-    QNetworkReply *netReply = d_ptr->netMan()->post(netRequest, JsonUtils::jsonToByteArray(data));
-    return createApiReply(request, netReply);
+    return d_ptr->netMan()->cookieJar();
 }
 
-ApiReply *ApiBase::put(const ApiRequest &request, QIODevice *device)
+void ApiBase::setCookieJar(QNetworkCookieJar *jar)
 {
-    const QNetworkRequest netRequest = createNetworkRequest(request, device, DeviceData);
-    QNetworkReply *netReply = d_ptr->netMan()->put(netRequest, device);
-    return createApiReply(request, netReply);
+    d_ptr->netMan()->setCookieJar(jar);
 }
 
-ApiReply *ApiBase::put(const ApiRequest &request, const QByteArray &data)
+QNetworkProxy ApiBase::proxy() const
 {
-    const QNetworkRequest netRequest = createNetworkRequest(request, &data, RawData);
-    QNetworkReply *netReply = d_ptr->netMan()->put(netRequest, data);
-    return createApiReply(request, netReply);
+    return d_ptr->netMan()->proxy();
 }
 
-ApiReply *ApiBase::put(const ApiRequest &request, QHttpMultiPart *data)
+void ApiBase::setProxy(const QNetworkProxy &proxy)
 {
-    const QNetworkRequest netRequest = createNetworkRequest(request, data, MultiPartData);
-    QNetworkReply *netReply = d_ptr->netMan()->put(netRequest, data);
-    return createApiReply(request, netReply);
+    d_ptr->netMan()->setProxy(proxy);
 }
 
-ApiReply *ApiBase::put(const ApiRequest &request, const QJsonValue &data)
-{
-    const QNetworkRequest netRequest = createNetworkRequest(request, &data, JsonData);
-    QNetworkReply *netReply = d_ptr->netMan()->put(netRequest, JsonUtils::jsonToByteArray(data));
-    return createApiReply(request, netReply);
-}
-
-ApiReply *ApiBase::patch(const ApiRequest &request, QIODevice *device)
-{
-    const QNetworkRequest netRequest = createNetworkRequest(request, device, DeviceData);
-    QNetworkReply *netReply = d_ptr->netMan()->sendCustomRequest(netRequest, "PATCH", device);
-    return createApiReply(request, netReply);
-}
-
-ApiReply *ApiBase::patch(const ApiRequest &request, const QByteArray &data)
-{
-    const QNetworkRequest netRequest = createNetworkRequest(request, &data, RawData);
-    QNetworkReply *netReply = d_ptr->netMan()->sendCustomRequest(netRequest, "PATCH", data);
-    return createApiReply(request, netReply);
-}
-
-ApiReply *ApiBase::patch(const ApiRequest &request, QHttpMultiPart *data)
-{
-    const QNetworkRequest netRequest = createNetworkRequest(request, data, MultiPartData);
-    QNetworkReply *netReply = d_ptr->netMan()->sendCustomRequest(netRequest, "PATCH", data);
-    return createApiReply(request, netReply);
-}
-
-ApiReply *ApiBase::patch(const ApiRequest &request, const QJsonValue &data)
-{
-    const QNetworkRequest netRequest = createNetworkRequest(request, &data, JsonData);
-    QNetworkReply *netReply = d_ptr->netMan()->sendCustomRequest(netRequest, "PATCH", JsonUtils::jsonToByteArray(data));
-    return createApiReply(request, netReply);
-}
-
-ApiReply *ApiBase::deleteResource(const ApiRequest &request)
-{
-    const QNetworkRequest netRequest = createNetworkRequest(request);
-    QNetworkReply *netReply = d_ptr->netMan()->deleteResource(netRequest);
-    return createApiReply(request, netReply);
-}
-
-QNetworkAccessManager *ApiBase::networkAccessManager() const
+QNetworkAccessManager *ApiBase::networkManager() const
 {
     return d_ptr->netMan();
 }
 
-void ApiBase::setNetworkAccessManager(QNetworkAccessManager *manager)
+void ApiBase::setNetworkManager(QNetworkAccessManager *manager)
 {
     d_ptr->setNetMan(manager);
 }
 
-QNetworkRequest ApiBase::createNetworkRequest(const ApiRequest &req, const void *data, DataType dataType)
+QNetworkRequest ApiBase::createNetworkRequest(const Request &req, const Body &body, Operation operation)
 {
-    ApiRequest request = req;
-    for (ApiRequestInterceptor *interceptor : d_ptr->requestInterceptors)
-        request = interceptor->interceptApiRequest(request, data, dataType);
+    Request request = Request::merge(req, d_ptr->internalRequest);
+    if (!req.endpoint().isEmpty())
+        for (RequestInterceptor *interceptor : d_ptr->requestInterceptors)
+            request = interceptor->intercept(request, body, operation);
 
     QNetworkRequest netReq;
     netReq.setOriginatingObject(this);
 
-    netReq.setHeader(QNetworkRequest::UserAgentHeader, userAgent());
-    if (!request.contentType().isEmpty()) {
-        netReq.setHeader(QNetworkRequest::ContentTypeHeader, request.contentType());
-    } else {
-        static QMimeDatabase db;
-        QMimeType type;
+    QUrl url = this->url();
+    {
+        QString urlPath = url.path() + request.urlPath();
+        url.setPath(urlPath);
 
-        switch (dataType) {
-        case DeviceData:
-            type = db.mimeTypeForData(static_cast<QIODevice *>(const_cast<void *>(data)));
-            break;
-
-        case RawData:
-            type = db.mimeTypeForData(*static_cast<const QByteArray *>(data));
-            break;
-
-        case MultiPartData:
-            break;
-
-        case JsonData:
-            type = db.mimeTypeForName("application/json");
-            break;
-
-        default:
-            break;
-        }
-
-        if (type.isValid())
-            netReq.setHeader(QNetworkRequest::ContentTypeHeader, type.name().toLatin1());
+        QUrlQuery urlQuery(url.query());
+        for (const QueryParameter &param : request.queryParameters())
+            if (param.isEnabled())
+                for (const QVariant &value : param.values())
+                    urlQuery.addQueryItem(param.name(), value.toString());
+        url.setQuery(urlQuery);
     }
+    netReq.setUrl(url);
+
+    netReq.setHeader(QNetworkRequest::UserAgentHeader, userAgent());
 
     netReq.setRawHeader("Accept", "*/*");
 
     {
-        QByteArrayList algorithms;
-#ifdef ZLIB_LIB
-        algorithms << "gzip" << "deflate";
-#endif
-
+        const QByteArrayList algorithms = CompressionUtils::supportedAlgorithms();
         if (!algorithms.isEmpty())
             netReq.setRawHeader("Accept-Encoding", algorithms.join(", "));
     }
@@ -328,7 +236,7 @@ QNetworkRequest ApiBase::createNetworkRequest(const ApiRequest &req, const void 
 
     netReq.setRawHeader("Connection", "keep-alive");
 
-    if (request.isCacheable()) {
+    if (true) {
         netReq.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
         netReq.setAttribute(QNetworkRequest::CacheSaveControlAttribute, true);
     } else {
@@ -336,38 +244,118 @@ QNetworkRequest ApiBase::createNetworkRequest(const ApiRequest &req, const void 
         netReq.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
     }
 
-    QUrl url = this->url();
-    QString urlPath = url.path() + request.endpoint();
-    QUrlQuery urlQuery(url.query());
-
-    const QList<ApiRequestParameter> parameters = this->parameters() + request.parameters();
-    for (const ApiRequestParameter &parameter : parameters) {
-        if (!parameter.isValid() || !parameter.isEnabled())
-            continue;
-
-        switch (parameter.scope()) {
-        case ApiRequestParameter::UrlPathScope:
-            urlPath.replace('{' + parameter.name() + '}', parameter.value().toString());
-            break;
-
-        case ApiRequestParameter::UrlQueryScope:
-            urlQuery.addQueryItem(parameter.name(), parameter.value().toString());
-            break;
-
-        case ApiRequestParameter::HeaderScope:
-            netReq.setRawHeader(parameter.name().toLatin1(), parameter.value().toByteArray());
-            break;
+    for (const Header &header : request.headers() + body.headers()) {
+        if (header.isEnabled()) {
+            const QVariantList values = header.values();
+            QByteArrayList rawValues(header.values().size());
+            std::transform(values.begin(), values.end(), rawValues.begin(), [](const QVariant &value) {
+                return value.toByteArray();
+            });
+            netReq.setRawHeader(header.name().toUtf8(), rawValues.join(','));
         }
     }
 
-    url.setPath(urlPath);
-    url.setQuery(urlQuery);
-
-    netReq.setUrl(url);
-
-    for (ApiRequestInterceptor *interceptor : d_ptr->requestInterceptors)
-        netReq = interceptor->interceptNetworkRequest(netReq, data, dataType);
     return netReq;
+}
+
+QNetworkReply *ApiBase::createNetworkReply(const QNetworkRequest &request, const Body &body, Operation operation)
+{
+    QNetworkAccessManager *man = d_ptr->netMan();
+    QNetworkReply *reply;
+
+    switch (operation) {
+    case HeadOperation:
+        reply = man->head(request);
+        break;
+
+    case GetOperation:
+        reply = man->get(request);
+        break;
+
+    case PostOperation:
+        if (body.isMultiPart())
+            reply =  man->post(request, body.multiPart());
+        else if (body.isDevice())
+            reply =  man->post(request, body.device());
+        else if (body.isData())
+            reply =  man->post(request, body.data());
+        else
+            reply =  man->post(request, QByteArray());
+        break;
+
+    case PutOperation:
+        if (body.isMultiPart())
+            reply =  man->put(request, body.multiPart());
+        else if (body.isDevice())
+            reply =  man->put(request, body.device());
+        else if (body.isData())
+            reply =  man->put(request, body.data());
+        else
+            reply =  man->put(request, QByteArray());
+        break;
+
+    case PatchOperation:
+        if (body.isMultiPart())
+            reply =  man->sendCustomRequest(request, "PATCH", body.multiPart());
+        else if (body.isDevice())
+            reply =  man->sendCustomRequest(request, "PATCH", body.device());
+        else if (body.isData())
+            reply =  man->sendCustomRequest(request, "PATCH", body.data());
+        else
+            reply =  man->sendCustomRequest(request, "PATCH", QByteArray());
+        break;
+
+    case DeleteOperation:
+        reply =  man->deleteResource(request);
+        break;
+
+    default:
+        reply =  nullptr;
+    }
+
+    if (body.isDevice()) {
+        QIODevice *device = body.device();
+        if (!device->parent())
+            device->setParent(reply ? static_cast<QObject *>(reply) : static_cast<QObject *>(this));
+    }
+
+    if (body.isMultiPart()) {
+        QHttpMultiPart *multiPart = body.multiPart();
+        if (!multiPart->parent())
+            multiPart->setParent(reply ? static_cast<QObject *>(reply) : static_cast<QObject *>(this));
+    }
+
+    return reply;
+}
+
+const QList<PathParameter> *ApiBase::constPathParameters() const
+{
+    return &d_ptr->internalRequest.d_ptr->pathParameters;
+}
+
+QList<PathParameter> *ApiBase::mutablePathParameters()
+{
+    return &d_ptr->internalRequest.d_ptr->pathParameters;
+}
+
+const QList<QueryParameter> *ApiBase::constQueryParameters() const
+{
+    return &d_ptr->internalRequest.d_ptr->queryParameters;
+}
+
+QList<QueryParameter> *ApiBase::mutableQueryParameters()
+{
+    return &d_ptr->internalRequest.d_ptr->queryParameters;
+}
+
+const QList<Header> *ApiBase::constHeaders() const
+{
+    return &d_ptr->internalRequest.d_ptr->headers;
+}
+
+QList<Header> *ApiBase::mutableHeaders()
+{
+    return &d_ptr->internalRequest.d_ptr->headers;
 }
 
 ApiBasePrivate::ApiBasePrivate(ApiBase *q) :
@@ -378,10 +366,8 @@ ApiBasePrivate::ApiBasePrivate(ApiBase *q) :
 
 QNetworkAccessManager *ApiBasePrivate::netMan() const
 {
-    if (!m_netMan) {
-        m_netMan = new QNetworkAccessManager(q_ptr);
-        m_netMan->setRedirectPolicy(QNetworkRequest::SameOriginRedirectPolicy);
-    }
+    if (!m_netMan)
+        m_netMan = new NetworkManager(q_ptr);
     return m_netMan;
 }
 

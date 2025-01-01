@@ -11,6 +11,8 @@ public:
     static QByteArray decompress(const QByteArray &input, const QByteArray &algorithm);
     static QByteArray decompressGzip(const QByteArray &input);
     static QByteArray decompressDeflate(const QByteArray &input);
+
+    static QByteArrayList supportedAlgorithms();
 };
 
 }

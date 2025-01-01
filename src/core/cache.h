@@ -1,5 +1,5 @@
-#ifndef RESTLINK_APICACHE_H
-#define RESTLINK_APICACHE_H
+#ifndef RESTLINK_CACHE_H
+#define RESTLINK_CACHE_H
 
 #include <RestLink/global.h>
 
@@ -7,15 +7,15 @@
 
 namespace RestLink {
 
-class ApiCachePrivate;
-class RESTLINK_EXPORT ApiCache : public QAbstractNetworkCache
+class CachePrivate;
+class RESTLINK_EXPORT Cache : public QAbstractNetworkCache
 {
     Q_OBJECT
     Q_PROPERTY(qint64 maxCacheSize READ maxCacheSize WRITE setMaxCacheSize NOTIFY maxCacheSizeChanged FINAL)
 
 public:
-    explicit ApiCache(QObject *parent = nullptr);
-    ~ApiCache();
+    explicit Cache(QObject *parent = nullptr);
+    ~Cache();
 
     qint64 maxCacheSize() const;
     Q_SLOT void setMaxCacheSize(qint64 size);
@@ -31,9 +31,9 @@ public:
     Q_SLOT void clear() override;
 
 private:
-    QScopedPointer<ApiCachePrivate> d;
+    QScopedPointer<CachePrivate> d;
 };
 
 }
 
-#endif // RESTLINK_APICACHE_H
+#endif // RESTLINK_CACHE_H

@@ -3,26 +3,24 @@
 #include <QtCore/qdir.h>
 #include <QtCore/qfile.h>
 #include <QtCore/qtimer.h>
+#include <QtCore/qstandardpaths.h>
 
 #include <QtNetwork/qnetworkaccessmanager.h>
 #include <QtNetwork/qnetworkreply.h>
 
 #include <RestLink/api.h>
-#include <RestLink/apirequest.h>
-#include <RestLink/apireply.h>
-#include <RestLink/apicache.h>
+#include <RestLink/request.h>
+#include <RestLink/response.h>
+#include <RestLink/cache.h>
+#include <RestLink/requestinterceptor.h>
 
 using namespace RestLink;
 
-void runRequest(const QString &endpoint, const QList<ApiRequestParameter> &parameters, Api *api)
+void runRequest(const Request &request, Api *api)
 {
-    static QDir folder("/home/commander/Desktop/" + api->name());
+    static QDir folder(QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) + '/' + api->name());
     if (!folder.exists())
         folder.mkpath(".");
-
-    ApiRequest request;
-    request.setEndpoint(endpoint);
-    request.setParameters(parameters);
 
     QString url = request.urlPath();
     if (url.count('/') > 1)
@@ -30,7 +28,7 @@ void runRequest(const QString &endpoint, const QList<ApiRequestParameter> &param
 
     QFile *file = new QFile(folder.path() + url + ".json", api);
 
-    api->get(request, [file, api](ApiReply *reply) {
+    api->get(request, [file, api](Response *reply) {
         QTextStream out(stdout);
         out << reply->endpoint() << " => ";
 
@@ -61,32 +59,37 @@ void runRequest(const QString &endpoint, const QList<ApiRequestParameter> &param
 
 void run(Api *api)
 {
-    const QMultiHash<QString, ApiRequestParameter> endpoints = {
-        { "/configuration", {} },
-        { "/discover/movie", {} },
-        { "/discover/tv", {} },
-        {
-         "/search/company",
-         {
-          ApiRequestParameter("query", "Marvel")
-         }
-        },
-        {
-         "/movie/{movie_id}",
-         {
-          ApiRequestParameter("movie_id", 335983, ApiRequestParameter::UrlPathScope)
-         }
-        }
-    };
+    QList<Request> requests;
+    requests.append("/configuration");
+    requests.append("/discover/movie");
+    requests.append("/discover/tv");
 
-    const QStringList endpointNames = endpoints.keys();
-    for (const QString &endpoint : endpointNames)
-        QTimer::singleShot(1500, api, [endpoint, endpoints, api] {
-            runRequest(endpoint, endpoints.values(endpoint), api);
-        });
+    {
+        Request request("/search/company");
+        request.setQueryParameter("query", "Marvel");
+        requests.append(request);
+    }
 
-    api->setProperty("count", endpoints.size());
+    {
+        Request request("/movie/{movie_id}");
+        request.setPathParameter("movie_id", 335983);
+        requests.append(request);
+    }
+
+    for (const Request &request : std::as_const(requests))
+        runRequest(request, api);
+
+    api->setProperty("count", requests.size());
 }
+
+class Interceptor : public RequestInterceptor
+{
+public:
+    Request intercept(const Request &request, const Body &body, ApiBase::Operation operation) override
+    {
+        return request;
+    }
+};
 
 int main(int argc, char *argv[])
 {
@@ -96,11 +99,12 @@ int main(int argc, char *argv[])
 
     QNetworkAccessManager manager;
     //manager.setTransferTimeout(10000);
-    manager.setCache(new ApiCache(&manager));
+    //manager.setCache(new Cache(&manager));
 
     Api api;
-    api.setNetworkAccessManager(&manager);
-    api.configure(QUrl::fromLocalFile("/home/commander/Downloads/TmdbConfig.json"));
+    api.addRequestInterceptor(new Interceptor());
+    api.setNetworkManager(&manager);
+    api.configure(QUrl::fromLocalFile(QStandardPaths::writableLocation(QStandardPaths::DownloadLocation) + "/TmdbConfig.json"));
     QObject::connect(&api, &Api::configurationCompleted, &app, [&api] { run(&api); });
     QObject::connect(&api, &Api::configurationFailed, &app, &QCoreApplication::quit);
 

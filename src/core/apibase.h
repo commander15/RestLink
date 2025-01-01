@@ -2,31 +2,34 @@
 #define RESTLINK_APIBASE_H
 
 #include <RestLink/global.h>
+#include <RestLink/requestinterface.h>
 
 #include <QtCore/qobject.h>
-#include <QtCore/qurl.h>
 
-class QHttpMultiPart;
+class QAbstractNetworkCache;
+class QNetworkCookieJar;
+class QNetworkProxy;
 class QNetworkAccessManager;
 class QNetworkRequest;
 class QNetworkReply;
 
 namespace RestLink {
 
-class ApiRequest;
-class ApiRequestParameter;
-class ApiReply;
-class ApiRequestInterceptor;
+class Request;
+class Body;
+class Response;
+class RequestInterceptor;
 
-typedef void(ApiRunCallback)(ApiReply *);
+typedef void(ApiRunCallback)(Response *);
 
 class ApiBasePrivate;
-class RESTLINK_EXPORT ApiBase : public QObject
+class RESTLINK_EXPORT ApiBase : public QObject, public RequestInterface
 {
     Q_OBJECT
 
 public:
     enum Operation {
+        HeadOperation,
         GetOperation,
         PostOperation,
         PutOperation,
@@ -40,69 +43,61 @@ public:
     virtual ~ApiBase();
 
     virtual QUrl url() const = 0;
-    virtual QList<ApiRequestParameter> parameters() const = 0;
 
     virtual QLocale locale() const;
 
-    void get(const ApiRequest &request, std::function<ApiRunCallback> callback);
+    void head(const Request &request, std::function<ApiRunCallback> callback);
+    Response *head(const Request &request);
 
-    void post(const ApiRequest &request, QIODevice *device, std::function<ApiRunCallback> callback);
-    void post(const ApiRequest &request, const QByteArray &data, std::function<ApiRunCallback> callback);
-    void post(const ApiRequest &request, QHttpMultiPart *data, std::function<ApiRunCallback> callback);
-    void post(const ApiRequest &request, const QJsonValue &data, std::function<ApiRunCallback> callback);
+    void get(const Request &request, std::function<ApiRunCallback> callback);
+    Response *get(const Request &request);
 
-    void put(const ApiRequest &request, QIODevice *device, std::function<ApiRunCallback> callback);
-    void put(const ApiRequest &request, const QByteArray &data, std::function<ApiRunCallback> callback);
-    void put(const ApiRequest &request, QHttpMultiPart *data, std::function<ApiRunCallback> callback);
-    void put(const ApiRequest &request, const QJsonValue &data, std::function<ApiRunCallback> callback);
+    void post(const Request &request, const Body &body, std::function<ApiRunCallback> callback);
+    Response *post(const Request &request, const Body &body);
 
-    void patch(const ApiRequest &request, QIODevice *device, std::function<ApiRunCallback> callback);
-    void patch(const ApiRequest &request, const QByteArray &data, std::function<ApiRunCallback> callback);
-    void patch(const ApiRequest &request, QHttpMultiPart *data, std::function<ApiRunCallback> callback);
-    void patch(const ApiRequest &request, const QJsonValue &data, std::function<ApiRunCallback> callback);
+    void put(const Request &request, const Body &body, std::function<ApiRunCallback> callback);
+    Response *put(const Request &request, const Body &body);
 
-    void deleteResource(const ApiRequest &request, std::function<ApiRunCallback> callback);
+    void patch(const Request &request, const Body &body, std::function<ApiRunCallback> callback);
+    Response *patch(const Request &request, const Body &body);
 
-    ApiReply *get(const ApiRequest &request);
+    void deleteResource(const Request &request, std::function<ApiRunCallback> callback);
+    Response *deleteResource(const Request &request);
 
-    ApiReply *post(const ApiRequest &request, QIODevice *device);
-    ApiReply *post(const ApiRequest &request, const QByteArray &data);
-    ApiReply *post(const ApiRequest &request, QHttpMultiPart *data);
-    ApiReply *post(const ApiRequest &request, const QJsonValue &data);
+    virtual QString userAgent() const;
 
-    ApiReply *put(const ApiRequest &request, QIODevice *device);
-    ApiReply *put(const ApiRequest &request, const QByteArray &data);
-    ApiReply *put(const ApiRequest &request, QHttpMultiPart *data);
-    ApiReply *put(const ApiRequest &request, const QJsonValue &data);
+    QList<RequestInterceptor *> requestInterceptors() const;
+    void addRequestInterceptor(RequestInterceptor *interceptor);
+    void removeRequestInterceptor(RequestInterceptor *interceptor);
 
-    ApiReply *patch(const ApiRequest &request, QIODevice *device);
-    ApiReply *patch(const ApiRequest &request, const QByteArray &data);
-    ApiReply *patch(const ApiRequest &request, QHttpMultiPart *data);
-    ApiReply *patch(const ApiRequest &request, const QJsonValue &data);
+    QAbstractNetworkCache *cache() const;
+    void setCache(QAbstractNetworkCache *cache);
 
-    ApiReply *deleteResource(const ApiRequest &request);
+    QNetworkCookieJar *cookieJar() const;
+    void setCookieJar(QNetworkCookieJar *jar);
 
-    virtual QString userAgent() const = 0;
+    QNetworkProxy proxy() const;
+    void setProxy(const QNetworkProxy &proxy);
 
-    QNetworkAccessManager *networkAccessManager() const;
-    void setNetworkAccessManager(QNetworkAccessManager *manager);
+    QNetworkAccessManager *networkManager() const;
+    void setNetworkManager(QNetworkAccessManager *manager);
 
 protected:
-    enum DataType {
-        DeviceData,
-        RawData,
-        MultiPartData,
-        JsonData,
-
-        NoData = -1
-    };
-
     ApiBase(ApiBasePrivate *d, QObject *parent);
 
-    virtual ApiReply *createApiReply(const ApiRequest &request, QNetworkReply *netReply) = 0;
-    virtual QNetworkRequest createNetworkRequest(const ApiRequest &request, const void *data = nullptr, DataType dataType = NoData);
+    virtual Response *createResponse(const Request &request, QNetworkReply *netReply) = 0;
+    virtual QNetworkRequest createNetworkRequest(const Request &request, const Body &body, Operation operation);
+    virtual QNetworkReply *createNetworkReply(const QNetworkRequest &request, const Body &body, Operation operation);
 
     QScopedPointer<ApiBasePrivate> d_ptr;
+
+private:
+    const QList<PathParameter> *constPathParameters() const override;
+    QList<PathParameter> *mutablePathParameters() override;
+    const QList<QueryParameter> *constQueryParameters() const override;
+    QList<QueryParameter> *mutableQueryParameters() override;
+    const QList<Header> *constHeaders() const override;
+    QList<Header> *mutableHeaders() override;
 
     friend class ApiBasePrivate;
 };

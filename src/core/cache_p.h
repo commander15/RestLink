@@ -1,29 +1,29 @@
-#ifndef RESTLINK_APICACHE_P_H
-#define RESTLINK_APICACHE_P_H
+#ifndef RESTLINK_CACHE_P_H
+#define RESTLINK_CACHE_P_H
 
-#include "apicache.h"
+#include "cache.h"
 
 #include <QtNetwork/qnetworkdiskcache.h>
 
 namespace RestLink {
 
-class ApiCachePrivate : public QNetworkDiskCache
+class CachePrivate : public QNetworkDiskCache
 {
     Q_OBJECT
 
 public:
-    ApiCachePrivate(ApiCache *qq);
+    CachePrivate(Cache *qq);
 
     QNetworkCacheMetaData cacheMetaData(QNetworkCacheMetaData metaData) const;
     QUrl cacheUrl(QUrl url) const;
 
     static QString generateCacheDir(const QString &name);
 
-    ApiCache *q;
+    Cache *q;
 
 
 };
 
 }
 
-#endif // RESTLINK_APICACHE_P_H
+#endif // RESTLINK_CACHE_P_H

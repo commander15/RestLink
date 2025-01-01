@@ -3,9 +3,9 @@
 
 #include "api.h"
 
-#include <RestLink/apirequest.h>
+#include <RestLink/request.h>
 
-#include <RestLink/private/apibase_p.h>
+#include "apibase_p.h"
 
 namespace RestLink {
 
@@ -21,22 +21,21 @@ public:
 
     void registerNetworkManager(QNetworkAccessManager *manager);
 
-    bool hasRemoteRequest(const ApiRequest &request) const;
-    ApiRequest remoteRequest(const ApiRequest &request) const;
-    QByteArray remoteRequestData(const ApiRequest &request) const;
+    bool hasRemoteRequest(const Request &request) const;
+    Request remoteRequest(const Request &request) const;
+    QByteArray remoteRequestData(const Request &request) const;
 
     Api *q;
 
     QString name;
     QVersionNumber version;
     QUrl url;
-    QVector<ApiRequestParameter> parameters;
 
     QLocale locale;
     QString userAgent;
 
     struct RemoteRequest {
-        ApiRequest request;
+        Request request;
         QByteArray data;
     };
 

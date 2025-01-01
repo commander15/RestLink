@@ -1,6 +1,7 @@
 #include "compressionutils.h"
 
 #include <QtCore/qbytearray.h>
+#include <QtCore/qbytearraylist.h>
 
 #ifdef ZLIB_LIB
 #   include <zlib.h>
@@ -67,6 +68,17 @@ QByteArray CompressionUtils::decompressDeflate(const QByteArray &input)
 #else
     return input;
 #endif
+}
+
+QByteArrayList CompressionUtils::supportedAlgorithms()
+{
+    QByteArrayList algorithms;
+
+#ifdef ZLIB_LIB
+    algorithms << "gzip" << "deflate";
+#endif
+
+    return algorithms;
 }
 
 }
