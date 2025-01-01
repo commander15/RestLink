@@ -1,4 +1,4 @@
-set(Modules ${Qt_FIND_COMPONENTS})
+set(Modules Core ${Qt_FIND_COMPONENTS})
 
 if (RESTLINK_BUILD_QML_PLUGIN)
     list(APPEND Modules Qml)
