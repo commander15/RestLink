@@ -23,12 +23,6 @@ list(PREPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 find_package(Qt REQUIRED COMPONENTS Network)
 
-if (Qt6_VERSION VERSION_GREATER_EQUAL 6.8.0)
-    qt_policy(SET QTP0005 NEW)
-endif()
-
-qt_standard_project_setup()
-
 include(cmake/Utils.cmake)
 
 add_subdirectory(src)
