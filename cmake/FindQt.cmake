@@ -8,7 +8,8 @@ if (RESTLINK_BUILD_QML_PLUGIN)
     endif()
 endif()
 
-find_package(Qt6 CONFIG REQUIRED COMPONENTS ${Modules})
+include(CMakeFindDependencyMacro)
+find_dependency(Qt6 CONFIG REQUIRED COMPONENTS ${Modules})
 
 if (Qt6Qml_FOUND)
     qt_policy(SET QTP0001 NEW)
