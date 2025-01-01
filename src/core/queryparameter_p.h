@@ -3,7 +3,7 @@
 
 #include "queryparameter.h"
 
-#include <QtCore/qvariantlist.h>
+#include <QtCore/qvariant.h>
 
 namespace RestLink {
 
