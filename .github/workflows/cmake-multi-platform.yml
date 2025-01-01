@@ -51,7 +51,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt update
-        sudo apt install -y qt6-base-dev qt6-qmake qt6-serialport-dev zlib1g-dev
+        sudo apt install -y qt6-base-dev zlib1g-dev
 
     - name: Set up Qt6 and dependencies (Windows)
       if: runner.os == 'Windows'
