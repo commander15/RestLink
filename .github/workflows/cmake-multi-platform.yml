@@ -57,7 +57,7 @@ jobs:
       if: runner.os == 'Windows'
       run: |
         # Assuming a Windows setup for Qt is required, install Qt using the Qt installer or from Chocolatey
-        choco install qt --version 6.0.0
+        choco install -y qt6-base-dev
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
