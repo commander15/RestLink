@@ -11,7 +11,9 @@ endif()
 include(CMakeFindDependencyMacro)
 find_dependency(Qt6 CONFIG REQUIRED COMPONENTS ${Modules})
 
-qt_standard_project_setup()
+if (QT_VERSION VERSION_GREATER_EQUAL 6.6.1)
+    qt_standard_project_setup()
+endif()
 
 if (Qt6Qml_FOUND)
     qt_policy(SET QTP0001 NEW)
