@@ -197,6 +197,7 @@ void ApiBase::setNetworkManager(QNetworkAccessManager *manager)
 
 QNetworkRequest ApiBase::createNetworkRequest(const Request &req, const Body &body, Operation operation)
 {
+    // Creating the final request
     Request request = Request::merge(req, d_ptr->internalRequest);
     if (!req.endpoint().isEmpty())
         for (RequestInterceptor *interceptor : d_ptr->requestInterceptors)
@@ -205,6 +206,7 @@ QNetworkRequest ApiBase::createNetworkRequest(const Request &req, const Body &bo
     QNetworkRequest netReq;
     netReq.setOriginatingObject(this);
 
+    // Url generation
     QUrl url = this->url();
     {
         QString urlPath = url.path() + request.urlPath();
@@ -219,7 +221,11 @@ QNetworkRequest ApiBase::createNetworkRequest(const Request &req, const Body &bo
     }
     netReq.setUrl(url);
 
+
+    // User agent setting
     netReq.setHeader(QNetworkRequest::UserAgentHeader, userAgent());
+
+    // Accept headers setup
 
     netReq.setRawHeader("Accept", "*/*");
 
@@ -230,12 +236,15 @@ QNetworkRequest ApiBase::createNetworkRequest(const Request &req, const Body &bo
     }
 
     {
-        const QLocale locale = this->locale();
-        netReq.setRawHeader("Accept-Language", QStringLiteral("%1,%2;q=0.5").arg(locale.name(), locale.bcp47Name()).toUtf8());
+        const QString full = locale().name();
+        const QString slim = full.section('_', 0, 0);
+        netReq.setRawHeader("Accept-Language", QStringLiteral("%1,%2;q=0.5").arg(full, slim).toLatin1());
     }
 
+    // Make keep alive
     netReq.setRawHeader("Connection", "keep-alive");
 
+    // Cache settings
     if (true) {
         netReq.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
         netReq.setAttribute(QNetworkRequest::CacheSaveControlAttribute, true);
@@ -244,6 +253,7 @@ QNetworkRequest ApiBase::createNetworkRequest(const Request &req, const Body &bo
         netReq.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
     }
 
+    // Request headers setup
     for (const Header &header : request.headers() + body.headers()) {
         if (header.isEnabled()) {
             const QVariantList values = header.values();
@@ -313,16 +323,16 @@ QNetworkReply *ApiBase::createNetworkReply(const QNetworkRequest &request, const
         reply =  nullptr;
     }
 
-    if (body.isDevice()) {
-        QIODevice *device = body.device();
-        if (!device->parent())
-            device->setParent(reply ? static_cast<QObject *>(reply) : static_cast<QObject *>(this));
-    }
-
     if (body.isMultiPart()) {
         QHttpMultiPart *multiPart = body.multiPart();
         if (!multiPart->parent())
             multiPart->setParent(reply ? static_cast<QObject *>(reply) : static_cast<QObject *>(this));
+    }
+
+    if (body.isDevice()) {
+        QIODevice *device = body.device();
+        if (!device->parent())
+            device->setParent(reply ? static_cast<QObject *>(reply) : static_cast<QObject *>(this));
     }
 
     return reply;

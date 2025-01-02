@@ -71,8 +71,11 @@ public:
 
     QNetworkReply *networkReply() const;
 
+    static Response *create(QNetworkReply *reply, QObject *parent = nullptr);
+
 protected:
     Response(const Request &request, QNetworkReply *reply, Api *api);
+    Response(QNetworkReply *reply, QObject *parent = nullptr);
 
 public slots:
     void ignoreSslErrors();

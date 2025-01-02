@@ -89,11 +89,16 @@ namespace RestLink {
  * \param api A pointer to the Api instance that initiated the request.
  */
 Response::Response(const Request &request, QNetworkReply *reply, Api *api)
-    : QObject{api}
-    , d_ptr(new ResponsePrivate{this})
+    : Response{reply, api}
 {
     d_ptr->request = request;
+    d_ptr->api = api;
+}
 
+Response::Response(QNetworkReply *reply, QObject *parent)
+    : QObject{parent}
+    , d_ptr(new ResponsePrivate(this))
+{
     d_ptr->netReply = reply;
     d_ptr->netReply->setParent(this);
 
@@ -103,8 +108,6 @@ Response::Response(const Request &request, QNetworkReply *reply, Api *api)
     connect(reply, &QNetworkReply::sslErrors, this, &Response::sslErrorsOccured);
     connect(reply, &QNetworkReply::errorOccurred, this, &Response::networkErrorOccured);
     connect(reply, &QNetworkReply::finished, this, &Response::finished);
-
-    d_ptr->api = api;
 }
 
 void Response::ignoreSslErrors()
@@ -398,6 +401,11 @@ QString Response::networkErrorString() const
 QNetworkReply *Response::networkReply() const
 {
     return d_ptr->netReply;
+}
+
+Response *Response::create(QNetworkReply *reply, QObject *parent)
+{
+    return new Response(reply, parent);
 }
 
 ResponsePrivate::ResponsePrivate(Response *q) :

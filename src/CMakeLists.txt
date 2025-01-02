@@ -33,7 +33,11 @@ endif()
 
 find_package(ZLIB)
 
-add_subdirectory(core)
+add_subdirectory(lib)
+
+if (RESTLINK_BUILD_CLI)
+    add_subdirectory(cli)
+endif()
 
 if (RESTLINK_BUILD_QML_PLUGIN)
     add_subdirectory(import)

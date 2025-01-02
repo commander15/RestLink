@@ -235,7 +235,7 @@ void Api::configure(const QUrl &url)
     request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferNetwork);
     request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, true);
 
-    Response *reply = new Response(Request(), d->netMan()->get(request), this);
+    Response *reply = Response::create(d->netMan()->get(request), this);
     connect(reply, &Response::finished, this, [reply, this] {
         if (reply->isSuccess() && configure(reply->readJsonObject())) {
 #ifdef RESTLINK_DEBUG
