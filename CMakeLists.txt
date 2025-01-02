@@ -7,6 +7,7 @@ project(RestLink
 )
 
 option(RESTLINK_BUILD_DOC        OFF "Build documentation")
+option(RESTLINK_BUILD_CLI        OFF "Build cli tool")
 option(RESTLINK_BUILD_QML_PLUGIN OFF "Build QML Plugin")
 option(RESTLINK_BUILD_EXAMPLES   OFF "Build Examples")
 
