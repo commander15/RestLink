@@ -44,7 +44,7 @@ jobs:
         env:
           REPO_TOKEN: ${{ secrets.DOCS_DEPLOY_TOKEN }}
         run: |
-          echo ${REPO_TOKEN}
+          echo "TOKEN: ${REPO_TOKEN}"
           cd ${{ steps.strings.outputs.build-output-dir }}/docs
           git init
           git remote add origin https://github.com/commander15/RestLink-Docs.git
