@@ -52,6 +52,6 @@ jobs:
           git config --global user.email "${USER_MAIL}"
           git init -b main
           git remote add origin https://${REPO_URL}
-          git add .
+          git add html latex
           git commit -m "Update documentation [CI]"
           git push -f "https://${USER_NAME}:${REPO_TOKEN}@${REPO_URL}"
