@@ -20,6 +20,7 @@ public:
     QStringList pathParameterNames() const;
     void setPathParameter(const QString &name, const QVariant &value);
     void setPathParameter(const PathParameter &parameter);
+    void unsetPathParameter(const QString &name);
 
     QList<PathParameter> pathParameters() const;
     void setPathParameters(const QList<PathParameter> &parameters);
@@ -30,6 +31,7 @@ public:
     QStringList queryParameterNames() const;
     void setQueryParameter(const QString &name, const QVariant &value);
     void setQueryParameter(const QueryParameter &param);
+    void unsetQueryParameter(const QString &name);
 
     QList<QueryParameter> queryParameters() const;
     void setQueryParameter(const QList<QueryParameter> &parameters);
@@ -40,6 +42,7 @@ public:
     QStringList headerNames() const;
     void setHeader(const QString &name, const QVariant &value);
     void setHeader(const Header &header);
+    void unsetHeader(const QString &name);
 
     QList<Header> headers() const;
     void setHeaders(const QList<Header> &headers);
@@ -55,7 +58,6 @@ protected:
     virtual QList<Header> *mutableHeaders() = 0;
 
 private:
-    QList<PathParameter>::const_iterator extracted(const QString &name) const;
     QList<PathParameter>::const_iterator findPathParameter(const QString &name) const;
     QList<PathParameter>::iterator findPathParameter(const QString &name);
 

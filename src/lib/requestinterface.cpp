@@ -48,6 +48,13 @@ void RequestInterface::setPathParameter(const PathParameter &parameter)
     setPathParameter(parameter.name(), parameter.value());
 }
 
+void RequestInterface::unsetPathParameter(const QString &name)
+{
+    auto it = findPathParameter(name);
+    if (it != mutablePathParameters()->end())
+        mutablePathParameters()->removeAt(std::distance(mutablePathParameters()->begin(), it));
+}
+
 QList<PathParameter> RequestInterface::pathParameters() const {
     return *constPathParameters();
 }
@@ -102,6 +109,13 @@ void RequestInterface::setQueryParameter(const QueryParameter &param)
         mutableQueryParameters()->append(param);
 }
 
+void RequestInterface::unsetQueryParameter(const QString &name)
+{
+    auto it = findQueryParameter(name);
+    if (it != mutableQueryParameters()->end())
+        mutableQueryParameters()->removeAt(std::distance(mutableQueryParameters()->begin(), it));
+}
+
 QList<QueryParameter> RequestInterface::queryParameters() const
 {
     return *constQueryParameters();
@@ -153,6 +167,13 @@ void RequestInterface::setHeader(const Header &header)
         *it = header;
     else
         mutableHeaders()->append(header);
+}
+
+void RequestInterface::unsetHeader(const QString &name)
+{
+    auto it = findHeader(name);
+    if (it != mutableHeaders()->end())
+        mutableHeaders()->removeAt(std::distance(mutableHeaders()->begin(), it));
 }
 
 QList<Header> RequestInterface::headers() const
