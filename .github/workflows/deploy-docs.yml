@@ -42,13 +42,12 @@ jobs:
       # Push documentation to RestLink-Docs
       - name: Deploy to Docs Repo
         env:
-          REPO_TOKEN: ${{ secrets.DOCS_DEPLOY_TOKEN }}xx
+          REPO_TOKEN: ${{ secrets.DOCS_DEPLOY_TOKEN }}
         run: |
-          echo "TOKEN: ${REPO_TOKEN}"
           cd ${{ steps.strings.outputs.build-output-dir }}/docs
           git init
           git remote add origin https://github.com/commander15/RestLink-Docs.git
           git add .
           git commit -m "Update documentation [CI]"
           git branch -M main
-          git push -f "https://commander15:${REPO_TOKEN}@github.com/commander15/RestLink-Docs.git" main
+          git push -f "https://commander15:${REPO_TOKEN}@github.com/commander15/RestLink-Docs.git"
