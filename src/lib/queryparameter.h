@@ -62,6 +62,8 @@ private:
     QSharedDataPointer<QueryParameterData> d_ptr;
 };
 
+typedef QList<QueryParameter> QueryParameterList;
+
 } // namespace RestLink
 
 #endif // RESTLINK_QUERYPARAMETER_H

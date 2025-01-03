@@ -35,6 +35,8 @@ private:
     QVariant m_value;
 };
 
+typedef QList<PathParameter> PathParameterList;
+
 } // namespace RestLink
 
 #endif // RESTLINK_PATHPARAMETER_H
