@@ -259,7 +259,7 @@ void App::monitorResponse(Response *response)
             m_out << "HTTP " << response->httpStatusCode() << ' ' << response->httpReasonPhrase() << Qt::endl;
             const QByteArrayList headers = response->headerList();
             for (const QByteArray &header : headers) {
-                m_out << header << ": " << response->header(header) << Qt::endl;
+                m_out << header.toUpper() << ": " << response->header(header) << Qt::endl;
             }
             m_out << Qt::endl;
         }
