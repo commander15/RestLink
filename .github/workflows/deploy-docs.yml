@@ -42,7 +42,7 @@ jobs:
       # Push documentation to RestLink-Docs
       - name: Deploy to Docs Repo
         env:
-          REPO_TOKEN: ${{ secrests.DOCS_DEPLOY_TOKEN }}
+          REPO_TOKEN: ${{ secrets.DOCS_DEPLOY_TOKEN }}
         run: |
           echo ${REPO_TOKEN}
           cd ${{ steps.strings.outputs.build-output-dir }}/docs
