@@ -35,7 +35,7 @@ jobs:
           -DRESTLINK_BUILD_DOCS=TRUE
           -S ${{ github.workspace }}
   
-      - name: Build
+      - name: Generate Documentation
         # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
         run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config RELEASE --target docs
 
@@ -54,4 +54,4 @@ jobs:
           git remote add origin https://${REPO_URL}
           git add .
           git commit -m "Update documentation [CI]"
-          git push -f "https://${USER_NAME}:${REPO_TOKEN}@${REPO_URL}" --verbose
+          git push -f "https://${USER_NAME}:${REPO_TOKEN}@${REPO_URL}"
