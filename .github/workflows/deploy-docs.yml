@@ -50,4 +50,4 @@ jobs:
           git add .
           git commit -m "Update documentation [CI]"
           git branch -M main
-          git push -f "https://${REPO_TOKEN}@github.com/commander15/RestLink-Docs.git" main
+          git push -f "https://commander15:${REPO_TOKEN}@github.com/commander15/RestLink-Docs.git" main
