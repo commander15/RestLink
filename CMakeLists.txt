@@ -6,7 +6,7 @@ project(RestLink
     LANGUAGES   CXX C
 )
 
-option(RESTLINK_BUILD_DOC        OFF "Build documentation")
+option(RESTLINK_BUILD_DOCS       OFF "Build documentation")
 option(RESTLINK_BUILD_CLI        OFF "Build cli tool")
 option(RESTLINK_BUILD_QML_PLUGIN OFF "Build QML Plugin")
 option(RESTLINK_BUILD_EXAMPLES   OFF "Build Examples")
@@ -28,11 +28,11 @@ include(cmake/Utils.cmake)
 
 add_subdirectory(src)
 
-if (RESTLINK_BUILD_DOC)
-    add_subdirectory(doc)
+if (RESTLINK_BUILD_DOCS)
+    add_subdirectory(docs)
 endif()
 
-#add_subdirectory(test)
+#add_subdirectory(tests)
 
 if (RESTLINK_BUILD_EXAMPLES)
     add_subdirectory(examples)
