@@ -34,7 +34,7 @@ public:
     void unsetQueryParameter(const QString &name);
 
     QList<QueryParameter> queryParameters() const;
-    void setQueryParameter(const QList<QueryParameter> &parameters);
+    void setQueryParameters(const QList<QueryParameter> &parameters);
 
     bool hasHeader(const QString &name) const;
     Header header(const QString &name) const;

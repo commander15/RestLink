@@ -121,7 +121,7 @@ QList<QueryParameter> RequestInterface::queryParameters() const
     return *constQueryParameters();
 }
 
-void RequestInterface::setQueryParameter(const QList<QueryParameter> &parameters)
+void RequestInterface::setQueryParameters(const QList<QueryParameter> &parameters)
 {
     *mutableQueryParameters() = parameters;
 }
