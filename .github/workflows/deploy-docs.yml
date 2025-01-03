@@ -42,8 +42,9 @@ jobs:
       # Push documentation to RestLink-Docs
       - name: Deploy to Docs Repo
         env:
-          REPO_TOKEN: ${{ DOCS_DEPLOY_TOKEN }}
+          REPO_TOKEN: ${{ secrests.DOCS_DEPLOY_TOKEN }}
         run: |
+          echo ${REPO_TOKEN}
           cd ${{ steps.strings.outputs.build-output-dir }}/docs
           git init
           git remote add origin https://github.com/commander15/RestLink-Docs.git
