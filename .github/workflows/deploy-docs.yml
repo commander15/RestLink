@@ -45,7 +45,9 @@ jobs:
           REPO_TOKEN: ${{ secrets.DOCS_DEPLOY_TOKEN }}
         run: |
           cd ${{ steps.strings.outputs.build-output-dir }}/docs
-          git init -b main
+          git config --global user.email "amadoubenjamain@gmail.com"
+          git config --global user.name "commander15"
+          git init
           git remote add origin https://github.com/commander15/RestLink-Docs.git
           git add .
           git commit -m "Update documentation [CI]"
