@@ -54,4 +54,4 @@ jobs:
           git remote add origin https://${REPO_URL}
           git add .
           git commit -m "Update documentation [CI]"
-          git push -f "https://${USER_NAME}:${REPO_TOKEN}@${REPO_URL}"
+          git push -f "https://${USER_NAME}:${REPO_TOKEN}@${REPO_URL}" --verbose
