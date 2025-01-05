@@ -38,8 +38,8 @@ public:
     void addValue(const QVariant &value);
     void removeValue(const QVariant &value);
 
-    QVariantList values() const;
-    void setValues(const QVariantList &values);
+    QList<QVariant> values() const;
+    void setValues(const QList<QVariant> &values);
 
     bool hasFlag(ParameterFlag flag) const;
     ParameterFlags flags() const;

@@ -7,8 +7,11 @@
 #include <QtCore/qjsondocument.h>
 #include <QtCore/qjsonobject.h>
 #include <QtCore/qjsonarray.h>
+#include <QtCore/qmimedatabase.h>
 
 namespace RestLink {
+
+static QMimeDatabase mimeDb;
 
 File::File(const char *fileName)
     : m_fileName(fileName)
@@ -52,43 +55,43 @@ Body::Body(const File &file)
 }
 
 Body::Body(QFile *file)
-    : Body(file, file->size())
+    : Body(file, file->size(), mimeDb.mimeTypeForFile(file->fileName()).name().toLatin1())
 {
 }
 
 Body::Body(QIODevice *device, qint64 size, const QByteArray &contentType)
     : m_multiPart(nullptr)
     , m_device(device)
-    , m_type(contentType)
     , m_length(size >= 0 ? size : (device->isSequential() ? -1 : device->size()))
+{
+    if (!contentType.isEmpty())
+        m_type = contentType;
+    else
+        m_type = mimeDb.mimeTypeForData(device).name().toLatin1();
+}
+
+Body::Body(const QString &text, const QByteArray &contentType)
+    : Body(text.toUtf8(), contentType)
+{
+}
+
+Body::Body(const QByteArray &data, const QByteArray &contentType)
+    : Body(data.constData(), data.size(), contentType)
 {
 }
 
 Body::Body(const char *data, int size, const QByteArray &contentType)
     : m_multiPart(nullptr)
     , m_device(nullptr)
-    , m_data(QByteArray(data, size))
-    , m_type(contentType)
-    , m_length(size)
 {
-}
+    QByteArray bodyData(data, size);
 
-Body::Body(const QByteArray &data, const QByteArray &contentType)
-    : m_multiPart(nullptr)
-    , m_device(nullptr)
-    , m_data(data)
-    , m_type(contentType)
-    , m_length(data.size())
-{
-}
-
-Body::Body(const QString &text, const QByteArray &contentType)
-    : m_multiPart(nullptr)
-    , m_device(nullptr)
-    , m_data(text.toUtf8())
-    , m_type(contentType)
-    , m_length(text.size())
-{
+    m_data = bodyData;
+    m_length = bodyData.size();
+    if (!contentType.isEmpty())
+        m_type = contentType;
+    else
+        m_type = mimeDb.mimeTypeForData(bodyData).name().toLatin1();
 }
 
 Body::Body(const QJsonObject &object)
@@ -184,7 +187,7 @@ QByteArray Body::generateData(const QVariant &data, int type)
 QList<Header> Body::generateHeaders(const QVariant &data, int type)
 {
     if (type == -1)
-        type = data.metaType().id();
+        type = data.userType();
 
     // Generate headers based on the type of the data provided
     HeaderList headers;

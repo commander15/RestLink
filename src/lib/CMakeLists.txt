@@ -1,4 +1,4 @@
-qt_add_library(RestLink ${RestLink_LIBRARY_TYPE})
+add_library(RestLink ${RestLink_LIBRARY_TYPE})
 
 set_target_properties(RestLink PROPERTIES
     OUTPUT_NAME RestLink
@@ -25,13 +25,14 @@ configure_file(config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h @ONLY)
 
 target_headers(RestLink
     PUBLIC
+        restlink.h
         global.h config.h debug.h
         apibase.h api.h
         requestinterface.h pathparameter.h queryparameter.h
         request.h response.h
         header.h body.h
         networkmanager.h cache.h
-        jsonutils.h compressionutils.h
+        compressionutils.h
         requestinterceptor.h
     PRIVATE
         apibase_p.h api_p.h
@@ -48,12 +49,8 @@ target_sources(RestLink
         request.cpp response.cpp
         header.cpp body.cpp
         networkmanager.cpp cache.cpp
-        jsonutils.cpp compressionutils.cpp
+        compressionutils.cpp
         requestinterceptor.cpp
-)
-
-qt_extract_metatypes(RestLink
-    OUTPUT_FILES RestLink_METATYPES
 )
 
 install(TARGETS RestLink

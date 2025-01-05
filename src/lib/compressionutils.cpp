@@ -70,7 +70,7 @@ QByteArray CompressionUtils::decompressDeflate(const QByteArray &input)
 #endif
 }
 
-QByteArrayList CompressionUtils::supportedAlgorithms()
+QList<QByteArray> CompressionUtils::supportedAlgorithms()
 {
     QByteArrayList algorithms;
 

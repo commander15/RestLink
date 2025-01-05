@@ -249,7 +249,7 @@ QVariantList QueryParameterData::validateValues(const QVariantList &values)
 
 QueryParameter::ParameterFlags QueryParameterData::validateFlags(QueryParameter::ParameterFlags flags)
 {
-    if (flags.testFlags(QueryParameter::AuthenticationFlag))
+    if (flags.testFlag(QueryParameter::AuthenticationFlag))
         flags.setFlag(QueryParameter::SecretFlag);
     return flags;
 }

@@ -27,7 +27,7 @@ public:
 
     bool hasQueryParameter(const QString &name) const;
     QueryParameter queryParameter(const QString &name) const;
-    QVariantList queryParameterValues(const QString &name) const;
+    QList<QVariant> queryParameterValues(const QString &name) const;
     QStringList queryParameterNames() const;
     void setQueryParameter(const QString &name, const QVariant &value);
     void setQueryParameter(const QueryParameter &param);
@@ -38,7 +38,7 @@ public:
 
     bool hasHeader(const QString &name) const;
     Header header(const QString &name) const;
-    QVariantList headerValues(const QString &name) const;
+    QList<QVariant> headerValues(const QString &name) const;
     QStringList headerNames() const;
     void setHeader(const QString &name, const QVariant &value);
     void setHeader(const Header &header);

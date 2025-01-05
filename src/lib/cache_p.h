@@ -17,11 +17,11 @@ public:
     QNetworkCacheMetaData cacheMetaData(QNetworkCacheMetaData metaData) const;
     QUrl cacheUrl(QUrl url) const;
 
+    QIODevice *prepare(const QNetworkCacheMetaData &metaData) override;
+
     static QString generateCacheDir(const QString &name);
 
     Cache *q;
-
-
 };
 
 }

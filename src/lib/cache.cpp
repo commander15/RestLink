@@ -99,3 +99,23 @@ QString RestLink::CachePrivate::generateCacheDir(const QString &name)
     static const QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/RestLink/API/";
     return cacheDir + name;
 }
+
+QIODevice *RestLink::CachePrivate::prepare(const QNetworkCacheMetaData &metaData)
+{
+    const QNetworkCacheMetaData::RawHeaderList headers = metaData.rawHeaders();
+
+    // Check for Cache-Control: private directive
+    for (const QPair<QByteArray, QByteArray> &header : headers) {
+        if (header.first.toLower() == "cache-control") {
+            const QByteArray &value = header.second.toLower();
+            if (value.contains("private")) {
+                // Avoid caching the request if Cache-Control is private
+                return nullptr;
+            }
+        }
+    }
+
+    // Default behavior if no private directive is found
+    return QNetworkDiskCache::prepare(metaData);
+}
+

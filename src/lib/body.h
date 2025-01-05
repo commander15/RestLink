@@ -34,9 +34,9 @@ public:
     Body(const File &file);
     Body(QFile *file);
     Body(QIODevice *device, qint64 size = -1, const QByteArray &contentType = QByteArrayLiteral("text/plain"));
-    Body(const char *data, int size = -1, const QByteArray &contentType = QByteArrayLiteral("text/plain"));
-    Body(const QByteArray &data, const QByteArray &contentType = QByteArrayLiteral("text/plain"));
     Body(const QString &text, const QByteArray &contentType = QByteArrayLiteral("text/plain"));
+    Body(const QByteArray &data, const QByteArray &contentType = QByteArrayLiteral("text/plain"));
+    Body(const char *data, int size = -1, const QByteArray &contentType = QByteArrayLiteral("text/plain"));
     Body(const QJsonObject &object);
     Body(const QJsonArray &array);
     Body(const QJsonDocument &doc);

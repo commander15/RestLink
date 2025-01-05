@@ -36,7 +36,7 @@ public:
         PatchOperation,
         DeleteOperation,
 
-        UnknownOperation = 0
+        UnknownOperation = -1
     };
     Q_ENUM(Operation)
 
