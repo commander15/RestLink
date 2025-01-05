@@ -77,10 +77,10 @@ QueryParameter RequestInterface::queryParameter(const QString &name) const
     return {};
 }
 
-QVariantList RequestInterface::queryParameterValues(const QString &name) const
+QList<QVariant> RequestInterface::queryParameterValues(const QString &name) const
 {
     auto it = findQueryParameter(name);
-    return it != constQueryParameters()->cend() ? it->values() : QVariantList{};
+    return it != constQueryParameters()->cend() ? it->values() : QList<QVariant>{};
 }
 
 QStringList RequestInterface::queryParameterNames() const
@@ -138,10 +138,10 @@ Header RequestInterface::header(const QString &name) const {
     return {};
 }
 
-QVariantList RequestInterface::headerValues(const QString &name) const
+QList<QVariant> RequestInterface::headerValues(const QString &name) const
 {
     auto it = findHeader(name);
-    return it != constHeaders()->cend() ? it->values() : QVariantList{};
+    return it != constHeaders()->cend() ? it->values() : QList<QVariant>{};
 }
 
 QStringList RequestInterface::headerNames() const {

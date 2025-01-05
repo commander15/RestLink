@@ -141,7 +141,7 @@ QString ApiBase::userAgent() const
 
 QList<RequestInterceptor *> ApiBase::requestInterceptors() const
 {
-    return d_ptr->requestInterceptors;
+    return d_ptr->requestInterceptors.toList();
 }
 
 void ApiBase::addRequestInterceptor(RequestInterceptor *interceptor)
@@ -257,10 +257,16 @@ QNetworkRequest ApiBase::createNetworkRequest(const Request &req, const Body &bo
     for (const Header &header : request.headers() + body.headers()) {
         if (header.isEnabled()) {
             const QVariantList values = header.values();
-            QByteArrayList rawValues(header.values().size());
-            std::transform(values.begin(), values.end(), rawValues.begin(), [](const QVariant &value) {
+            QList<QByteArray> rawValues;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+            rawValues.reserve(values.size());
+            std::transform(values.begin(), values.end(), std::back_inserter(rawValues), [](const QVariant &value) {
                 return value.toByteArray();
             });
+#else
+            for (const QVariant &value : values)
+                rawValues.append(value.toByteArray());
+#endif
             netReq.setRawHeader(header.name().toUtf8(), rawValues.join(','));
         }
     }

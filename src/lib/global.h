@@ -15,4 +15,8 @@
 
 #define RESTLINK_D(ClassName) ClassName##Private *d = static_cast<ClassName##Private *>(qGetPtrHelper(d_ptr))
 
+class QString;
+class QByteArray;
+class QVariant;
+
 #endif // RESTLINK_GLOBAL_H
