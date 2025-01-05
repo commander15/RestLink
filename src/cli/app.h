@@ -2,6 +2,7 @@
 #define APP_H
 
 #include <QCoreApplication>
+#include <QTextStream>
 #include <QCommandLineParser>
 
 namespace RestLink {
