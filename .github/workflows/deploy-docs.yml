@@ -3,7 +3,7 @@ name: Deploy Docs to RestLink-Docs
 on:
   push:
     branches:
-      - dev
+      - main
 
 jobs:
   deploy-docs:
