@@ -53,6 +53,8 @@ target_sources(RestLink
         requestinterceptor.cpp
 )
 
+add_subdirectory(mock)
+
 install(TARGETS RestLink
     EXPORT RestLinkTargets
     ARCHIVE        DESTINATION lib
