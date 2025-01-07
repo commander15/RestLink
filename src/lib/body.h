@@ -41,7 +41,12 @@ public:
     Body(const QJsonArray &array);
     Body(const QJsonDocument &doc);
     Body(const QVariant &value, int type = -1, const QByteArray &contentType = QByteArray());
+    Body(const Body &other) = default;
+    Body(Body &&other) = default;
     ~Body();
+
+    Body &operator=(const Body &other);
+    Body &operator=(Body &&other);
 
     bool isMultiPart() const;
     QHttpMultiPart *multiPart() const;

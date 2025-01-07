@@ -5,6 +5,7 @@
 #include <RestLink/requestinterface.h>
 
 #include <QtCore/qshareddata.h>
+#include <QtCore/qmetatype.h>
 
 class QJsonObject;
 
@@ -50,5 +51,7 @@ private:
 };
 
 }
+
+Q_DECLARE_METATYPE(RestLink::Request)
 
 #endif // RESTLINK_REQUEST_H

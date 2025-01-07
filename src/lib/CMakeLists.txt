@@ -31,7 +31,7 @@ target_headers(RestLink
         requestinterface.h pathparameter.h queryparameter.h
         request.h response.h
         header.h body.h
-        networkmanager.h cache.h
+        networkmanager.h cache.h cookiejar.h
         compressionutils.h
         requestinterceptor.h
     PRIVATE
@@ -48,7 +48,7 @@ target_sources(RestLink
         requestinterface.cpp pathparameter.cpp queryparameter.cpp
         request.cpp response.cpp
         header.cpp body.cpp
-        networkmanager.cpp cache.cpp
+        networkmanager.cpp cache.cpp cookiejar.cpp
         compressionutils.cpp
         requestinterceptor.cpp
 )

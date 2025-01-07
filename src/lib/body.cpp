@@ -127,6 +127,34 @@ Body::~Body()
 {
 }
 
+Body &Body::operator=(const Body &other)
+{
+    if (this != &other) {
+        m_multiPart = other.m_multiPart;
+        m_device = other.m_device;
+        m_data = other.m_data;
+        m_type = other.m_type;
+        m_length = other.m_length;
+        m_headers = other.m_headers;
+    }
+
+    return *this;
+}
+
+Body &Body::operator=(Body &&other)
+{
+    if (this != &other) {
+        m_multiPart = std::move(other.m_multiPart);
+        m_device = std::move(other.m_device);
+        m_data = std::move(other.m_data);
+        m_type = std::move(other.m_type);
+        m_length = std::move(other.m_length);
+        m_headers = std::move(other.m_headers);
+    }
+
+    return *this;
+}
+
 bool Body::isMultiPart() const
 {
     return m_multiPart;

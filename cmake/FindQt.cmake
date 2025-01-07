@@ -6,7 +6,7 @@ endif()
 
 set(Modules ${Qt_FIND_COMPONENTS})
 
-if (RESTLINK_BUILD_QML_PLUGIN)
+if (RESTLINK_BUILD_QML)
     list(APPEND Modules Qml)
 
     if (RESTLINK_BUILD_EXAMPLES)

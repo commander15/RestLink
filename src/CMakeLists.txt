@@ -39,7 +39,7 @@ if (RESTLINK_BUILD_CLI)
     add_subdirectory(cli)
 endif()
 
-if (RESTLINK_BUILD_QML_PLUGIN)
+if (RESTLINK_BUILD_QML)
     add_subdirectory(import)
 endif()
 

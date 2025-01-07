@@ -8,7 +8,7 @@ project(RestLink
 
 option(RESTLINK_BUILD_DOCS       OFF "Build documentation")
 option(RESTLINK_BUILD_CLI        OFF "Build cli tool")
-option(RESTLINK_BUILD_QML_PLUGIN OFF "Build QML Plugin")
+option(RESTLINK_BUILD_QML        OFF "Build QML Plugin")
 option(RESTLINK_BUILD_EXAMPLES   OFF "Build Examples")
 
 set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml)
