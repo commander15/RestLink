@@ -51,6 +51,7 @@ jobs:
           git config --global user.name "${USER_NAME}"
           git config --global user.email "${USER_MAIL}"
           git clone https://${REPO_URL}
+          cp -f ${{ github.workspace }}/README.MD RestLink-Docs/
           cp -f -R docs/html docs/latex RestLink-Docs/
           cd RestLink-Docs
           git add .

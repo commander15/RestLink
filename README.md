@@ -164,6 +164,10 @@ The ApiRequest object is configured with the endpoint, api object and autoRun di
 The onFinished signal handles the API response. If the request is successful, it logs the response data; otherwise, it logs the error message.
 The Button allows triggering the API request.
 
+## Documentation
+
+The full RestLink documentation is available here: https://commander15.github.io/RestLink-Docs
+
 ## Contact
 
 For more informations or questions, please reach out to amadoubenjamain@gmail.com.

@@ -19,10 +19,9 @@ namespace RestLink {
  * \class RestLink::Api
  * \brief Represents an API interface that manages configuration, requests, and parameters.
  *
- * The Api class is used to interact with a specific API, including managing the API's name, version,
- * URL, and request parameters. It provides methods for setting and retrieving these properties,
- * as well as configuring the API using both direct URLs and JSON configuration objects. The class
- * allows for adding, removing, and managing request parameters.
+ * The Api class is responsible for creating network requests and managing
+ * response data. It supports adding parameters to requests, configuring the API from different sources,
+ * and emitting signals for configuration changes and network error events.
  *
  * \property QString Api::name
  * \brief The name of the API.
@@ -35,10 +34,6 @@ namespace RestLink {
  *
  * \property QString Api::userAgent
  * \brief The user agent string to be used in API requests.
- *
- * The Api class is responsible for creating network requests and managing
- * response data. It supports adding parameters to requests, configuring the API from different sources,
- * and emitting signals for configuration changes and network error events.
  *
  * \signal void Api::nameChanged(const QString &name)
  * \brief Emitted when the API name changes.
