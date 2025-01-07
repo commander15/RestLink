@@ -24,19 +24,16 @@ namespace RestLink {
  * as well as configuring the API using both direct URLs and JSON configuration objects. The class
  * allows for adding, removing, and managing request parameters.
  *
- * \property QString apiName
+ * \property QString Api::name
  * \brief The name of the API.
  *
- * \property int apiVersion
+ * \property QVersionNumber Api:version
  * \brief The version of the API.
  *
- * \property QUrl apiUrl
+ * \property QUrl Api:url
  * \brief The base URL of the API.
  *
- * \property int apiParameterCount
- * \brief The number of parameters associated with the API.
- *
- * \property QString userAgent
+ * \property QString Api::userAgent
  * \brief The user agent string to be used in API requests.
  *
  * The Api class is responsible for creating network requests and managing
