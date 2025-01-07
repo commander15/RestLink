@@ -24,23 +24,55 @@
 
 namespace RestLink {
 
+/**
+ * @class ApiBase
+ * @brief The ApiBase class provides methods for making HTTP requests (HEAD, GET, POST, PUT, PATCH, DELETE) and handling responses.
+ *
+ * This class encapsulates the functionality for interacting with an API by providing methods for various HTTP operations.
+ * It manages request interceptors, constructs network requests, and handles the creation of network replies and responses.
+ * The class supports asynchronous communication, allowing the user to pass callbacks for handling responses.
+ *
+ * @note This class is must not be used directly, use Api class instead.
+ *
+ * @see Request, Response, RequestInterceptor
+ */
+
 ApiBase::ApiBase(ApiBasePrivate *d, QObject *parent) :
     QObject(parent),
     d_ptr(d)
 {
 }
 
+/**
+ * @brief Destructor for ApiBase.
+ *
+ * Deletes all request interceptors that are managed by ApiBase.
+ */
 ApiBase::~ApiBase()
 {
     for (RequestInterceptor *interceptor : d_ptr->requestInterceptors)
         delete interceptor;
 }
 
+/**
+ * @brief Returns the api locale.
+ *
+ * @return QLocale representing the api locale.
+ *
+ * @note This locale is used to set ACCEPT-LANGUAGE header only, if you want to pass it to the API you are using,
+ * you must do it manually according to the used API documentation.
+ */
 QLocale ApiBase::locale() const
 {
     return QLocale::system();
 }
 
+/**
+ * @brief Makes a HEAD request and calls the provided callback upon completion.
+ *
+ * @param request The Request object to be sent.
+ * @param callback The callback function to be invoked once the request completes.
+ */
 void ApiBase::head(const Request &request, std::function<ApiRunCallback> callback)
 {
     Response *response = head(request);
@@ -48,6 +80,12 @@ void ApiBase::head(const Request &request, std::function<ApiRunCallback> callbac
     connect(response, &Response::finished, response, &QObject::deleteLater);
 }
 
+/**
+ * @brief Makes a HEAD request and returns the Response object.
+ *
+ * @param request The Request object to be sent.
+ * @return A Response object containing the result of the HEAD request.
+ */
 Response *ApiBase::head(const Request &request)
 {
     const Api::Operation operation = Api::HeadOperation;
@@ -57,6 +95,12 @@ Response *ApiBase::head(const Request &request)
     return createResponse(request, netReply);
 }
 
+/**
+ * @brief Makes a GET request and calls the provided callback upon completion.
+ *
+ * @param request The Request object to be sent.
+ * @param callback The callback function to be invoked once the request completes.
+ */
 void ApiBase::get(const Request &request, std::function<ApiRunCallback> callback)
 {
     Response *response = get(request);
@@ -64,6 +108,12 @@ void ApiBase::get(const Request &request, std::function<ApiRunCallback> callback
     connect(response, &Response::finished, response, &QObject::deleteLater);
 }
 
+/**
+ * @brief Makes a GET request and returns the Response object.
+ *
+ * @param request The Request object to be sent.
+ * @return A Response object containing the result of the GET request.
+ */
 Response *ApiBase::get(const Request &request)
 {
     const Api::Operation operation = Api::GetOperation;
@@ -73,6 +123,13 @@ Response *ApiBase::get(const Request &request)
     return createResponse(request, netReply);
 }
 
+/**
+ * @brief Makes a POST request with a body and calls the provided callback upon completion.
+ *
+ * @param request The Request object to be sent.
+ * @param body The Body object containing the data to be sent in the request.
+ * @param callback The callback function to be invoked once the request completes.
+ */
 void ApiBase::post(const Request &request, const Body &body, std::function<ApiRunCallback> callback)
 {
     Response *response = post(request, body);
@@ -80,6 +137,13 @@ void ApiBase::post(const Request &request, const Body &body, std::function<ApiRu
     connect(response, &Response::finished, response, &QObject::deleteLater);
 }
 
+/**
+ * @brief Makes a POST request with a body and returns the Response object.
+ *
+ * @param request The Request object to be sent.
+ * @param body The Body object containing the data to be sent in the request.
+ * @return A Response object containing the result of the POST request.
+ */
 Response *ApiBase::post(const Request &request, const Body &body)
 {
     const Api::Operation operation = Api::PostOperation;
@@ -88,6 +152,13 @@ Response *ApiBase::post(const Request &request, const Body &body)
     return createResponse(request, netReply);
 }
 
+/**
+ * @brief Makes a PUT request with a body and calls the provided callback upon completion.
+ *
+ * @param request The Request object to be sent.
+ * @param body The Body object containing the data to be sent in the request.
+ * @param callback The callback function to be invoked once the request completes.
+ */
 void ApiBase::put(const Request &request, const Body &body, std::function<ApiRunCallback> callback)
 {
     Response *response = put(request, body);
@@ -95,6 +166,13 @@ void ApiBase::put(const Request &request, const Body &body, std::function<ApiRun
     connect(response, &Response::finished, response, &QObject::deleteLater);
 }
 
+/**
+ * @brief Makes a PUT request with a body and returns the Response object.
+ *
+ * @param request The Request object to be sent.
+ * @param body The Body object containing the data to be sent in the request.
+ * @return A Response object containing the result of the PUT request.
+ */
 Response *ApiBase::put(const Request &request, const Body &body)
 {
     const Api::Operation operation = Api::PutOperation;
@@ -103,6 +181,13 @@ Response *ApiBase::put(const Request &request, const Body &body)
     return createResponse(request, netReply);
 }
 
+/**
+ * @brief Makes a PATCH request with a body and calls the provided callback upon completion.
+ *
+ * @param request The Request object to be sent.
+ * @param body The Body object containing the data to be sent in the request.
+ * @param callback The callback function to be invoked once the request completes.
+ */
 void ApiBase::patch(const Request &request, const Body &body, std::function<ApiRunCallback> callback)
 {
     Response *response = patch(request, body);
@@ -110,6 +195,13 @@ void ApiBase::patch(const Request &request, const Body &body, std::function<ApiR
     connect(response, &Response::finished, response, &QObject::deleteLater);
 }
 
+/**
+ * @brief Makes a PATCH request with a body and returns the Response object.
+ *
+ * @param request The Request object to be sent.
+ * @param body The Body object containing the data to be sent in the request.
+ * @return A Response object containing the result of the PATCH request.
+ */
 Response *ApiBase::patch(const Request &request, const Body &body)
 {
     const Api::Operation operation = Api::PatchOperation;
@@ -118,6 +210,12 @@ Response *ApiBase::patch(const Request &request, const Body &body)
     return createResponse(request, netReply);
 }
 
+/**
+ * @brief Makes a DELETE request and calls the provided callback upon completion.
+ *
+ * @param request The Request object to be sent.
+ * @param callback The callback function to be invoked once the request completes.
+ */
 void ApiBase::deleteResource(const Request &request, std::function<ApiRunCallback> callback)
 {
     Response *response = deleteResource(request);
@@ -125,6 +223,12 @@ void ApiBase::deleteResource(const Request &request, std::function<ApiRunCallbac
     connect(response, &Response::finished, response, &QObject::deleteLater);
 }
 
+/**
+ * @brief Makes a DELETE request and returns the Response object.
+ *
+ * @param request The Request object to be sent.
+ * @return A Response object containing the result of the DELETE request.
+ */
 Response *ApiBase::deleteResource(const Request &request)
 {
     const Api::Operation operation = Api::DeleteOperation;
@@ -134,22 +238,42 @@ Response *ApiBase::deleteResource(const Request &request)
     return createResponse(request, netReply);
 }
 
+/**
+ * @brief Returns the user agent string for the API.
+ *
+ * @return A string representing the user agent.
+ */
 QString ApiBase::userAgent() const
 {
     return QStringLiteral("libRestLink/") + QStringLiteral(RESTLINK_VERSION_STR);
 }
 
+/**
+ * @brief Returns the list of request interceptors.
+ *
+ * @return A QList of request interceptors.
+ */
 QList<RequestInterceptor *> ApiBase::requestInterceptors() const
 {
     return d_ptr->requestInterceptors.toList();
 }
 
+/**
+ * @brief Adds a request interceptor to the list.
+ *
+ * @param interceptor The interceptor to be added.
+ */
 void ApiBase::addRequestInterceptor(RequestInterceptor *interceptor)
 {
     if (!d_ptr->requestInterceptors.contains(interceptor))
         d_ptr->requestInterceptors.append(interceptor);
 }
 
+/**
+ * @brief Removes a request interceptor from the list.
+ *
+ * @param interceptor The interceptor to be removed.
+ */
 void ApiBase::removeRequestInterceptor(RequestInterceptor *interceptor)
 {
     d_ptr->requestInterceptors.removeOne(interceptor);
@@ -185,16 +309,41 @@ void ApiBase::setProxy(const QNetworkProxy &proxy)
     d_ptr->netMan()->setProxy(proxy);
 }
 
+/**
+ * @brief Returns the network manager used by the ApiBase class.
+ *
+ * This function retrieves the current instance of the QNetworkAccessManager that is used for making network requests.
+ *
+ * @return A pointer to the QNetworkAccessManager instance.
+ */
 QNetworkAccessManager *ApiBase::networkManager() const
 {
     return d_ptr->netMan();
 }
 
+/**
+ * @brief Sets the network manager for the ApiBase class.
+ *
+ * This function allows setting a custom QNetworkAccessManager instance to be used for network requests.
+ *
+ * @param manager A pointer to the QNetworkAccessManager instance to be set.
+ */
 void ApiBase::setNetworkManager(QNetworkAccessManager *manager)
 {
     d_ptr->setNetMan(manager);
 }
 
+/**
+ * @brief Creates a network request for the given parameters.
+ *
+ * This function constructs a QNetworkRequest using the provided Request, Body, and Operation parameters. It merges the provided request with internal settings, applies any request interceptors, constructs the URL with query parameters, and sets necessary headers (such as User-Agent, Accept-Encoding, and Accept-Language). It also configures cache and connection settings before returning the fully-constructed network request.
+ *
+ * @param req The request object containing information like the endpoint and headers.
+ * @param body The body of the request that contains any data or file to be sent.
+ * @param operation The operation type (e.g., GET, POST, PUT) that specifies the HTTP method.
+ *
+ * @return The fully-constructed QNetworkRequest to be used in the network request.
+ */
 QNetworkRequest ApiBase::createNetworkRequest(const Request &req, const Body &body, Operation operation)
 {
     // Creating the final request
@@ -275,6 +424,17 @@ QNetworkRequest ApiBase::createNetworkRequest(const Request &req, const Body &bo
     return netReq;
 }
 
+/**
+ * @brief Creates a network reply based on the given request, body, and operation.
+ *
+ * This function uses the provided QNetworkRequest, Body, and Operation to determine the appropriate network reply to perform the specified HTTP operation. It handles various types of body content (e.g., multipart, device, data) and returns a QNetworkReply that corresponds to the operation being executed.
+ *
+ * @param request The QNetworkRequest that defines the network request to be made.
+ * @param body The body of the request, which may contain data, files, or other content.
+ * @param operation The HTTP operation to be performed (e.g., GET, POST, PUT, PATCH, DELETE).
+ *
+ * @return A pointer to the QNetworkReply object representing the network reply for the operation.
+ */
 QNetworkReply *ApiBase::createNetworkReply(const QNetworkRequest &request, const Body &body, Operation operation)
 {
     QNetworkAccessManager *man = d_ptr->netMan();
