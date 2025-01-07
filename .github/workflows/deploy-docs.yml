@@ -51,8 +51,8 @@ jobs:
           git config --global user.name "${USER_NAME}"
           git config --global user.email "${USER_MAIL}"
           git clone https://${REPO_URL}
-          cp -f -R docs/* RestLink/
-          cd RestLink
+          cp -f -R docs/* RestLink-Docs/
+          cd RestLink-Docs
           git add html latex restlink.qch
           git commit -m "Update documentation [CI]"
           git push "https://${USER_NAME}:${REPO_TOKEN}@${REPO_URL}"
