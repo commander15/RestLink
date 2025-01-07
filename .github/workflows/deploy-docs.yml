@@ -53,7 +53,7 @@ jobs:
           git init -b main
           git remote add origin https://${REPO_URL}
           git fetch
-          git pull origin/main main
-          git add html latex
+          git pull https://${REPO_URL} main
+          git add html latex restlink.qch
           git commit -m "Update documentation [CI]"
           git push "https://${USER_NAME}:${REPO_TOKEN}@${REPO_URL}"
