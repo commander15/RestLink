@@ -17,7 +17,7 @@ jobs:
       - name: Set up Qt6 and dependencies
         run: |
           sudo apt update
-          sudo apt install -y qt6-base-dev qt6-documentation-tools doxygen
+          sudo apt install -y qt6-base-dev doxygen
 
       - name: Set reusable strings
         # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
@@ -53,6 +53,6 @@ jobs:
           git clone https://${REPO_URL}
           cp -f -R docs/* RestLink-Docs/
           cd RestLink-Docs
-          git add html latex restlink.qch
+          git add html latex
           git commit -m "Update documentation [CI]"
           git push "https://${USER_NAME}:${REPO_TOKEN}@${REPO_URL}"
