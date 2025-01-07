@@ -205,6 +205,7 @@ QNetworkRequest ApiBase::createNetworkRequest(const Request &req, const Body &bo
 
     QNetworkRequest netReq;
     netReq.setOriginatingObject(this);
+    netReq.setAttribute(QNetworkRequest::UserMax, QVariant::fromValue(request));
 
     // Url generation
     QUrl url = this->url();
