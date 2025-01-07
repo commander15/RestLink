@@ -40,25 +40,22 @@ namespace RestLink {
  * response data. It supports adding parameters to requests, configuring the API from different sources,
  * and emitting signals for configuration changes and network error events.
  *
- * \signal void apiNameChanged(const QString &name)
+ * \signal void Api::nameChanged(const QString &name)
  * \brief Emitted when the API name changes.
  *
- * \signal void apiVersionChanged(int version)
+ * \signal void Api::versionChanged(int version)
  * \brief Emitted when the API version changes.
  *
- * \signal void apiUrlChanged(const QUrl &url)
+ * \signal void Api::urlChanged(const QUrl &url)
  * \brief Emitted when the API URL changes.
  *
- * \signal void apiParametersChanged()
- * \brief Emitted when the API parameters change.
- *
- * \signal void userAgentChanged(const QString &agent)
+ * \signal void Api::userAgentChanged(const QString &agent)
  * \brief Emitted when the user agent changes.
  *
- * \signal void configurationCompleted()
+ * \signal void Api::configurationCompleted()
  * \brief Emitted when the API configuration is completed.
  *
- * \signal void configurationFailed()
+ * \signal void Api::configurationFailed()
  * \brief Emitted when the API configuration fails.
  *
  * \see ApiBase, Request, RequestParameter
