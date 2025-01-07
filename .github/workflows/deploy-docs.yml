@@ -47,13 +47,12 @@ jobs:
           REPO_URL: github.com/commander15/RestLink-Docs.git
           REPO_TOKEN: ${{ secrets.DOCS_DEPLOY_TOKEN }}
         run: |
-          cd ${{ steps.strings.outputs.build-output-dir }}/docs
+          cd ${{ steps.strings.outputs.build-output-dir }}
           git config --global user.name "${USER_NAME}"
           git config --global user.email "${USER_MAIL}"
-          git init -b main
-          git remote add origin https://${REPO_URL}
-          git fetch
-          git pull https://${REPO_URL} main
+          git clone https://${REPO_URL}
+          cp -f -R docs/* RestLink/
+          cd RestLink
           git add html latex restlink.qch
           git commit -m "Update documentation [CI]"
           git push "https://${USER_NAME}:${REPO_TOKEN}@${REPO_URL}"
