@@ -196,6 +196,20 @@ void App::run()
         monitorResponse(response);
         return;
     }
+
+    if (m_parser.isSet(PATCH_OPTION)) {
+        Request request = makeRequest(PATCH_OPTION);
+        Response *response = m_api->patch(request, makeBody());
+        monitorResponse(response);
+        return;
+    }
+
+    if (m_parser.isSet(DELETE_OPTION)) {
+        Request request = makeRequest(DELETE_OPTION);
+        Response *response = m_api->deleteResource(request);
+        monitorResponse(response);
+        return;
+    }
 }
 
 Request App::makeRequest(const QString &option)
