@@ -171,7 +171,7 @@ void App::run()
 {
     if (m_parser.isSet(HEAD_OPTION)) {
         Request request = makeRequest(HEAD_OPTION);
-        Response *response = m_api->get(request);
+        Response *response = m_api->head(request);
         monitorResponse(response);
         return;
     }
