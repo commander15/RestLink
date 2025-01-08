@@ -250,6 +250,14 @@ Request App::makeRequest(const QString &option)
 
 Body App::makeBody()
 {
+    if (m_parser.isSet(DATA_OPTION)) {
+        return Body(m_parser.value(DATA_OPTION));
+    }
+
+    if (m_parser.isSet(JSON_OPTION)) {
+        return Body(m_parser.value(JSON_OPTION), QByteArrayLiteral("application/json"));
+    }
+
     return Body();
 }
 
