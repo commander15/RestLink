@@ -6,6 +6,10 @@ endif()
 
 set(Modules ${Qt_FIND_COMPONENTS})
 
+if (RESTLINK_SUPPORT_SQL)
+    list(APPEND Modules Sql)
+endif()
+
 if (RESTLINK_BUILD_QML)
     list(APPEND Modules Qml)
 

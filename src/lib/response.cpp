@@ -2,7 +2,8 @@
 #include "response_p.h"
 
 #include <RestLink/debug.h>
-#include <RestLink/compressionutils.h>
+#include <RestLink/private/httputils.h>
+#include <RestLink/private/networkresponse_p.h>
 
 #include <QtNetwork/qnetworkaccessmanager.h>
 #include <QtNetwork/qnetworkreply.h>
@@ -84,47 +85,11 @@ namespace RestLink {
  * \brief Emitted when a network error occurs during the request.
  */
 
-/*!
- * \brief Protected constructor for Response.
- * \param api A pointer to the Api instance that initiated the request.
- */
-Response::Response(const Request &request, QNetworkReply *reply, Api *api)
-    : Response{reply, api}
+Response::Response(ResponsePrivate *d, Api *api)
+    : QObject(api)
+    , d_ptr(d)
 {
-    d_ptr->request = request;
     d_ptr->api = api;
-}
-
-Response::Response(QNetworkReply *reply, QObject *parent)
-    : QObject{parent}
-    , d_ptr(new ResponsePrivate(this))
-{
-    d_ptr->netReply = reply;
-    d_ptr->netReply->setParent(this);
-
-    connect(reply, &QNetworkReply::readyRead, this, &Response::readyRead);
-    connect(reply, &QNetworkReply::downloadProgress, this, &Response::downloadProgress);
-    connect(reply, &QNetworkReply::uploadProgress, this, &Response::uploadProgress);
-    connect(reply, &QNetworkReply::sslErrors, this, &Response::sslErrorsOccured);
-    connect(reply, &QNetworkReply::errorOccurred, this, &Response::networkErrorOccured);
-    connect(reply, &QNetworkReply::finished, this, &Response::finished);
-}
-
-void Response::ignoreSslErrors()
-{
-    d_ptr->netReply->ignoreSslErrors();
-}
-
-void Response::abort()
-{
-    d_ptr->netReply->abort();
-}
-
-QByteArray Response::body()
-{
-    if (d_ptr->netReply->bytesAvailable() > 0)
-        d_ptr->body.append(readBody());
-    return d_ptr->body;
 }
 
 /*!
@@ -155,31 +120,10 @@ Request Response::request() const
 }
 
 /*!
+ * \fn Response::operation
  * \brief Retrieves the HTTP operation type for this response.
  * \return The HTTP operation as an Api::Operation.
  */
-ApiBase::Operation Response::operation() const
-{
-    switch (d_ptr->netReply->operation()) {
-    case QNetworkAccessManager::GetOperation:
-        return Api::GetOperation;
-
-    case QNetworkAccessManager::PostOperation:
-        return Api::PostOperation;
-
-    case QNetworkAccessManager::PutOperation:
-        return Api::PutOperation;
-
-    case QNetworkAccessManager::DeleteOperation:
-        return Api::DeleteOperation;
-
-    case QNetworkAccessManager::CustomOperation:
-        return Api::PatchOperation;
-
-    default:
-        return Api::UnknownOperation;
-    }
-}
 
 /*!
  * \brief Retrieves the API instance associated with this response.
@@ -196,48 +140,32 @@ Api *Response::api() const
  */
 QUrl Response::url() const
 {
-    return d_ptr->netReply->request().url();
+    return networkRequest().url();
 }
 
 /*!
+ * \fn Response::networkRequest
  * \brief Retrieves the network request used in this response.
  * \return The QNetworkRequest object.
  */
-QNetworkRequest Response::networkRequest() const
-{
-    return d_ptr->netReply->request();
-}
 
 /*!
+ * \fn Response::isRunning
  * \brief Checks if the request is currently running.
  * \return \c true if the request is running, otherwise \c false.
  */
-bool Response::isRunning() const
-{
-    return d_ptr->netReply->isRunning();
-}
 
 /*!
+ * \fn Response::isFinished
  * \brief Checks if the request has finished processing.
  * \return \c true if the request is finished, otherwise \c false.
  */
-bool Response::isFinished() const
-{
-    return d_ptr->netReply->isFinished();
-}
 
 /*!
+ * \fn Response::isSuccess
  * \brief Checks if the request was successful.
  * \return \c true if the request was successful, otherwise \c false.
  */
-bool Response::isSuccess() const
-{
-    const QUrl url = d_ptr->netReply->url();
-    if (url.scheme().contains("http"))
-        return isHttpStatusSuccess();
-    else
-        return !hasNetworkError();
-}
 
 /*!
  * \brief Checks if the HTTP status code indicates success.
@@ -245,8 +173,13 @@ bool Response::isSuccess() const
  */
 bool Response::isHttpStatusSuccess() const
 {
-    const int code = httpStatusCode();
-    return (code >= 200 && code <= 299);
+    const QUrl url = this->url();
+    if (url.scheme().startsWith("http")) {
+        const int code = httpStatusCode();
+        return (code >= 200 && code <= 299);
+    } else {
+        return !hasNetworkError();
+    }
 }
 
 /*!
@@ -256,26 +189,25 @@ bool Response::isHttpStatusSuccess() const
 bool Response::hasHttpStatusCode() const
 {
     const int code = httpStatusCode();
-    return code >= 100 && code <= 500;
+    return code >= 100 && code <= 599;
+}
+
+QString Response::httpReasonPhrase() const
+{
+    return HttpUtils::reasonPhrase(httpStatusCode());
 }
 
 /*!
+ * \fn Response::httpStatusCode
  * \brief Retrieves the HTTP status code of the response.
  * \return The HTTP status code.
  */
-int Response::httpStatusCode() const
-{
-    return d_ptr->netReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-}
 
 /*!
+ * \fn Response::httpReasonPhrase
  * \brief Retrieves the HTTP reason phrase of the response.
  * \return The HTTP reason phrase as a QString.
  */
-QString Response::httpReasonPhrase() const
-{
-    return d_ptr->netReply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
-}
 
 /*!
  * \brief Checks if the response contains a specific header.
@@ -284,27 +216,21 @@ QString Response::httpReasonPhrase() const
  */
 bool Response::hasHeader(const QByteArray &name) const
 {
-    return d_ptr->netReply->hasRawHeader(name);
+    return headerList().contains(name);
 }
 
 /*!
+ * \fn Response::header
  * \brief Retrieves the value of a specific header.
  * \param header The name of the header to retrieve.
  * \return The header value as a QByteArray.
  */
-QByteArray Response::header(const QByteArray &header) const
-{
-    return d_ptr->netReply->rawHeader(header);
-}
 
 /*!
+ * \fn Response::headerList
  * \brief Retrieves a list of all headers in the response.
  * \return A QByteArrayList containing the header names.
  */
-QByteArrayList Response::headerList() const
-{
-    return d_ptr->netReply->rawHeaderList();
-}
 
 /*!
  * \brief Reads the response body as a JSON object.
@@ -352,29 +278,16 @@ QString Response::readString()
 }
 
 /*!
+ * \fn Response::readBody
  * \brief Reads the raw response body as a QByteArray.
  * \return The response body as a QByteArray.
  */
-QByteArray Response::readBody()
-{
-    if (d_ptr->netReply->bytesAvailable() > 0) {
-        const QByteArray data = d_ptr->netReply->readAll();
-        if (d_ptr->netReply->hasRawHeader("Content-Encoding"))
-            return CompressionUtils::decompress(data, d_ptr->netReply->rawHeader("Content-Encoding"));
-        else
-            return data;
-    } else
-        return QByteArray();
-}
 
 /*!
+ * \fn Response::hasNetworkError
  * \brief Checks if a network error occurred during the request.
  * \return \c true if a network error occurred, otherwise \c false.
  */
-bool Response::hasNetworkError() const
-{
-    return d_ptr->netReply->error() != QNetworkReply::NoError;
-}
 
 /*!
  * \brief Retrieves the network error code.
@@ -382,7 +295,8 @@ bool Response::hasNetworkError() const
  */
 int Response::networkError() const
 {
-    return d_ptr->netReply->error();
+    const QNetworkReply *reply = networkReply();
+    return (reply ? reply->error() : QNetworkReply::NoError);
 }
 
 /*!
@@ -391,27 +305,45 @@ int Response::networkError() const
  */
 QString Response::networkErrorString() const
 {
-    return d_ptr->netReply->errorString();
+    const QNetworkReply *reply = networkReply();
+    return (reply ? reply->errorString() : QString());
 }
 
 /*!
+ * \fn Response::networkReply
  * \brief Retrieves the QNetworkReply instance associated with this response.
  * \return A pointer to the QNetworkReply.
  */
-QNetworkReply *Response::networkReply() const
-{
-    return d_ptr->netReply;
-}
 
 Response *Response::create(QNetworkReply *reply, QObject *parent)
 {
-    return new Response(reply, parent);
+    NetworkResponse *response = new NetworkResponse(nullptr);
+    response->setReply(reply);
+    response->setParent(parent);
+    return response;
 }
 
-ResponsePrivate::ResponsePrivate(Response *q) :
-    q_ptr(q),
-    api(nullptr),
-    netReply(nullptr)
+void Response::setRequest(const Request &request)
+{
+    d_ptr->request = request;
+}
+
+QByteArray Response::body()
+{
+    d_ptr->body.append(readBody());
+    return d_ptr->body;
+}
+
+void Response::ignoreSslErrors()
+{
+    QNetworkReply *reply = networkReply();
+    if (reply)
+        reply->ignoreSslErrors();
+}
+
+ResponsePrivate::ResponsePrivate(Response *q)
+    : q_ptr(q)
+    , api(nullptr)
 {
 }
 

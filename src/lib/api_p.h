@@ -19,8 +19,6 @@ public:
 
     ApiPrivate(Api *qq);
 
-    void registerNetworkManager(QNetworkAccessManager *manager);
-
     bool hasRemoteRequest(const Request &request) const;
     Request remoteRequest(const Request &request) const;
     QByteArray remoteRequestData(const Request &request) const;

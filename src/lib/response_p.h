@@ -16,9 +16,7 @@ public:
 
     Request request;
     Api *api;
-
     QByteArray body;
-    QNetworkReply *netReply;
 };
 
 }
