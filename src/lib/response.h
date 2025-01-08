@@ -1,5 +1,5 @@
-#ifndef RESPONSE_H
-#define RESPONSE_H
+#ifndef RESTLINK_RESPONSE_H
+#define RESTLINK_RESPONSE_H
 
 #include <RestLink/global.h>
 #include <RestLink/api.h>
@@ -17,6 +17,7 @@ namespace RestLink {
 class Request;
 
 class ResponsePrivate;
+class NetworkResponsePrivate;
 class RESTLINK_EXPORT Response : public QObject
 {
     Q_OBJECT
@@ -34,52 +35,59 @@ class RESTLINK_EXPORT Response : public QObject
     Q_PROPERTY(QByteArray body READ body NOTIFY finished)
 
 public:
-    ~Response();
+    virtual ~Response();
 
     QString endpoint() const;
     Request request() const;
 
-    Api::Operation operation() const;
+    virtual Api::Operation operation() const = 0;
     Api *api() const;
 
     QUrl url() const;
-    QNetworkRequest networkRequest() const;
+    virtual QNetworkRequest networkRequest() const = 0;
 
-    bool isRunning() const;
-    bool isFinished() const;
+    inline bool isRunning() const
+    { return !isFinished(); }
+    virtual bool isFinished() const = 0;
 
-    bool isSuccess() const;
+    inline bool isSuccess() const
+    { return !hasNetworkError() && isHttpStatusSuccess(); }
 
     bool isHttpStatusSuccess() const;
     bool hasHttpStatusCode() const;
-    int httpStatusCode() const;
-    QString httpReasonPhrase() const;
+    virtual int httpStatusCode() const = 0;
+    virtual QString httpReasonPhrase() const;
 
-    bool hasHeader(const QByteArray &name) const;
-    Q_INVOKABLE QByteArray header(const QByteArray &header) const;
-    QByteArrayList headerList() const;
+    virtual bool hasHeader(const QByteArray &name) const;
+    Q_INVOKABLE virtual QByteArray header(const QByteArray &name) const = 0;
+    virtual QByteArrayList headerList() const = 0;
 
     QJsonObject readJsonObject(QJsonParseError *error = nullptr);
     QJsonArray readJsonArray(QJsonParseError *error = nullptr);
-    QJsonValue readJson(QJsonParseError *error = nullptr);
+    virtual QJsonValue readJson(QJsonParseError *error = nullptr);
     QString readString();
-    Q_INVOKABLE QByteArray readBody();
+    Q_INVOKABLE virtual QByteArray readBody() = 0;
 
-    bool hasNetworkError() const;
-    int networkError() const;
-    QString networkErrorString() const;
+    inline bool hasNetworkError() const { return networkError() != 0; }
+    virtual int networkError() const;
+    virtual QString networkErrorString() const;
 
-    QNetworkReply *networkReply() const;
+    virtual QNetworkReply *networkReply() const = 0;
 
     static Response *create(QNetworkReply *reply, QObject *parent = nullptr);
 
 protected:
-    Response(const Request &request, QNetworkReply *reply, Api *api);
-    Response(QNetworkReply *reply, QObject *parent = nullptr);
+    Response(ResponsePrivate *d, Api *api);
+
+    void setRequest(const Request &request);
+
+    QByteArray body();
+
+    QScopedPointer<ResponsePrivate> d_ptr;
 
 public slots:
-    void ignoreSslErrors();
-    void abort();
+    virtual void ignoreSslErrors();
+    virtual void abort() = 0;
 
 signals:
     void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
@@ -90,14 +98,9 @@ signals:
 
     void sslErrorsOccured(const QList<QSslError> &errors);
 
-private:
-    QByteArray body();
-
-    QScopedPointer<ResponsePrivate> d_ptr;
-
-    friend class Api;
+    friend class NetworkManager;
 };
 
 }
 
-#endif // RESPONSE_H
+#endif // RESTLINK_RESPONSE_H

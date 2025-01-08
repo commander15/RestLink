@@ -53,6 +53,13 @@ target_sources(RestLink
         requestinterceptor.cpp
 )
 
+add_subdirectory(network)
+add_subdirectory(thread)
+
+if (RESTLINK_SUPPORT_SQL)
+    add_subdirectory(sql)
+endif()
+
 install(TARGETS RestLink
     EXPORT RestLinkTargets
     ARCHIVE        DESTINATION lib

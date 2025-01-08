@@ -5,6 +5,7 @@
 #include <RestLink/debug.h>
 #include <RestLink/request.h>
 #include <RestLink/response.h>
+#include <RestLink/networkmanager.h>
 
 #include <QtNetwork/qnetworkrequest.h>
 #include <QtNetwork/qnetworkreply.h>
@@ -217,14 +218,14 @@ void Api::configure(const QUrl &url)
 {
     RESTLINK_D(Api);
 
-    QNetworkRequest request = createNetworkRequest(Request(), Body(), GetOperation);
+    QNetworkRequest request = d_ptr->netMan()->createNetworkRequest(GetOperation, Request(), Body(), this);
     request.setUrl(url);
     request.setPriority(QNetworkRequest::HighPriority);
     request.setTransferTimeout(3000);
     request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferNetwork);
     request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, true);
 
-    Response *reply = Response::create(d->netMan()->get(request), this);
+    Response *reply = Response::create(static_cast<QNetworkAccessManager *>(d->netMan())->get(request), this);
     connect(reply, &Response::finished, this, [reply, this] {
         if (reply->isSuccess() && configure(reply->readJsonObject())) {
 #ifdef RESTLINK_DEBUG
@@ -302,27 +303,14 @@ bool Api::configure(const QJsonObject &config)
     return true;
 }
 
-Response *Api::createResponse(const Request &request, QNetworkReply *netReply)
-{
-    Response *response = new Response(request, netReply, this);
-
-#ifdef RESTLINK_DEBUG
-    restlinkInfo() << d_ptr->httpVerbFromOperation(response->operation())
-                   << ' ' << response->url().toString(QUrl::DecodeReserved);
-#endif
-
-    return response;
-}
-
-QNetworkRequest Api::createNetworkRequest(const Request &request, const Body &body, Operation operation)
+Response *Api::send(Operation operation, const Request &request, const Body &body)
 {
     RESTLINK_D(Api);
-    if (d->hasRemoteRequest(request)) {
-        Request preprocessed = Request::merge(request, d->remoteRequest(request));
-        return ApiBase::createNetworkRequest(preprocessed, body, operation);
-    } else {
-        return ApiBase::createNetworkRequest(request, body, operation);
-    }
+
+    if (d->hasRemoteRequest(request))
+        return ApiBase::send(operation, Request::merge(request, d->remoteRequest(request)), body);
+    else
+        return ApiBase::send(operation, request, body);
 }
 
 ApiPrivate::ApiPrivate(Api *qq) :
@@ -333,11 +321,6 @@ ApiPrivate::ApiPrivate(Api *qq) :
 {
     if (!QSslSocket::supportsSsl())
         restlinkWarning() << "SSL support disabled, seem that relevant libraries are missing";
-}
-
-void ApiPrivate::registerNetworkManager(QNetworkAccessManager *manager)
-{
-    //QObject::connect(manager, &QNetworkAccessManager::sslErrors, q, &Api::processSslErrors);
 }
 
 bool ApiPrivate::hasRemoteRequest(const Request &request) const

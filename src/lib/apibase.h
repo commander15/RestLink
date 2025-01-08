@@ -6,19 +6,13 @@
 
 #include <QtCore/qobject.h>
 
-class QAbstractNetworkCache;
-class QNetworkCookieJar;
-class QNetworkProxy;
-class QNetworkAccessManager;
-class QNetworkRequest;
-class QNetworkReply;
-
 namespace RestLink {
 
 class Request;
 class Body;
 class Response;
 class RequestInterceptor;
+class NetworkManager;
 
 typedef void(ApiRunCallback)(Response *);
 
@@ -70,24 +64,13 @@ public:
     void addRequestInterceptor(RequestInterceptor *interceptor);
     void removeRequestInterceptor(RequestInterceptor *interceptor);
 
-    QAbstractNetworkCache *cache() const;
-    void setCache(QAbstractNetworkCache *cache);
-
-    QNetworkCookieJar *cookieJar() const;
-    void setCookieJar(QNetworkCookieJar *jar);
-
-    QNetworkProxy proxy() const;
-    void setProxy(const QNetworkProxy &proxy);
-
-    QNetworkAccessManager *networkManager() const;
-    void setNetworkManager(QNetworkAccessManager *manager);
+    NetworkManager *networkManager() const;
+    void setNetworkManager(NetworkManager *manager);
 
 protected:
     ApiBase(ApiBasePrivate *d, QObject *parent);
 
-    virtual Response *createResponse(const Request &request, QNetworkReply *netReply) = 0;
-    virtual QNetworkRequest createNetworkRequest(const Request &request, const Body &body, Operation operation);
-    virtual QNetworkReply *createNetworkReply(const QNetworkRequest &request, const Body &body, Operation operation);
+    virtual Response *send(Operation operation, const Request &request, const Body &body);
 
     QScopedPointer<ApiBasePrivate> d_ptr;
 

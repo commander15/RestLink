@@ -50,8 +50,7 @@ public:
     Q_SIGNAL void configurationFailed();
 
 protected:
-    Response *createResponse(const Request &request, QNetworkReply *netReply) override;
-    QNetworkRequest createNetworkRequest(const Request &request, const Body &body, Operation operation) override;
+    Response *send(Operation operation, const Request &request, const Body &body) override;
 
     friend class ApiPrivate;
 };

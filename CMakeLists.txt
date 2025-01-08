@@ -6,10 +6,11 @@ project(RestLink
     LANGUAGES   CXX C
 )
 
-option(RESTLINK_BUILD_DOCS       OFF "Build documentation")
-option(RESTLINK_BUILD_CLI        OFF "Build cli tool")
-option(RESTLINK_BUILD_QML        OFF "Build QML Plugin")
-option(RESTLINK_BUILD_EXAMPLES   OFF "Build Examples")
+option(RESTLINK_SUPPORT_SQL    OFF "Enable SQL support")
+option(RESTLINK_BUILD_DOCS     OFF "Build documentation")
+option(RESTLINK_BUILD_CLI      OFF "Build cli tool")
+option(RESTLINK_BUILD_QML      OFF "Build QML Plugin")
+option(RESTLINK_BUILD_EXAMPLES OFF "Build Examples")
 
 set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml)
 

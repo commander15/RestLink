@@ -15,8 +15,8 @@ class ApiBasePrivate
 public:
     ApiBasePrivate(ApiBase *q);
 
-    QNetworkAccessManager *netMan() const;
-    void setNetMan(QNetworkAccessManager *man);
+    NetworkManager *netMan() const;
+    void setNetMan(NetworkManager *man);
 
     static QByteArray httpVerbFromOperation(int op);
 
@@ -26,7 +26,7 @@ public:
     QVector<RequestInterceptor *> requestInterceptors;
 
 private:
-    mutable QNetworkAccessManager *m_netMan;
+    mutable NetworkManager *m_netMan;
 };
 
 }
