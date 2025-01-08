@@ -169,6 +169,13 @@ void App::setApi(RestLink::Api *api)
 
 void App::run()
 {
+    if (m_parser.isSet(HEAD_OPTION)) {
+        Request request = makeRequest(HEAD_OPTION);
+        Response *response = m_api->get(request);
+        monitorResponse(response);
+        return;
+    }
+
     if (m_parser.isSet(GET_OPTION)) {
         Request request = makeRequest(GET_OPTION);
         Response *response = m_api->get(request);
