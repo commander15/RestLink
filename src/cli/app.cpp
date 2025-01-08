@@ -189,6 +189,13 @@ void App::run()
         monitorResponse(response);
         return;
     }
+
+    if (m_parser.isSet(PUT_OPTION)) {
+        Request request = makeRequest(PUT_OPTION);
+        Response *response = m_api->put(request, makeBody());
+        monitorResponse(response);
+        return;
+    }
 }
 
 Request App::makeRequest(const QString &option)
