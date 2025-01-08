@@ -220,9 +220,9 @@ void App::run()
         "Come on, you can do better than that!",
         "HTTP methods: HEAD, GET, POST, PUT, PATCH, DELETE... Easy, right?",
     };
-
     m_out << responses[random() % responses.size()] << Qt::endl;
 
+    quit();
 }
 
 Request App::makeRequest(const QString &option)
