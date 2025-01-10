@@ -14,6 +14,9 @@ class RESTLINK_EXPORT SqlUtils
 public:
     static QJsonObject recordToJsonObject(const QSqlRecord &record);
     static QSqlRecord jsonObjectToRecord(const QJsonObject &object);
+
+    static QString formatValue(const QVariant &value);
+    static QStringList formatValues(const QVariantList &values);
 };
 
 }

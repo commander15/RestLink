@@ -2,7 +2,7 @@
 #include "response_p.h"
 
 #include <RestLink/debug.h>
-#include <RestLink/private/httputils.h>
+#include <RestLink/httputils.h>
 #include <RestLink/private/networkresponse_p.h>
 
 #include <QtNetwork/qnetworkaccessmanager.h>

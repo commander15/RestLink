@@ -7,7 +7,6 @@
 #include <RestLink/response.h>
 #include <RestLink/requestinterceptor.h>
 #include <RestLink/networkmanager.h>
-
 #include <RestLink/private/request_p.h>
 
 namespace RestLink {
@@ -20,7 +19,7 @@ namespace RestLink {
  * It manages request interceptors, constructs network requests, and handles the creation of network replies and responses.
  * The class supports asynchronous communication, allowing the user to pass callbacks for handling responses.
  *
- * @note This class is must not be used directly, use Api class instead.
+ * @note This class must not be used directly, use Api class instead.
  *
  * @see Request, Response, RequestInterceptor
  */
@@ -255,7 +254,7 @@ void ApiBase::removeRequestInterceptor(RequestInterceptor *interceptor)
  */
 NetworkManager *ApiBase::networkManager() const
 {
-    return d_ptr->netMan();
+    return d_ptr->networkManager();
 }
 
 /**
@@ -267,7 +266,7 @@ NetworkManager *ApiBase::networkManager() const
  */
 void ApiBase::setNetworkManager(NetworkManager *manager)
 {
-    d_ptr->setNetMan(manager);
+    d_ptr->setNetworkManager(manager);
 }
 
 Response *ApiBase::send(Operation operation, const Request &request, const Body &body)
@@ -280,7 +279,7 @@ Response *ApiBase::send(Operation operation, const Request &request, const Body 
         finalRequest = interceptor->intercept(finalRequest, body, operation);
 
     // Sending request and returning response
-    return d_ptr->netMan()->send(operation, finalRequest, body, this);
+    return d_ptr->networkManager()->send(operation, finalRequest, body, this);
 }
 
 const QList<PathParameter> *ApiBase::constPathParameters() const
@@ -315,20 +314,20 @@ QList<Header> *ApiBase::mutableHeaders()
 
 ApiBasePrivate::ApiBasePrivate(ApiBase *q) :
     q_ptr(q),
-    m_netMan(nullptr)
+    m_networkManager(nullptr)
 {
 }
 
-NetworkManager *ApiBasePrivate::netMan() const
+NetworkManager *ApiBasePrivate::networkManager() const
 {
-    if (!m_netMan)
-        m_netMan = new NetworkManager(q_ptr);
-    return m_netMan;
+    if (!m_networkManager)
+        m_networkManager = new NetworkManager(q_ptr);
+    return m_networkManager;
 }
 
-void ApiBasePrivate::setNetMan(NetworkManager *man)
+void ApiBasePrivate::setNetworkManager(NetworkManager *manager)
 {
-    m_netMan = man;
+    m_networkManager = manager;
 }
 
 QByteArray ApiBasePrivate::httpVerbFromOperation(int op)

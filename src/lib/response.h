@@ -98,7 +98,7 @@ signals:
 
     void sslErrorsOccured(const QList<QSslError> &errors);
 
-    friend class NetworkManager;
+    friend class RequestHandler;
 };
 
 }

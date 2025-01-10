@@ -35,4 +35,16 @@ QSqlRecord SqlUtils::jsonObjectToRecord(const QJsonObject &object)
     return record;
 }
 
+QString SqlUtils::formatValue(const QVariant &value)
+{
+    return value.toString();
+}
+
+QStringList SqlUtils::formatValues(const QVariantList &values)
+{
+    QStringList strings(values.size());
+    std::transform(values.begin(), values.end(), strings.begin(), &formatValue);
+    return strings;
+}
+
 }

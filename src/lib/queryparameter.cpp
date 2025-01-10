@@ -71,7 +71,7 @@ void QueryParameter::setName(const QString &name)
  */
 QVariant QueryParameter::value() const
 {
-    return (!d_ptr->values.isEmpty() ? d_ptr->values : QVariant());
+    return (!d_ptr->values.isEmpty() ? d_ptr->values.constFirst() : QVariant());
 }
 
 /*!

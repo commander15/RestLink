@@ -8,15 +8,13 @@
 
 namespace RestLink {
 
-class ApiReply;
-
 class ApiBasePrivate
 {
 public:
     ApiBasePrivate(ApiBase *q);
 
-    NetworkManager *netMan() const;
-    void setNetMan(NetworkManager *man);
+    NetworkManager *networkManager() const;
+    void setNetworkManager(NetworkManager *manager);
 
     static QByteArray httpVerbFromOperation(int op);
 
@@ -26,7 +24,7 @@ public:
     QVector<RequestInterceptor *> requestInterceptors;
 
 private:
-    mutable NetworkManager *m_netMan;
+    mutable NetworkManager *m_networkManager;
 };
 
 }

@@ -1,18 +1,17 @@
-#ifndef RESTLINK_INTERNALRESPONSE_H
-#define RESTLINK_INTERNALRESPONSE_H
+#ifndef RESTLINK_SERVERRESPONSE_H
+#define RESTLINK_SERVERRESPONSE_H
 
 #include <RestLink/global.h>
 #include <RestLink/response.h>
 
 namespace RestLink {
 
-class InternalResponsePrivate;
-class RESTLINK_EXPORT InternalResponse : public Response
+class RESTLINK_EXPORT ServerResponse : public RestLink::Response
 {
     Q_OBJECT
 
 public:
-    virtual ~InternalResponse();
+    explicit ServerResponse(Api *api);
 
     Api::Operation operation() const override;
     void setOperation(Api::Operation operation);
@@ -27,10 +26,8 @@ public:
     QByteArrayList headerList() const override;
     void setHeaders(const QList<Header> &headers);
 
-    QJsonValue readJson(QJsonParseError *error) override;
     QByteArray readBody() override;
-    void setData(const QJsonValue &data);
-    void setData(const QByteArray &data);
+    void setBody(const Body &body);
 
     QNetworkRequest networkRequest() const override;
     void setNetworkRequest(const QNetworkRequest &request);
@@ -44,11 +41,8 @@ public slots:
 
     void ignoreSslErrors() override;
     void abort() override;
-
-protected:
-    InternalResponse(InternalResponsePrivate *d, Api *api);
 };
 
 } // namespace RestLink
 
-#endif // RESTLINK_INTERNALRESPONSE_H
+#endif // RESTLINK_SERVERRESPONSE_H
