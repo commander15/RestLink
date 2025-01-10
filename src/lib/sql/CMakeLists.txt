@@ -1,16 +1,14 @@
 target_headers(RestLink
     PUBLIC
-        sqlresponse.h
-    PRIVATE
-        sqlhandler.h sqlhandler_p.h
-        sqlresponse_p.h
+        sqlserver.h
         sqlutils.h
+    PRIVATE
+        sqlserver_p.h
 )
 
 target_sources(RestLink
     PRIVATE
-        sqlhandler.cpp
-        sqlresponse.cpp
+        sqlserver.cpp
         sqlutils.cpp
 )
 

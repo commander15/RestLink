@@ -12,12 +12,10 @@
 #include <RestLink/compressionutils.h>
 
 #ifdef RESTLINK_SQL
-#   include <RestLink/private/sqlhandler.h>
+#   include <RestLink/sqlserver.h>
 #endif
 
 #include <QtCore/qcoreapplication.h>
-#include <QtCore/qurl.h>
-#include <QtCore/qurlquery.h>
 
 #include <QtNetwork/qhttpmultipart.h>
 #include <QtNetwork/qnetworkreply.h>
@@ -50,105 +48,55 @@ NetworkManager::NetworkManager(QObject *parent)
     setCache(new Cache(this));
     setCookieJar(new CookieJar(this));
 
-    initHandlers();
+#ifdef RESTLINK_SQL
+    SqlServer *sqlServer = new SqlServer(this);
+    sqlServer->listen();
+    m_handlers.append(sqlServer);
+#endif
 }
 
-Response *NetworkManager::head(const Request &request, Api *api)
-{
-    return send(Api::HeadOperation, request, Body(), api);
-}
-
-Response *NetworkManager::get(const Request &request, Api *api)
-{
-    return send(Api::GetOperation, request, Body(), api);
-}
-
-Response *NetworkManager::post(const Request &request, const Body &body, Api *api)
-{
-    return send(Api::PostOperation, request, body, api);
-}
-
-Response *NetworkManager::put(const Request &request, const Body &body, Api *api)
-{
-    return send(Api::PutOperation, request, body, api);
-}
-
-Response *NetworkManager::patch(const Request &request, const Body &body, Api *api)
-{
-    return send(Api::PatchOperation, request, body, api);
-}
-
-Response *NetworkManager::deleteResource(const Request &request, Api *api)
-{
-    return send(Api::DeleteOperation, request, Body(), api);
-}
-
-Response *NetworkManager::send(Api::Operation operation, const Request &request, const Body &body, Api *api)
+Response *NetworkManager::sendRequest(Api::Operation operation, const Request &request, const Body &body, Api *api)
 {
     const QString urlSheme = api->url().scheme();
-    QVector<NetworkRequestHandler *>::Iterator it = std::find_if(s_handlers.begin(), s_handlers.end(), [urlSheme](const NetworkRequestHandler *handler) {
-        return handler->schemes().contains(urlSheme);
+    QVector<RequestHandler *>::Iterator it = std::find_if(m_handlers.begin(), m_handlers.end(), [urlSheme](const RequestHandler *handler) {
+        return handler->supportedSchemes().contains(urlSheme);
     });
 
     Response *response;
 
-    if (it != s_handlers.end()) {
-        NetworkRequestHandler *handler = *it;
-        handler->manager = this;
+    if (it != m_handlers.end()) {
+        RequestHandler *handler = *it;
         response = handler->send(operation, request, body, api);
     } else {
-        QNetworkRequest networkRequest = createNetworkRequest(operation, request, body, api);
-        QNetworkReply *networkReply = createNetworkReply(operation, networkRequest, body);
+        QNetworkRequest networkRequest = generateNetworkRequest(operation, request, body, api);
+        QNetworkReply *networkReply = generateNetworkReply(operation, networkRequest, body, api);
         NetworkResponse *networkResponse = new NetworkResponse(api);
         networkResponse->setReply(networkReply);
         response = networkResponse;
     }
-
-    response->setRequest(request);
     return response;
-}
-
-Response *NetworkManager::send(ApiBase::Operation operation, const Request &request, const Body &body, ApiBase *api)
-{
-    if (api->inherits("RestLink::Api"))
-        return send(operation, request, body, static_cast<Api *>(api));
-    else
-        return nullptr;
 }
 
 QStringList NetworkManager::supportedSchemes() const
 {
     // Getting schemes from QNetworkAccessManager and network handlers
     QStringList schemes = QNetworkAccessManager::supportedSchemes();
-    for (NetworkRequestHandler *handler : s_handlers)
-        schemes.append(schemes);
+    for (RequestHandler *handler : m_handlers)
+        schemes.append(handler->supportedSchemes());
 
     // Removing duplicates and returning schemes
     schemes.removeDuplicates();
     return schemes;
 }
 
-QNetworkRequest NetworkManager::createNetworkRequest(ApiBase::Operation operation, const Request &request, const Body &body, ApiBase *api)
+QNetworkRequest NetworkManager::generateNetworkRequest(ApiBase::Operation operation, const Request &request, const Body &body, ApiBase *api)
 {
     QNetworkRequest netReq;
-    netReq.setOriginatingObject(this);
+    netReq.setOriginatingObject(api);
     netReq.setAttribute(QNetworkRequest::UserMax, QVariant::fromValue(request));
 
     // Url generation
-    QUrl url = api->url();
-    {
-        QString urlPath = url.path() + request.urlPath();
-        url.setPath(urlPath);
-
-        QUrlQuery urlQuery(url.query());
-        for (const QueryParameter &param : request.queryParameters())
-            if (param.isEnabled())
-                for (const QVariant &value : param.values())
-                    urlQuery.addQueryItem(param.name(), value.toString());
-        url.setQuery(urlQuery);
-    }
-    netReq.setUrl(url);
-
+    netReq.setUrl(generateUrl(request, api));
 
     // User agent setting
     netReq.setHeader(QNetworkRequest::UserAgentHeader, api->userAgent());
@@ -202,7 +150,7 @@ QNetworkRequest NetworkManager::createNetworkRequest(ApiBase::Operation operatio
     return netReq;
 }
 
-QNetworkReply *NetworkManager::createNetworkReply(ApiBase::Operation operation, const QNetworkRequest &request, const Body &body)
+QNetworkReply *NetworkManager::generateNetworkReply(ApiBase::Operation operation, const QNetworkRequest &request, const Body &body, ApiBase *api)
 {
     QNetworkAccessManager *man = this;
     QNetworkReply *reply;
@@ -269,24 +217,9 @@ QNetworkReply *NetworkManager::createNetworkReply(ApiBase::Operation operation, 
             device->setParent(reply ? static_cast<QObject *>(reply) : static_cast<QObject *>(this));
     }
 
+    Q_UNUSED(api);
+
     return reply;
-}
-
-void NetworkManager::initHandlers()
-{
-    if (!s_handlers.isEmpty())
-        return;
-
-#ifdef RESTLINK_SQL
-    s_handlers.append(new SqlHandler(qApp));
-#endif
-}
-
-QVector<class NetworkRequestHandler *> NetworkManager::s_handlers;
-
-QNetworkRequest NetworkRequestHandler::createNetworkRequest(ApiBase::Operation operation, const Request &request, const Body &body, ApiBase *api)
-{
-    return manager->createNetworkRequest(operation, request, body, api);
 }
 
 }

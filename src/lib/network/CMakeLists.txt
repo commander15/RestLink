@@ -1,11 +1,15 @@
 target_headers(RestLink
-    PRIVATE
-        networkresponse_p.h
+    PUBLIC
+        networkmanager.h cache.h cookiejar.h
         httputils.h
+    PRIVATE
+        cache_p.h
+        networkresponse_p.h
 )
 
 target_sources(RestLink
     PRIVATE
+        networkmanager.cpp cache.cpp cookiejar.cpp
         networkresponse.cpp
         httputils.cpp
 )

@@ -31,14 +31,15 @@ target_headers(RestLink
         requestinterface.h pathparameter.h queryparameter.h
         request.h response.h
         header.h body.h
-        networkmanager.h cache.h cookiejar.h
         compressionutils.h
         requestinterceptor.h
+        requesthandler.h
+        server.h serverresponse.h
     PRIVATE
         apibase_p.h api_p.h
         queryparameter_p.h
         request_p.h response_p.h
-        cache_p.h
+        server_p.h serverresponse_p.h
 )
 
 target_sources(RestLink
@@ -48,13 +49,13 @@ target_sources(RestLink
         requestinterface.cpp pathparameter.cpp queryparameter.cpp
         request.cpp response.cpp
         header.cpp body.cpp
-        networkmanager.cpp cache.cpp cookiejar.cpp
         compressionutils.cpp
         requestinterceptor.cpp
+        requesthandler.cpp
+        server.cpp serverresponse.cpp
 )
 
 add_subdirectory(network)
-add_subdirectory(thread)
 
 if (RESTLINK_SUPPORT_SQL)
     add_subdirectory(sql)

@@ -218,14 +218,14 @@ void Api::configure(const QUrl &url)
 {
     RESTLINK_D(Api);
 
-    QNetworkRequest request = d_ptr->netMan()->createNetworkRequest(GetOperation, Request(), Body(), this);
+    QNetworkRequest request = d_ptr->networkManager()->generateNetworkRequest(GetOperation, Request(), Body(), this);
     request.setUrl(url);
     request.setPriority(QNetworkRequest::HighPriority);
     request.setTransferTimeout(3000);
     request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferNetwork);
     request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, true);
 
-    Response *reply = Response::create(static_cast<QNetworkAccessManager *>(d->netMan())->get(request), this);
+    Response *reply = Response::create(static_cast<QNetworkAccessManager *>(d->networkManager())->get(request), this);
     connect(reply, &Response::finished, this, [reply, this] {
         if (reply->isSuccess() && configure(reply->readJsonObject())) {
 #ifdef RESTLINK_DEBUG
