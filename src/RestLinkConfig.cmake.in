@@ -1,21 +1,31 @@
+# RestLink Configuration file
 @PACKAGE_INIT@
 
+# Setting up variables
+set(RESTLINK_SQL  @RESTLINK_SUPPORT_SQL@)
+set(RESTLINK_CLI  @RESTLINK_BUILD_CLI@)
+set(RESTLINK_QML  @RESTLINK_BUILD_QML@)
+set(RESTLINK_DOCS @RESTLINK_BUILD_DOCS@)
+
 # Computing paths
-set(RestLink_ROOT "@PACKAGE_ROOT@")
-set(RestLink_LIB_DIR "${RestLink_ROOT}/lib")
+set(RESTLINK_ROOT "@PACKAGE_ROOT@")
+set(RESTLINK_LIB_DIR "${RESTLINK_ROOT}/lib")
 
 # Find components
 foreach (Module ${RestLink_FIND_COMPONENTS})
-    set(FILE "${CMAKE_CURRENT_LIST_DIR}/RestLink${Module}.cmake")
-    if (EXISTS ${FILE})
-        include(${FILE})
-        set(RestLink_${Module}_FOUND TRUE)
+    if (${Module} STR_EQUAL "Core")
+        # Core
+    elseif (${Module} STR_EQUAL "Sql")
+        # Sql
+        if (RestLink_Sql_REQUIRED AND NOT RESTLINK_SQL)
+            message("RestLink: Sql support not found")
+            set(RestLink_FOUND FALSE)
+        endif()
     else()
-        set(RestLink_${Module}_FOUND TRUE)
+        # Unknown
+        message(WARNING "RestLink: unknown module: ${Module}")
     endif()
 endforeach()
-
-check_required_components(RestLink)
 
 # Importing targets
 include(${CMAKE_CURRENT_LIST_DIR}/RestLinkTargets.cmake)

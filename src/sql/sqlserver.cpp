@@ -1,10 +1,12 @@
 #include "sqlserver.h"
 #include "sqlserver_p.h"
 
+#include "sqlutils.h"
+
 #include <RestLink/queryparameter.h>
 #include <RestLink/serverresponse.h>
-#include <RestLink/sqlutils.h>
 
+#include <QtCore/qjsondocument.h>
 #include <QtCore/qjsonobject.h>
 #include <QtCore/qjsonarray.h>
 
@@ -12,6 +14,9 @@
 #include <QtSql/qsqlquery.h>
 #include <QtSql/qsqlrecord.h>
 #include <QtSql/qsqlerror.h>
+#include <QtSql/qsqldriver.h>
+
+#define RESTLINK_SQL_HEADER "X-SQL-QUERY"
 
 namespace RestLink {
 
@@ -63,7 +68,7 @@ void SqlServer::handleGet(const Request &request, QSqlQuery *query, ServerRespon
     int limit = 0;
 
     if (request.endpoint() == "/query") {
-        statement = request.header("X-SQL-QUERY").value().toString();
+        statement = request.header(RESTLINK_SQL_HEADER).value().toString();
     } else {
         // Extracting path data
         QString primary;
@@ -97,6 +102,8 @@ void SqlServer::handleGet(const Request &request, QSqlQuery *query, ServerRespon
         }
     }
 
+    response->setHeaders({ Header(RESTLINK_SQL_HEADER, statement) });
+
     query->setForwardOnly(true);
     if (query->exec(statement)) {
         QJsonObject object;
@@ -126,31 +133,94 @@ void SqlServer::handleGet(const Request &request, QSqlQuery *query, ServerRespon
             }
         }
 
-        response->setBody(object);
         response->setHttpStatusCode(!object.isEmpty() ? 200 : 404);
+        response->setBody(object);
     } else {
         handleError(query, response);
     }
 }
 
-void SqlServer::handlePost(const Request &request, const Body &body, QSqlQuery *query, ServerResponse *response)
+void SqlServer::handlePost(const Request &request, const QJsonObject &body, QSqlQuery *query, ServerResponse *response)
+{
+    RESTLINK_D(SqlServer);
+
+    QString table;
+    QString primary;
+    d->extractDataFromPath(request.urlPath(), &table, &primary);
+
+    // Validate table and primary key values
+    if (table.isEmpty()) {
+        response->setHttpStatusCode(400); // Bad Request
+        response->complete();
+        return;
+    }
+
+    QSqlRecord record = SqlUtils::jsonObjectToRecord(body);
+
+    QString statement = query->driver()->sqlStatement(QSqlDriver::InsertStatement, table, record, false);
+
+    if (query->exec(statement)) {
+        response->setHttpStatusCode(201);
+
+        QJsonObject object = body;
+        object.insert("id", QJsonValue::fromVariant(query->lastInsertId()));
+        response->setBody(object);
+        response->complete();
+    } else {
+        handleError(query, response);
+    }
+}
+
+void SqlServer::handlePut(const Request &request, const QJsonObject &body, QSqlQuery *query, ServerResponse *response)
 {
     //
 }
 
-void SqlServer::handlePut(const Request &request, const Body &body, QSqlQuery *query, ServerResponse *response)
-{
-    //
-}
-
-void SqlServer::handlePatch(const Request &request, const Body &body, QSqlQuery *query, ServerResponse *response)
+void SqlServer::handlePatch(const Request &request, const QJsonObject &body, QSqlQuery *query, ServerResponse *response)
 {
     //
 }
 
 void SqlServer::handleDelete(const Request &request, QSqlQuery *query, ServerResponse *response)
 {
-    //
+    RESTLINK_D(SqlServer);
+
+    QString table;
+    QString primary;
+    d->extractDataFromPath(request.urlPath(), &table, &primary);
+
+    // Validate table and primary key values
+    if (table.isEmpty() || primary.isEmpty()) {
+        response->setHttpStatusCode(400); // Bad Request
+        response->complete();
+        return;
+    }
+
+    // Securely build the query with table name and primary key
+    const QString statement = QStringLiteral("DELETE FROM %1 WHERE id = :primary");
+
+    query->prepare(statement.arg(table));
+    query->bindValue(":primary", primary);
+
+    if (query->exec()) {
+        response->setHttpStatusCode(200); // OK
+        response->complete();
+    } else {
+        handleError(query, response);
+    }
+}
+
+void SqlServer::handleError(const QJsonParseError &error, ServerResponse *response)
+{
+    response->setHttpStatusCode(400);
+
+    QJsonObject e;
+    e.insert("message", error.errorString());
+    e.insert("offset", error.offset);
+    e.insert("type", error.error);
+    response->setBody(e);
+
+    response->complete();
 }
 
 void SqlServer::handleError(QSqlQuery *query, ServerResponse *response)
@@ -160,12 +230,21 @@ void SqlServer::handleError(QSqlQuery *query, ServerResponse *response)
 
 void SqlServer::handleError(const QSqlError &error, ServerResponse *response)
 {
+    response->setHttpStatusCode(500);
+
     QJsonObject e;
     e.insert("code", error.nativeErrorCode());
     e.insert("message", error.databaseText());
     e.insert("description", error.driverText());
     e.insert("type", error.type());
     response->setBody(e);
+
+    response->complete();
+}
+
+QJsonObject SqlServer::validate(ApiBase::Operation operation, const Request &request, const QJsonObject &body, ServerResponse *response) const
+{
+    return body;
 }
 
 void SqlServer::processRequest(ApiBase::Operation operation, const Request &request, const Body &body, Response *r)
@@ -177,16 +256,41 @@ void SqlServer::processRequest(ApiBase::Operation operation, const Request &requ
     QSqlDatabase db = d->databaseFromUrl(r->property("dbUrl").toUrl());
 
     if (!db.isValid()) {
-        //
+        response->setHttpStatusCode(500);
+        response->complete();
         return;
     }
 
-    if (!db.isOpen()) {
+    if (!db.isOpen() && !db.open()) {
         handleError(db.lastError(), response);
         return;
     }
 
+    RequestProcessing processing = request.processing();
+    if (processing) {
+        processing(request, body, &db, response);
+        response->complete();
+        return;
+    }
+
     QSqlQuery query(db);
+
+    QJsonObject object;
+    {
+        QJsonParseError parseError;
+        QJsonDocument doc = QJsonDocument::fromJson(body.data(), &parseError);
+        if (parseError.error == QJsonParseError::NoError) {
+            object = validate(operation, request, doc.object(), response);
+            //return;
+        } else {
+            handleError(parseError, response);
+            return;
+        }
+    }
+
+    // Return if the validation method completed the response
+    if (response->isFinished())
+        return;
 
     switch (operation) {
     case ApiBase::GetOperation:
@@ -194,15 +298,15 @@ void SqlServer::processRequest(ApiBase::Operation operation, const Request &requ
         break;
 
     case ApiBase::PostOperation:
-        handlePost(request, body, &query, response);
+        handlePost(request, object, &query, response);
         break;
 
     case ApiBase::PutOperation:
-        handlePut(request, body, &query, response);
+        handlePut(request, object, &query, response);
         break;
 
     case ApiBase::PatchOperation:
-        handlePatch(request, body, &query, response);
+        handlePatch(request, object, &query, response);
         break;
 
     case ApiBase::DeleteOperation:
@@ -221,6 +325,14 @@ Response *SqlServer::createResponse(ApiBase::Operation operation, const Request 
     Response *response = Server::createResponse(operation, request, body, api);
     response->setProperty("dbUrl", api->url());
     return response;
+}
+
+Response *SqlServer::sendRequest(ApiBase::Operation operation, const Request &request, const Body &body, Api *api)
+{
+    if (!isListening())
+        listen();
+
+    return Server::sendRequest(operation, request, body, api);
 }
 
 SqlServerPrivate::SqlServerPrivate(SqlServer *q)
@@ -285,26 +397,25 @@ QSqlDatabase SqlServerPrivate::databaseFromUrl(const QUrl &url)
 {
     if (databaseInfos.contains(url)) {
         DatabaseInfos &info = databaseInfos[url];
-        return QSqlDatabase::database(info.connection);
+        return QSqlDatabase::database(info.connection, false);
     }
 
     static int index = 0;
     const QString connection = QStringLiteral("RestLink_%1").arg(index++);
-    {
-        QSqlDatabase db = QSqlDatabase::addDatabase('Q' + url.scheme().toUpper(), connection);
-        db.setUserName(url.userName());
-        db.setPassword(url.password());
-        db.setHostName(url.host());
-        db.setPort(url.port());
-        db.setDatabaseName(url.path().mid(1));
-    }
+
+    QSqlDatabase db = QSqlDatabase::addDatabase('Q' + url.scheme().toUpper(), connection);
+    db.setUserName(url.userName());
+    db.setPassword(url.password());
+    db.setHostName(url.host());
+    db.setPort(url.port());
+    db.setDatabaseName(url.path().mid(1));
 
     DatabaseInfos info;
     info.connection = connection;
     //db.lastUsed = QDateTime::currentDateTime();
     databaseInfos.insert(url, info);
 
-    return QSqlDatabase::database(info.connection);
+    return db;
 }
 
 } // namespace RestLink

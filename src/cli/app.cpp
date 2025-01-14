@@ -243,9 +243,9 @@ Request App::makeRequest(const QString &option)
         for (const QString &param : parameters) {
             QStringList p = param.split('=');
             if (p.size() >= 2)
-                request.setQueryParameter(p.first(), p.last());
+                request.addQueryParameter(p.first(), p.last());
             else if (p.size() == 1)
-                request.setQueryParameter(p.first(), QVariant());
+                request.addQueryParameter(p.first(), QVariant());
         }
     }
 

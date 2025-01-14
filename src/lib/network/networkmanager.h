@@ -24,9 +24,6 @@ protected:
     QNetworkRequest generateNetworkRequest(Api::Operation operation, const Request &request, const Body &body, ApiBase *api);
     QNetworkReply *generateNetworkReply(Api::Operation operation, const QNetworkRequest &request, const Body &body, ApiBase *api);
 
-private:
-    QVector<RequestHandler *> m_handlers;
-
     friend class Api;
 };
 

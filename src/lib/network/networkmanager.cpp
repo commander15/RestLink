@@ -10,10 +10,7 @@
 #include <RestLink/response.h>
 #include <RestLink/private/networkresponse_p.h>
 #include <RestLink/compressionutils.h>
-
-#ifdef RESTLINK_SQL
-#   include <RestLink/sqlserver.h>
-#endif
+#include <RestLink/plugin.h>
 
 #include <QtCore/qcoreapplication.h>
 
@@ -47,29 +44,26 @@ NetworkManager::NetworkManager(QObject *parent)
 
     setCache(new Cache(this));
     setCookieJar(new CookieJar(this));
-
-#ifdef RESTLINK_SQL
-    SqlServer *sqlServer = new SqlServer(this);
-    sqlServer->listen();
-    m_handlers.append(sqlServer);
-#endif
 }
 
 Response *NetworkManager::sendRequest(Api::Operation operation, const Request &request, const Body &body, Api *api)
 {
+    QList<RequestHandler *> handlers = Plugin::allHandlers();
+
     const QString urlSheme = api->url().scheme();
-    QVector<RequestHandler *>::Iterator it = std::find_if(m_handlers.begin(), m_handlers.end(), [urlSheme](const RequestHandler *handler) {
+    QList<RequestHandler *>::Iterator it = std::find_if(handlers.begin(), handlers.end(), [urlSheme](const RequestHandler *handler) {
         return handler->supportedSchemes().contains(urlSheme);
     });
 
     Response *response;
 
-    if (it != m_handlers.end()) {
+    if (it != handlers.end()) {
         RequestHandler *handler = *it;
         response = handler->send(operation, request, body, api);
     } else {
         QNetworkRequest networkRequest = generateNetworkRequest(operation, request, body, api);
         QNetworkReply *networkReply = generateNetworkReply(operation, networkRequest, body, api);
+
         NetworkResponse *networkResponse = new NetworkResponse(api);
         networkResponse->setReply(networkReply);
         response = networkResponse;
@@ -81,7 +75,8 @@ QStringList NetworkManager::supportedSchemes() const
 {
     // Getting schemes from QNetworkAccessManager and network handlers
     QStringList schemes = QNetworkAccessManager::supportedSchemes();
-    for (RequestHandler *handler : m_handlers)
+    QList<RequestHandler *> handlers = Plugin::allHandlers();
+    for (RequestHandler *handler : handlers)
         schemes.append(handler->supportedSchemes());
 
     // Removing duplicates and returning schemes
@@ -133,7 +128,7 @@ QNetworkRequest NetworkManager::generateNetworkRequest(ApiBase::Operation operat
     for (const Header &header : request.headers() + body.headers()) {
         if (header.isEnabled()) {
             const QVariantList values = header.values();
-            QList<QByteArray> rawValues;
+            QByteArrayList rawValues;
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
             rawValues.reserve(values.size());
             std::transform(values.begin(), values.end(), std::back_inserter(rawValues), [](const QVariant &value) {

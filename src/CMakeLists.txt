@@ -35,6 +35,10 @@ find_package(ZLIB)
 
 add_subdirectory(lib)
 
+if (RESTLINK_SUPPORT_SQL)
+    add_subdirectory(sql)
+endif()
+
 if (RESTLINK_BUILD_CLI)
     add_subdirectory(cli)
 endif()
