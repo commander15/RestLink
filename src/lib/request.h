@@ -11,6 +11,12 @@ class QJsonObject;
 
 namespace RestLink {
 
+class Request;
+class Body;
+class Response;
+
+typedef std::function<void(const Request &, const Body &, void *, Response *)> RequestProcessing;
+
 class RequestData;
 class RESTLINK_EXPORT Request : public RequestInterface
 {
@@ -29,6 +35,9 @@ public:
     void setEndpoint(const QString &endpoint);
 
     QString urlPath() const;
+
+    RequestProcessing processing() const;
+    void setProcessing(RequestProcessing processing);
 
     QJsonObject toJsonObject() const;
     static Request fromJsonbject(const QJsonObject &object);

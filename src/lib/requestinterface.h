@@ -29,9 +29,10 @@ public:
     QueryParameter queryParameter(const QString &name) const;
     QList<QVariant> queryParameterValues(const QString &name) const;
     QStringList queryParameterNames() const;
-    void setQueryParameter(const QString &name, const QVariant &value);
-    void setQueryParameter(const QueryParameter &param);
-    void unsetQueryParameter(const QString &name);
+    void addQueryParameter(const QString &name, const QVariant &value);
+    void addQueryParameter(const QueryParameter &param);
+    void removeQueryParameter(const QString &name);
+    void removeQueryParameter(const QString &name, const QVariant &value);
 
     QList<QueryParameter> queryParameters() const;
     void setQueryParameters(const QList<QueryParameter> &parameters);

@@ -1,6 +1,8 @@
 #ifndef RESTLINK_REQUEST_P_H
 #define RESTLINK_REQUEST_P_H
 
+#include "request.h"
+
 #include <RestLink/queryparameter.h>
 #include <RestLink/pathparameter.h>
 #include <RestLink/header.h>
@@ -27,6 +29,8 @@ public:
     QList<PathParameter> pathParameters;
     QList<QueryParameter> queryParameters;
     QList<Header> headers;
+
+    RequestProcessing processing;
 };
 
 }

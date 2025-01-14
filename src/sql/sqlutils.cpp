@@ -28,7 +28,7 @@ QSqlRecord SqlUtils::jsonObjectToRecord(const QJsonObject &object)
     QSqlRecord record;
     for (auto it = object.begin(); it != object.end(); ++it) {
         const QVariant value = it.value().toVariant();
-        QSqlField field(it.key(), value.type());
+        QSqlField field(it.key(), value.metaType());
         field.setValue(value);
         record.append(field);
     }

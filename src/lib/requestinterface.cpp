@@ -202,7 +202,7 @@ QStringList RequestInterface::queryParameterNames() const
 }
 
 /**
- * @brief Sets the value of a query parameter.
+ * @brief Add the value of a query parameter.
  *
  * This function sets or updates the value of a query parameter in the request. If the parameter does
  * not exist, it is added.
@@ -210,7 +210,7 @@ QStringList RequestInterface::queryParameterNames() const
  * @param name The name of the query parameter.
  * @param value The new value to set for the query parameter.
  */
-void RequestInterface::setQueryParameter(const QString &name, const QVariant &value)
+void RequestInterface::addQueryParameter(const QString &name, const QVariant &value)
 {
     auto it = findQueryParameter(name);
     if (it != mutableQueryParameters()->end())
@@ -220,33 +220,49 @@ void RequestInterface::setQueryParameter(const QString &name, const QVariant &va
 }
 
 /**
- * @brief Sets a query parameter using a `QueryParameter` object.
+ * @brief Add query parameter using a `QueryParameter` object.
  *
  * This function sets or updates a query parameter using a `QueryParameter` object.
  *
  * @param param The `QueryParameter` object containing the name and value.
  */
-void RequestInterface::setQueryParameter(const QueryParameter &param)
+void RequestInterface::addQueryParameter(const QueryParameter &param)
 {
     auto it = findQueryParameter(param.name());
     if (it != mutableQueryParameters()->end())
-        *it = param;
+        for (const QVariant &value : param.values())
+            it->addValue(value);
     else
         mutableQueryParameters()->append(param);
 }
 
 /**
- * @brief Unsets (removes) a query parameter from the request.
+ * @brief Removes a query parameter from the request.
  *
  * This function removes the query parameter with the given name from the request.
  *
  * @param name The name of the query parameter to remove.
  */
-void RequestInterface::unsetQueryParameter(const QString &name)
+void RequestInterface::removeQueryParameter(const QString &name)
 {
     auto it = findQueryParameter(name);
     if (it != mutableQueryParameters()->end())
         mutableQueryParameters()->removeAt(std::distance(mutableQueryParameters()->begin(), it));
+}
+
+
+/**
+ * @brief Removes a query parameter from the request.
+ *
+ * This function removes the value on the query parameter if it exists.
+ *
+ * @param name The name of the query parameter to remove.
+ */
+void RequestInterface::removeQueryParameter(const QString &name, const QVariant &value)
+{
+    auto it = findQueryParameter(name);
+    if (it != mutableQueryParameters()->end())
+        it->removeValue(value);
 }
 
 /**

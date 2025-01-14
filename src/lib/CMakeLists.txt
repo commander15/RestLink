@@ -56,10 +56,7 @@ target_sources(RestLink
 )
 
 add_subdirectory(network)
-
-if (RESTLINK_SUPPORT_SQL)
-    add_subdirectory(sql)
-endif()
+add_subdirectory(plugin)
 
 install(TARGETS RestLink
     EXPORT RestLinkTargets

@@ -4,6 +4,8 @@
 #include <RestLink/global.h>
 #include <RestLink/server.h>
 
+class QJsonParseError;
+
 class QSqlQuery;
 class QSqlError;
 
@@ -27,15 +29,20 @@ protected:
     bool maintain() override;
 
     void handleGet(const Request &request, QSqlQuery *query, ServerResponse *response);
-    void handlePost(const Request &request, const Body &body, QSqlQuery *query, ServerResponse *response);
-    void handlePut(const Request &request, const Body &body, QSqlQuery *query, ServerResponse *response);
-    void handlePatch(const Request &request, const Body &body, QSqlQuery *query, ServerResponse *response);
+    void handlePost(const Request &request, const QJsonObject &body, QSqlQuery *query, ServerResponse *response);
+    void handlePut(const Request &request, const QJsonObject &body, QSqlQuery *query, ServerResponse *response);
+    void handlePatch(const Request &request, const QJsonObject &body, QSqlQuery *query, ServerResponse *response);
     void handleDelete(const Request &request, QSqlQuery *query, ServerResponse *response);
+    void handleError(const QJsonParseError &error, ServerResponse *response);
     void handleError(QSqlQuery *query, ServerResponse *response);
     void handleError(const QSqlError &error, ServerResponse *response);
 
+    QJsonObject validate(ApiBase::Operation operation, const Request &request, const QJsonObject &body, ServerResponse *response) const;
+
     void processRequest(ApiBase::Operation operation, const Request &request, const Body &body, Response *r) override;
     Response *createResponse(ApiBase::Operation operation, const Request &request, const Body &body, Api *api) override;
+
+    Response *sendRequest(ApiBase::Operation operation, const Request &request, const Body &body, Api *api) override;
 };
 
 } // namespace RestLink

@@ -74,6 +74,21 @@ Response *Server::createResponse(ApiBase::Operation operation, const Request &re
     return response;
 }
 
+Response *Server::sendRequest(ApiBase::Operation operation, const Request &request, const Body &body, Api *api)
+{
+    ServerPrivate::PendingRequest pending;
+    pending.operation = operation;
+    pending.request = request;
+    pending.body = body;
+    pending.response = createResponse(operation, request, body, api);
+
+    d_ptr->mutex.lock();
+    d_ptr->pendingRequests.enqueue(pending);
+    d_ptr->mutex.unlock();
+
+    return pending.response;
+}
+
 void Server::setError(int code, const QString &str)
 {
     d_ptr->mutex.lock();
@@ -92,20 +107,6 @@ void Server::setListening(bool listening)
     d_ptr->mutex.unlock();
 
     emit stateChanged(listening);
-}
-
-Response *Server::sendRequest(ApiBase::Operation operation, const Request &request, const Body &body, Api *api)
-{
-    ServerPrivate::PendingRequest pending;
-    pending.operation = operation;
-    pending.request = request;
-    pending.response = createResponse(operation, request, body, api);
-
-    d_ptr->mutex.lock();
-    d_ptr->pendingRequests.enqueue(pending);
-    d_ptr->mutex.unlock();
-
-    return pending.response;
 }
 
 ServerPrivate::ServerPrivate(Server::ServerType type, Server *q)
@@ -174,12 +175,19 @@ void ServerPrivate::run()
         });
 
         // Starting event loop
-        if (exec() != 0)
+        if (exec() != 0) {
+            mutex.lock();
             bypassCleanup = true;
+            mutex.unlock();
+        }
     }
 
     // Calling cleanup function
-    if (!bypassCleanup)
+    mutex.lock();
+    const bool clean = !bypassCleanup;
+    mutex.unlock();
+
+    if (clean)
         q_ptr->cleanup();
 }
 

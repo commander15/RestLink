@@ -159,6 +159,16 @@ QString Request::urlPath() const
     return path;
 }
 
+RequestProcessing Request::processing() const
+{
+    return d_ptr->processing;
+}
+
+void Request::setProcessing(RequestProcessing processing)
+{
+    d_ptr->processing = processing;
+}
+
 QJsonObject Request::toJsonObject() const
 {
     QJsonObject parameters;
@@ -256,7 +266,7 @@ Request Request::merge(const Request &r1, const Request &r2)
     // Adding query parameters from r2 to r1
     const QList<QueryParameter> parameters2 = r2.queryParameters();
     for (const QueryParameter &param : parameters2) {
-        request.setQueryParameter(param);
+        request.addQueryParameter(param);
     }
 
     // Adding mutableHeaders from r2 to r1
