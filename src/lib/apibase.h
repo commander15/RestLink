@@ -58,6 +58,8 @@ public:
     void deleteResource(const Request &request, std::function<ApiRunCallback> callback);
     Response *deleteResource(const Request &request);
 
+    virtual Response *send(Operation operation, const Request &request, const Body &body);
+
     virtual QString userAgent() const;
 
     QList<RequestInterceptor *> requestInterceptors() const;
@@ -69,8 +71,6 @@ public:
 
 protected:
     ApiBase(ApiBasePrivate *d, QObject *parent);
-
-    virtual Response *send(Operation operation, const Request &request, const Body &body);
 
     QScopedPointer<ApiBasePrivate> d_ptr;
 

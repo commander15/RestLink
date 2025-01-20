@@ -4,7 +4,7 @@ import QtQuick 2.14
 import QtQuick.Controls 2.14
 import QtQuick.Layouts 1.14
 
-import "file:///home/commander/Projects/RestLink/build/Desktop_6_8_1-Debug/qml/RestLink"
+import RestLink
 
 ApplicationWindow {
     id: win
@@ -48,7 +48,7 @@ ApplicationWindow {
         anchors.margins: 9
     }
 
-    ApiRequest {
+    Request {
         id: request
 
         endpoint: "/search/multi"
@@ -56,17 +56,21 @@ ApplicationWindow {
 
         onFinished: function(response) {
             if (response.success) {
-                const rawJson = response.readBody();
-                //console.log(rawJson);
+                const rawJson = response.body;
+                console.log(rawJson);
 
                 var json = JSON.parse(rawJson).results;
                 view.model = json;
 
                 console.log(response.header('Content-Encoding'));
+            } else if (response.hasHttpStatusCode) {
+                console.log(response.httpReasonPhrase);
+            } else if (response.hasNetworkError) {
+                console.log(response.networkErrorString);
             }
         }
 
-        ApiRequestParameter {
+        RequestParameter {
             name: "query"
             value: query.text
         }
@@ -81,16 +85,15 @@ ApplicationWindow {
 
         locale: Qt.locale("fr-FR")
 
-        ApiRequestParameter {
+        RequestParameter {
             name: "api_key"
             value: TMDB_API_KEY
-            scope: ApiRequestParameter.UrlQuery
         }
 
-        ApiRequestParameter {
+        RequestParameter {
             name: "language"
             value: restApi.locale.name.substring(0, 2);
-            scope: ApiRequestParameter.UrlQuery
+            type: RequestParameter.UrlQuery
         }
     }
 }

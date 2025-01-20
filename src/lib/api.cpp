@@ -128,7 +128,7 @@ void Api::setVersion(const QVersionNumber &version)
     RESTLINK_D(Api);
     if (d->version != version) {
         d->version = version;
-        emit versionChanged(version);
+        emit versionChanged();
     }
 }
 

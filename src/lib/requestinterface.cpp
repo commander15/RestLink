@@ -5,6 +5,8 @@
 #include <RestLink/queryparameter.h>
 #include <RestLink/header.h>
 
+#include <QtCore/qvariant.h>
+
 namespace RestLink {
 
 /*!

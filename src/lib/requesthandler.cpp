@@ -79,9 +79,8 @@ QUrl RequestHandler::generateUrl(const Request &request, ApiBase *api) const
 
     QUrlQuery urlQuery(url.query());
     for (const QueryParameter &param : request.queryParameters())
-        if (param.isEnabled())
-            for (const QVariant &value : param.values())
-                urlQuery.addQueryItem(param.name(), value.toString());
+        for (const QVariant &value : param.values())
+            urlQuery.addQueryItem(param.name(), value.toString());
     url.setQuery(urlQuery);
 
     return url;

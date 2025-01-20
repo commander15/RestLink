@@ -198,7 +198,10 @@ HeaderList Body::headers() const
     if (m_length > 0)
         headers.append(Header("Content-Length", m_length));
 
-    return headers + m_headers;
+    for (const Header &header : m_headers)
+        headers.addParameter(header.name(), header.values());
+
+    return headers;
 }
 
 void Body::setHeaders(const HeaderList &headers)

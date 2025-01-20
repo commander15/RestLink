@@ -15,7 +15,7 @@ class RESTLINK_EXPORT Api : public ApiBase
 {
     Q_OBJECT
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged FINAL)
-    Q_PROPERTY(QVersionNumber version READ version WRITE setVersion NOTIFY versionChanged FINAL)
+    Q_PROPERTY(QString version READ versionString WRITE setVersionString NOTIFY versionChanged FINAL)
     Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged FINAL)
     Q_PROPERTY(QLocale locale READ locale WRITE setLocale NOTIFY localeChanged FINAL)
     Q_PROPERTY(QString userAgent READ userAgent WRITE setUserAgent NOTIFY userAgentChanged FINAL)
@@ -30,7 +30,7 @@ public:
 
     QVersionNumber version() const;
     Q_SLOT void setVersion(const QVersionNumber &version);
-    Q_SIGNAL void versionChanged(const QVersionNumber &version);
+    Q_SIGNAL void versionChanged();
 
     QUrl url() const override;
     Q_SLOT void setUrl(const QUrl &url);
@@ -49,8 +49,14 @@ public:
     Q_SIGNAL void configurationCompleted();
     Q_SIGNAL void configurationFailed();
 
-protected:
     Response *send(Operation operation, const Request &request, const Body &body) override;
+
+private:
+    inline QString versionString() const
+    { return version().toString(); }
+
+    inline void setVersionString(const QString &version)
+    { setVersion(QVersionNumber::fromString(version)); }
 
     friend class ApiPrivate;
 };

@@ -6,9 +6,9 @@ message("QML: ${QT_QML_ROOT_PATH}")
 
 add_subdirectory(tmdb-desktop)
 
-return()
+if (RESTLINK_BUILD_QML)
+    link_libraries(RestLinkQml)
 
-if (RESTLINK_BUILD_QML_PLUGIN)
     set(QML_IMPORT_PATH
         ${CMAKE_BINARY_DIR}/qml
         CACHE STRING "" FORCE

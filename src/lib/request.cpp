@@ -60,6 +60,12 @@ Request::Request(const QString &endpoint) :
     d_ptr->endpoint = RequestData::validateEndpoint(endpoint);
 }
 
+Request::Request(const RequestProcessing &processing) :
+    d_ptr(new RequestData())
+{
+    d_ptr->processing = processing;
+}
+
 /*!
  * \brief Copy constructor for Request.
  *
@@ -216,18 +222,12 @@ Request Request::fromJsonbject(const QJsonObject &object)
         const QJsonObject parameters = object.value("parameters").toObject();
 
         const QJsonArray pathParameterArray = parameters.value("path").toArray();
-        for (const QJsonValue &paramValue : pathParameterArray) {
-            const QJsonObject paramObject = paramValue.toObject();
-
-            PathParameter param;
-            param.setName(paramObject.value("name").toString());
-            param.setValue(paramObject.value("value").toVariant());
-            data->pathParameters.append(param);
-        }
+        for (const QJsonValue &value : pathParameterArray)
+            data->pathParameters.append(PathParameter::fromJsonObject(value.toObject()));
 
         const QJsonArray queryParameterArray = parameters.value("query").toArray();
         for (const QJsonValue &value : queryParameterArray)
-            data->queryParameters.append(QueryParameter::fromJsonbject(value.toObject()));
+            data->queryParameters.append(QueryParameter::fromJsonObject(value.toObject()));
     }
 
     const QJsonArray headerArray = object.value("headers").toArray();
@@ -272,7 +272,7 @@ Request Request::merge(const Request &r1, const Request &r2)
     // Adding mutableHeaders from r2 to r1
     const QList<Header> headers = r2.headers();
     for (const Header &header : headers) {
-        request.setHeader(header.name(), header.value());
+        request.setHeader(header);
     }
 
     return request;

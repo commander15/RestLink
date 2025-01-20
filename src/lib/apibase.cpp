@@ -204,6 +204,19 @@ Response *ApiBase::deleteResource(const Request &request)
     return send(DeleteOperation, request, Body());
 }
 
+Response *ApiBase::send(Operation operation, const Request &request, const Body &body)
+{
+    // Preprocessing request by adding api url parameters and headers
+    Request finalRequest = Request::merge(request, d_ptr->internalRequest);
+
+    // Preprocessing request by passing it to interceptors
+    for (RequestInterceptor *interceptor : d_ptr->requestInterceptors)
+        finalRequest = interceptor->intercept(finalRequest, body, operation);
+
+    // Sending request and returning response
+    return d_ptr->networkManager()->send(operation, finalRequest, body, this);
+}
+
 /**
  * @brief Returns the user agent string for the API.
  *
@@ -267,19 +280,6 @@ NetworkManager *ApiBase::networkManager() const
 void ApiBase::setNetworkManager(NetworkManager *manager)
 {
     d_ptr->setNetworkManager(manager);
-}
-
-Response *ApiBase::send(Operation operation, const Request &request, const Body &body)
-{
-    // Preprocessing request by adding api url parameters and headers
-    Request finalRequest = Request::merge(request, d_ptr->internalRequest);
-
-    // Preprocessing request by passing it to interceptors
-    for (RequestInterceptor *interceptor : d_ptr->requestInterceptors)
-        finalRequest = interceptor->intercept(finalRequest, body, operation);
-
-    // Sending request and returning response
-    return d_ptr->networkManager()->send(operation, finalRequest, body, this);
 }
 
 const QList<PathParameter> *ApiBase::constPathParameters() const

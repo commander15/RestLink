@@ -2,7 +2,7 @@ import RestLink
 
 import QtQml
 
-RestLinkApi {
+ApiBase {
     id: api
 
     default property list<QtObject> resources;

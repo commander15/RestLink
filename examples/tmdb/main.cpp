@@ -10,12 +10,10 @@ int main(int argc, char *argv[])
 
     QLoggingCategory::setFilterRules("restlink.info=true");
 
-    const QUrl url("qrc:/qt/qml/TmdbApp/main.qml");
-
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("TMDB_API_KEY", qEnvironmentVariable("TMDB_API_KEY"));
     engine.addImportPath(app.applicationDirPath() + "/../qml");
-    engine.load(url);
+    engine.loadFromModule("TmdbApp", "Main");
 
     return app.exec();
 }

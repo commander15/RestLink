@@ -49,7 +49,8 @@ QList<RequestHandler *> Plugin::allHandlers()
             continue;
         }
 
-        const QString pluginName = metaData.value("name").toString();
+        const QJsonObject pluginObject = metaData.value("MetaData").toObject();
+        const QString pluginName = pluginObject.value("name").toString();
 
         // Retrieve handler
         RequestHandler *handler = plugin->createHandler();
@@ -75,6 +76,11 @@ QList<RequestHandler *> Plugin::allHandlers()
 bool Plugin::isDiscoveryEnabled()
 {
     return s_discoveryEnabled;
+}
+
+void Plugin::enableDiscovery()
+{
+    s_discoveryEnabled = true;
 }
 
 void Plugin::setDiscoveryEnabled(bool enable)

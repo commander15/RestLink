@@ -1,63 +1,50 @@
 #include "pathparameter.h"
 
+#include <RestLink/private/parameter_p.h>
+
 namespace RestLink {
 
+class PathParameterData : public ParameterData
+{
+public:
+    Parameter::Type type() const override
+    { return Parameter::PathParameter; }
+};
+
 PathParameter::PathParameter()
+    : Parameter(new PathParameterData())
 {
 }
 
 PathParameter::PathParameter(const QString &name, const QVariant &value)
-    : m_name(name)
-    , m_value(value)
+    : Parameter(new PathParameterData)
 {
+    setName(name);
+    setValue(value);
 }
 
 PathParameter &PathParameter::operator=(const PathParameter &other)
 {
-    if (this != &other) {
-        m_name = other.m_name;
-        m_value = other.m_value;
-    }
+    Parameter::operator=(other);
     return *this;
+}
+
+PathParameter PathParameter::fromJsonObject(const QJsonObject &object)
+{
+    PathParameter p;
+    dataFromJsonObject(p.d_ptr, object);
+    return p;
 }
 
 PathParameter &PathParameter::operator=(PathParameter &&other)
 {
-    if (this != &other) {
-        m_name = std::move(other.m_name);
-        m_value = std::move(other.m_value);
-    }
+    Parameter::operator=(std::move(other));
     return *this;
-}
-
-QString PathParameter::name() const
-{
-    return m_name;
-}
-
-void PathParameter::setName(const QString &name)
-{
-    m_name = name;
-}
-
-QVariant PathParameter::value() const
-{
-    return m_value;
-}
-
-void PathParameter::setValue(const QVariant &value)
-{
-    m_value = value;
-}
-
-bool PathParameter::isValid() const
-{
-    return !m_name.isEmpty() && m_value.isValid();
 }
 
 bool PathParameter::operator==(const PathParameter &other)
 {
-    return m_name == other.m_name && m_value == other.m_value;
+    return Parameter::operator==(other);
 }
 
 } // namespace RestLink

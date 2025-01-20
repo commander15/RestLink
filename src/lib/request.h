@@ -24,6 +24,7 @@ public:
     Request();
     Request(const char *endpoint);
     Request(const QString &endpoint);
+    Request(const RequestProcessing &processing);
     Request(const Request &other);
     Request(Request &&other);
     ~Request();

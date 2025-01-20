@@ -2,14 +2,15 @@ import RestLink
 
 import QtQml
 
-RestLinkApiRequestParameter {
+RequestParameterBase {
     id: parameter
 
-    enum Scope {
+    enum Type {
         UrlPath = 0,
         UrlQuery = 1,
         Header = 2
     }
 
-    default property list<QtObject> resources;
+    property bool authentication: false
+    property bool secret: false
 }

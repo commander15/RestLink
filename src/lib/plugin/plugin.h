@@ -23,6 +23,7 @@ public:
     static QList<RequestHandler *> allHandlers();
 
     static bool isDiscoveryEnabled();
+    static void enableDiscovery();
     static void setDiscoveryEnabled(bool enable = true);
 
 private:

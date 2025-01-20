@@ -28,7 +28,8 @@ target_headers(RestLink
         restlink.h
         global.h config.h debug.h
         apibase.h api.h
-        requestinterface.h pathparameter.h queryparameter.h
+        requestinterface.h
+        parameter.h parameterlist.h pathparameter.h queryparameter.h
         request.h response.h
         header.h body.h
         compressionutils.h
@@ -37,7 +38,7 @@ target_headers(RestLink
         server.h serverresponse.h
     PRIVATE
         apibase_p.h api_p.h
-        queryparameter_p.h
+        parameter_p.h queryparameter_p.h
         request_p.h response_p.h
         server_p.h serverresponse_p.h
 )
@@ -46,7 +47,8 @@ target_sources(RestLink
     PRIVATE
         debug.cpp
         apibase.cpp api.cpp
-        requestinterface.cpp pathparameter.cpp queryparameter.cpp
+        requestinterface.cpp
+        parameter.cpp pathparameter.cpp queryparameter.cpp
         request.cpp response.cpp
         header.cpp body.cpp
         compressionutils.cpp

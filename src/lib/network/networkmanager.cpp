@@ -65,7 +65,13 @@ Response *NetworkManager::sendRequest(Api::Operation operation, const Request &r
         QNetworkReply *networkReply = generateNetworkReply(operation, networkRequest, body, api);
 
         NetworkResponse *networkResponse = new NetworkResponse(api);
-        networkResponse->setReply(networkReply);
+
+        RequestProcessing processing = request.processing();
+        if (processing)
+            processing(request, body, this, networkResponse);
+        else
+            networkResponse->setReply(networkReply);
+
         response = networkResponse;
     }
     return response;
@@ -126,20 +132,18 @@ QNetworkRequest NetworkManager::generateNetworkRequest(ApiBase::Operation operat
 
     // Request headers setup
     for (const Header &header : request.headers() + body.headers()) {
-        if (header.isEnabled()) {
-            const QVariantList values = header.values();
-            QByteArrayList rawValues;
+        const QVariantList values = header.values();
+        QByteArrayList rawValues;
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-            rawValues.reserve(values.size());
-            std::transform(values.begin(), values.end(), std::back_inserter(rawValues), [](const QVariant &value) {
-                return value.toByteArray();
-            });
+        rawValues.reserve(values.size());
+        std::transform(values.begin(), values.end(), std::back_inserter(rawValues), [](const QVariant &value) {
+            return value.toByteArray();
+        });
 #else
-            for (const QVariant &value : values)
-                rawValues.append(value.toByteArray());
+        for (const QVariant &value : values)
+            rawValues.append(value.toByteArray());
 #endif
-            netReq.setRawHeader(header.name().toUtf8(), rawValues.join(','));
-        }
+        netReq.setRawHeader(header.name().toUtf8(), rawValues.join(','));
     }
 
     return netReq;

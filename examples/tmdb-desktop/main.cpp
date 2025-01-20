@@ -5,9 +5,6 @@
 #include <QtCore/qtimer.h>
 #include <QtCore/qstandardpaths.h>
 
-#include <QtNetwork/qnetworkaccessmanager.h>
-#include <QtNetwork/qnetworkreply.h>
-
 #include <RestLink/api.h>
 #include <RestLink/request.h>
 #include <RestLink/response.h>
@@ -66,7 +63,7 @@ void run(Api *api)
 
     {
         Request request("/search/company");
-        request.setQueryParameter("query", "Marvel");
+        request.addQueryParameter("query", "Marvel");
         requests.append(request);
     }
 
@@ -97,13 +94,8 @@ int main(int argc, char *argv[])
 
     QLoggingCategory::setFilterRules("restlink.info=true");
 
-    QNetworkAccessManager manager;
-    //manager.setTransferTimeout(10000);
-    //manager.setCache(new Cache(&manager));
-
     Api api;
     api.addRequestInterceptor(new Interceptor());
-    api.setNetworkManager(&manager);
     api.configure(QUrl::fromLocalFile(QStandardPaths::writableLocation(QStandardPaths::DownloadLocation) + "/TmdbConfig.json"));
     QObject::connect(&api, &Api::configurationCompleted, &app, [&api] { run(&api); });
     QObject::connect(&api, &Api::configurationFailed, &app, &QCoreApplication::quit);

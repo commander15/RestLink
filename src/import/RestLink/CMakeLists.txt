@@ -4,17 +4,17 @@ qt_add_qml_module(RestLinkQml
     TYPEINFO RestLink.qmltypes
     QML_FILES
         Api.qml
-        ApiRequest.qml
-        ApiRequestParameter.qml
+        Request.qml
+        RequestParameter.qml
     SOURCES
         restlinkplugin.cpp
-        restlinkapi.cpp
-        restlinkapirequest.cpp
     PLUGIN_TARGET RestLinkQml
     NO_GENERATE_PLUGIN_SOURCE
+    SOURCES request.h request.cpp
+    SOURCES api.h api.cpp
 )
 
-target_link_libraries(RestLinkQml PRIVATE Qt::Qml RestLink)
+target_link_libraries(RestLinkQml PUBLIC Qt::Qml RestLink)
 
 qt_query_qml_module(RestLinkQml
     QMLDIR        DIR

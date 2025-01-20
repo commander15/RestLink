@@ -1,7 +1,8 @@
 #include "restlinkplugin.h"
 
-#include <RestLink/api.h>
-#include <RestLink/apireply.h>
+#include <RestLink/response.h>
+#include <RestLink/cache.h>
+#include <RestLink/cookiejar.h>
 
 #include <QtQml/qqmlengine.h>
 
@@ -18,8 +19,9 @@ void RestLinkPlugin::registerTypes(const char *uri)
 
     // @uri RestLink
 
-    qmlRegisterType<RestLink::Api>(uri, 1, 0, "RestLinkApi");
+    qmlRegisterUncreatableType<RestLink::Response>(uri, 1, 0, "Response",
+                                                   "Need to be instanctiate by RestLink::Api");
 
-    qmlRegisterUncreatableType<RestLink::ApiReply>(uri, 1, 0, "RestLinkApiReply",
-                                                   tr("Need to be instanctiate by RestLink::Api"));
+    qmlRegisterType<RestLink::Cache>(uri, 1, 0, "Cache");
+    qmlRegisterType<RestLink::CookieJar>(uri, 1, 0, "CookieJar");
 }
