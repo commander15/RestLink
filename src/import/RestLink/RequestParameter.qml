@@ -13,4 +13,5 @@ RequestParameterBase {
 
     property bool authentication: false
     property bool secret: false
+    property bool locale: false
 }

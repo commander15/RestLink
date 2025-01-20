@@ -33,16 +33,16 @@ void Request::fillParameters(RequestInterface *interface, QObject *request)
     const ParameterList parameters = Request::parameters(request);
     for (const Parameter &parameter : parameters) {
         switch (parameter.type()) {
-        case Parameter::PathParameter:
-            interface->setPathParameter(parameter.name(), parameter.value());
+        case Parameter::PathParameterType:
+            interface->setPathParameter(parameter.toPathParameter());
             break;
 
-        case Parameter::QueryParameter:
-            interface->addQueryParameter(parameter.name(), parameter.value());
+        case Parameter::QueryParameterType:
+            interface->addQueryParameter(parameter.toQueryParameter());
             break;
 
-        case Parameter::Header:
-            interface->setHeader(parameter.name(), parameter.value());
+        case Parameter::HeaderType:
+            interface->setHeader(parameter.toHeader());
 
         default:
             break;
@@ -92,7 +92,7 @@ void Request::run()
 
 RequestParameter::RequestParameter(QObject *parent)
     : QObject(parent)
-    , m_type(Parameter::QueryParameter)
+    , m_type(Parameter::QueryParameterType)
     , m_enabled(true)
 {
 }
@@ -102,21 +102,23 @@ Parameter RequestParameter::parameter() const
     Parameter p;
 
     switch (m_type) {
-    case Parameter::PathParameter:
+    case Parameter::PathParameterType:
         p = PathParameter(m_name, m_value);
         break;
 
-    case Parameter::QueryParameter:
+    case Parameter::QueryParameterType:
         p = QueryParameter(m_name, m_value);
         break;
 
-    case Parameter::Header:
+    case Parameter::HeaderType:
         p = Header(m_name, m_value);
         break;
 
     default:
         break;
     }
+
+    bool auth = property("locale").toBool();
 
     auto setFlag = [this, &p](const char *property, Parameter::Flag flag) {
         if (this->property(property).toBool())
@@ -125,6 +127,7 @@ Parameter RequestParameter::parameter() const
 
     setFlag("authentication", Parameter::Authentication);
     setFlag("secret", Parameter::Secret);
+    setFlag("locale", Parameter::Locale);
 
     return p;
 }
