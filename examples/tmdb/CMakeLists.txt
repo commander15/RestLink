@@ -8,7 +8,7 @@ qt_add_qml_module(tmdb
     QML_FILES
     Main.qml
         MediaDelegate.qml
-        TmdbApi.qml
+        Tmdb.qml
 )
 
 set_target_properties(tmdb PROPERTIES

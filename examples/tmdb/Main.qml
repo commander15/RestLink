@@ -52,12 +52,12 @@ ApplicationWindow {
         id: request
 
         endpoint: "/search/multi"
-        api: restApi
+        api: tmdb
 
         onFinished: function(response) {
             if (response.success) {
                 const rawJson = response.body;
-                console.log(rawJson);
+                //console.log(rawJson);
 
                 var json = JSON.parse(rawJson).results;
                 view.model = json;
@@ -76,24 +76,10 @@ ApplicationWindow {
         }
     }
 
-    Api {
-        id: restApi
+    Tmdb {
+        id: tmdb
 
-        name: "TMDB"
-        //version: "3"
-        url: "https://api.themoviedb.org/3"
-
-        locale: Qt.locale("fr-FR")
-
-        RequestParameter {
-            name: "api_key"
-            value: TMDB_API_KEY
-        }
-
-        RequestParameter {
-            name: "language"
-            value: restApi.locale.name.substring(0, 2);
-            type: RequestParameter.UrlQuery
-        }
+        key: TMDB_API_KEY
+        locale: Qt.locale("fr_FR")
     }
 }

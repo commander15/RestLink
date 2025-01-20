@@ -3,6 +3,8 @@ import RestLink
 Api {
     id: api
 
+    property string key
+    property string token
     property bool adult: false
     property bool secure: false
 
@@ -12,12 +14,22 @@ Api {
 
     RequestParameter {
         name: "Authorization"
-        value: api
+        value: "Bearer " + api.token
+        type: RequestParameter.Header
+        authentication: true
+        enabled: api.token.length > 0
+    }
+
+    RequestParameter {
+        name: "api_key"
+        value: api.key
+        authentication: true
+        enabled: api.key.length > 0
     }
 
     RequestParameter {
         name: "language"
-        value: api.language
+        locale: true
     }
 
     RequestParameter {
