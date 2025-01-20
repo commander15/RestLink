@@ -6,6 +6,7 @@
 
 namespace RestLink {
 
+class PathParameterData;
 class RESTLINK_EXPORT PathParameter : public Parameter
 {
 public:
@@ -22,6 +23,11 @@ public:
     bool operator==(const PathParameter &other);
     inline bool operator!=(const PathParameter &other)
     { return !operator==(other); }
+
+protected:
+    PathParameter(const QSharedDataPointer<ParameterData> &d);
+
+    friend class Parameter;
 };
 
 typedef QList<PathParameter> PathParameterList;

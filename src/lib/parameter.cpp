@@ -1,6 +1,14 @@
 #include "parameter.h"
 #include "parameter_p.h"
 
+#include <RestLink/pathparameter.h>
+#include <RestLink/queryparameter.h>
+#include <RestLink/header.h>
+
+#include <RestLink/private/pathparameter_p.h>
+#include <RestLink/private/queryparameter_p.h>
+#include <RestLink/private/header_p.h>
+
 #include <QtCore/qjsonobject.h>
 #include <QtCore/qjsonarray.h>
 
@@ -23,6 +31,11 @@ Parameter::Parameter(Parameter &&other)
 
 Parameter::Parameter(ParameterData *d)
     : d_ptr(d)
+{
+}
+
+Parameter::Parameter(const QSharedDataPointer<ParameterData> &data)
+    : d_ptr(data)
 {
 }
 
@@ -77,7 +90,9 @@ QVariant Parameter::value() const
  */
 void Parameter::setValue(const QVariant &value)
 {
-    d_ptr->values = { d_ptr->validateValue(value) };
+    const QVariant finalValue = d_ptr->validateValue(value);
+    if (finalValue.isValid())
+        d_ptr->values = { finalValue };
 }
 
 bool Parameter::hasValue(const QVariant &value) const
@@ -87,7 +102,9 @@ bool Parameter::hasValue(const QVariant &value) const
 
 void Parameter::addValue(const QVariant &value)
 {
-    d_ptr->values.append(value);
+    const QVariant finalValue = d_ptr->validateValue(value);
+    if (finalValue.isValid())
+        d_ptr->values.append(finalValue);
 }
 
 void Parameter::removeValue(const QVariant &value)
@@ -102,7 +119,7 @@ QVariantList Parameter::values() const
 
 void Parameter::setValues(const QVariantList &values)
 {
-    d_ptr->values = values;
+    d_ptr->values = d_ptr->validateValues(values);
 }
 
 /*!
@@ -157,6 +174,44 @@ Parameter::Type Parameter::type() const
 bool Parameter::isValid() const
 {
     return !d_ptr->isValid();
+}
+
+PathParameter Parameter::toPathParameter() const
+{
+    if (d_ptr->type() == PathParameterType)
+        return PathParameter(d_ptr);
+    else
+        return PathParameter();
+}
+
+/**
+ * Converts the current Parameter instance to a QueryParameter.
+ * If the type of the parameter is QueryParameterType, it returns a valid QueryParameter.
+ * Otherwise, it returns an invalid QueryParameter instance.
+ *
+ * @return QueryParameter - A converted QueryParameter instance or an invalid one.
+ */
+QueryParameter Parameter::toQueryParameter() const
+{
+    if (d_ptr->type() == QueryParameterType)
+        return QueryParameter(d_ptr);
+    else
+        return QueryParameter();
+}
+
+/**
+ * Converts the current Parameter instance to a Header.
+ * If the type of the parameter is HeaderType, it returns a valid Header.
+ * Otherwise, it returns an invalid Header instance.
+ *
+ * @return Header - A converted Header instance or an invalid one.
+ */
+Header Parameter::toHeader() const
+{
+    if (d_ptr->type() == HeaderType)
+        return Header(d_ptr);
+    else
+        return Header();
 }
 
 QJsonObject Parameter::toJsonObject() const
@@ -231,6 +286,7 @@ void Parameter::dataFromJsonObject(ParameterData *data, const QJsonObject &objec
 
     setFlag("authentication", Authentication, false);
     setFlag("secret", Secret, false);
+    setFlag("locale", Locale, false);
 }
 
 } // namespace RestLink

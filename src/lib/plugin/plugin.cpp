@@ -17,7 +17,9 @@ Plugin::Plugin(QObject *parent)
 
 QList<RequestHandler *> Plugin::allHandlers()
 {
-    if (!s_handlers.isEmpty())
+    static bool loaded = false;
+
+    if (loaded)
         return s_handlers;
 
     QPluginLoader loader;
@@ -69,6 +71,8 @@ QList<RequestHandler *> Plugin::allHandlers()
 
         loader.unload();
     }
+
+    loaded = true;
 
     return s_handlers;
 }

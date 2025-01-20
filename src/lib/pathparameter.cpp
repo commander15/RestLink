@@ -1,15 +1,9 @@
 #include "pathparameter.h"
+#include "pathparameter_p.h"
 
 #include <RestLink/private/parameter_p.h>
 
 namespace RestLink {
-
-class PathParameterData : public ParameterData
-{
-public:
-    Parameter::Type type() const override
-    { return Parameter::PathParameter; }
-};
 
 PathParameter::PathParameter()
     : Parameter(new PathParameterData())
@@ -21,6 +15,11 @@ PathParameter::PathParameter(const QString &name, const QVariant &value)
 {
     setName(name);
     setValue(value);
+}
+
+PathParameter::PathParameter(const QSharedDataPointer<ParameterData> &d)
+    : Parameter(d)
+{
 }
 
 PathParameter &PathParameter::operator=(const PathParameter &other)

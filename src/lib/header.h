@@ -7,6 +7,7 @@
 
 namespace RestLink {
 
+class HeaderData;
 class RESTLINK_EXPORT Header : public Parameter
 {
 public:
@@ -18,6 +19,11 @@ public:
     Header &operator=(const Header &other);
 
     static Header fromJsonObject(const QJsonObject &object);
+
+protected:
+    Header(const QSharedDataPointer<ParameterData> &d);
+
+    friend class Parameter;
 };
 
 typedef ParameterList<Header> HeaderList;

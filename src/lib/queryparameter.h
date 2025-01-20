@@ -6,6 +6,7 @@
 
 namespace RestLink {
 
+class QueryParameterData;
 class RESTLINK_EXPORT QueryParameter : public Parameter
 {
 public:
@@ -20,6 +21,11 @@ public:
 
     using Parameter::operator==;
     using Parameter::operator!=;
+
+protected:
+    QueryParameter(const QSharedDataPointer<ParameterData> &d);
+
+    friend class Parameter;
 };
 
 typedef QList<QueryParameter> QueryParameterList;

@@ -24,6 +24,11 @@ QueryParameter::QueryParameter(const QueryParameter &other)
 {
 }
 
+QueryParameter::QueryParameter(const QSharedDataPointer<ParameterData> &d)
+    : Parameter(d)
+{
+}
+
 /*!
  * \brief Destructor for QueryParameter.
  *

@@ -70,7 +70,7 @@ QString Server::errorString() const
 Response *Server::createResponse(ApiBase::Operation operation, const Request &request, const Body &body, Api *api)
 {
     ServerResponse *response = new ServerResponse(api);
-    response->setNetworkRequest(QNetworkRequest(generateUrl(request, api)));
+    response->setNetworkRequest(QNetworkRequest(generateUrl(request, api, RequestContext)));
     return response;
 }
 

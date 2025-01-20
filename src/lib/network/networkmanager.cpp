@@ -1,5 +1,6 @@
 #include "networkmanager.h"
 
+#include <RestLink/debug.h>
 #include <RestLink/cache.h>
 #include <RestLink/cookiejar.h>
 #include <RestLink/request.h>
@@ -9,6 +10,7 @@
 #include <RestLink/body.h>
 #include <RestLink/response.h>
 #include <RestLink/private/networkresponse_p.h>
+#include <RestLink/httputils.h>
 #include <RestLink/compressionutils.h>
 #include <RestLink/plugin.h>
 
@@ -48,6 +50,8 @@ NetworkManager::NetworkManager(QObject *parent)
 
 Response *NetworkManager::sendRequest(Api::Operation operation, const Request &request, const Body &body, Api *api)
 {
+    restlinkInfo() << HttpUtils::methodString(operation) << ' ' << generateUrl(request, api, LogContext).toString(QUrl::DecodeReserved);
+
     QList<RequestHandler *> handlers = Plugin::allHandlers();
 
     const QString urlSheme = api->url().scheme();
@@ -97,7 +101,7 @@ QNetworkRequest NetworkManager::generateNetworkRequest(ApiBase::Operation operat
     netReq.setAttribute(QNetworkRequest::UserMax, QVariant::fromValue(request));
 
     // Url generation
-    netReq.setUrl(generateUrl(request, api));
+    netReq.setUrl(generateUrl(request, api, RequestContext));
 
     // User agent setting
     netReq.setHeader(QNetworkRequest::UserAgentHeader, api->userAgent());
@@ -134,15 +138,21 @@ QNetworkRequest NetworkManager::generateNetworkRequest(ApiBase::Operation operat
     for (const Header &header : request.headers() + body.headers()) {
         const QVariantList values = header.values();
         QByteArrayList rawValues;
+        if (header.hasFlag(Parameter::Locale) && values.isEmpty()) {
+            const QString language = api->locale().name();
+            rawValues.append(language.section('_', 0, 0).toLatin1());
+        } else {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        rawValues.reserve(values.size());
-        std::transform(values.begin(), values.end(), std::back_inserter(rawValues), [](const QVariant &value) {
-            return value.toByteArray();
-        });
+            rawValues.reserve(values.size());
+            std::transform(values.begin(), values.end(), std::back_inserter(rawValues), [](const QVariant &value) {
+                return value.toByteArray();
+            });
 #else
-        for (const QVariant &value : values)
-            rawValues.append(value.toByteArray());
+            for (const QVariant &value : values)
+                rawValues.append(value.toByteArray());
 #endif
+        }
+
         netReq.setRawHeader(header.name().toUtf8(), rawValues.join(','));
     }
 

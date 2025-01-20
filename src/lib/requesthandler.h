@@ -24,9 +24,14 @@ public:
     virtual QStringList supportedSchemes() const = 0;
 
 protected:
+    enum UrlContext {
+        LogContext,
+        RequestContext
+    };
+
     bool isApiSupported(ApiBase *api) const;
 
-    QUrl generateUrl(const Request &request, ApiBase *api) const;
+    QUrl generateUrl(const Request &request, ApiBase *api, UrlContext context) const;
 
     virtual Response *sendRequest(Api::Operation operation, const Request &request, const Body &body, Api *api) = 0;
 

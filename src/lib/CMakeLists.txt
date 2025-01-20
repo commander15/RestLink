@@ -38,7 +38,7 @@ target_headers(RestLink
         server.h serverresponse.h
     PRIVATE
         apibase_p.h api_p.h
-        parameter_p.h queryparameter_p.h
+        parameter_p.h pathparameter_p.h queryparameter_p.h header_p.h
         request_p.h response_p.h
         server_p.h serverresponse_p.h
 )

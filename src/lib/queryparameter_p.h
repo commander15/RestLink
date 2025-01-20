@@ -11,7 +11,7 @@ class QueryParameterData : public ParameterData
 {
 public:
     Parameter::Type type() const override
-    { return Parameter::QueryParameter; }
+    { return Parameter::QueryParameterType; }
 };
 
 }

@@ -70,7 +70,7 @@ bool RequestHandler::isApiSupported(ApiBase *api) const
     return supportedSchemes().contains(api->url().scheme());
 }
 
-QUrl RequestHandler::generateUrl(const Request &request, ApiBase *api) const
+QUrl RequestHandler::generateUrl(const Request &request, ApiBase *api, UrlContext context) const
 {
     QUrl url = api->url();
 
@@ -78,9 +78,22 @@ QUrl RequestHandler::generateUrl(const Request &request, ApiBase *api) const
     url.setPath(urlPath);
 
     QUrlQuery urlQuery(url.query());
-    for (const QueryParameter &param : request.queryParameters())
+    for (const QueryParameter &param : request.queryParameters()) {
+        if (context == LogContext && param.hasFlag(Parameter::Secret))
+            continue;
+
+        if (param.values().isEmpty()) {
+            if (param.hasFlag(Parameter::Locale)) {
+                const QString language = api->locale().name();
+                urlQuery.addQueryItem(param.name(), language.section('_', 0, 0));
+            }
+
+            continue;
+        }
+
         for (const QVariant &value : param.values())
             urlQuery.addQueryItem(param.name(), value.toString());
+    }
     url.setQuery(urlQuery);
 
     return url;

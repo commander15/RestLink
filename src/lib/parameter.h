@@ -10,6 +10,10 @@ class QJsonObject;
 
 namespace RestLink {
 
+class PathParameter;
+class QueryParameter;
+class Header;
+
 class ParameterData;
 class RESTLINK_EXPORT Parameter
 {
@@ -17,15 +21,16 @@ public:
     enum Flag {
         NoFlag = 0x0,
         Authentication = 0x1,
-        Secret = 0x2
+        Secret = 0x2,
+        Locale = 0x4
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
     enum Type {
-        Base,
-        PathParameter,
-        QueryParameter,
-        Header
+        BaseType,
+        PathParameterType,
+        QueryParameterType,
+        HeaderType
     };
 
     Parameter();
@@ -61,6 +66,10 @@ public:
 
     bool isValid() const;
 
+    PathParameter toPathParameter() const;
+    QueryParameter toQueryParameter() const;
+    Header toHeader() const;
+
     QJsonObject toJsonObject() const;
     static Parameter fromJsonObject(const QJsonObject &object, Type type);
 
@@ -71,6 +80,7 @@ public:
 
 protected:
     Parameter(ParameterData *d);
+    Parameter(const QSharedDataPointer<ParameterData> &data);
 
     static void dataFromJsonObject(ParameterData *data, const QJsonObject &object);
 

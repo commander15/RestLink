@@ -43,7 +43,7 @@ public:
     { return !name.isEmpty() && !values.isEmpty(); }
 
     virtual Parameter::Type type() const
-    { return Parameter::Base; }
+    { return Parameter::BaseType; }
 };
 
 } // namespace RestLink
