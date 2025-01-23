@@ -86,6 +86,9 @@ Response *Server::sendRequest(ApiBase::Operation operation, const Request &reque
     d_ptr->pendingRequests.enqueue(pending);
     d_ptr->mutex.unlock();
 
+    if (d_ptr->autoStart && !isListening())
+        listen();
+
     return pending.response;
 }
 
@@ -112,6 +115,7 @@ void Server::setListening(bool listening)
 ServerPrivate::ServerPrivate(Server::ServerType type, Server *q)
     : q_ptr(q)
     , listening(false)
+    , autoStart(false)
     , type(type)
     , bypassCleanup(false)
 {

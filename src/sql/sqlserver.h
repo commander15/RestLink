@@ -41,8 +41,6 @@ protected:
 
     void processRequest(ApiBase::Operation operation, const Request &request, const Body &body, Response *r) override;
     Response *createResponse(ApiBase::Operation operation, const Request &request, const Body &body, Api *api) override;
-
-    Response *sendRequest(ApiBase::Operation operation, const Request &request, const Body &body, Api *api) override;
 };
 
 } // namespace RestLink

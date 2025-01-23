@@ -35,6 +35,8 @@ public:
     int errorCode;
     QString errorString;
 
+    bool autoStart;
+
     const Server::ServerType type;
     QQueue<PendingRequest> pendingRequests;
     bool bypassCleanup;
