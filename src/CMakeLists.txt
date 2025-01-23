@@ -31,12 +31,14 @@ if (${CMAKE_BUILD_TYPE} STREQUAL "Debug" AND FALSE)
     string(PREPEND CMAKE_SHARED_MODULE_SUFFIX  "d")
 endif()
 
-find_package(ZLIB)
-
 add_subdirectory(lib)
 
 if (RESTLINK_SUPPORT_SQL)
     add_subdirectory(sql)
+endif()
+
+if (RESTLINK_SUPPORT_EXCEL)
+    add_subdirectory(excel)
 endif()
 
 if (RESTLINK_BUILD_CLI)

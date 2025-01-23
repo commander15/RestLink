@@ -7,6 +7,7 @@ project(RestLink
 )
 
 option(RESTLINK_SUPPORT_SQL    OFF "Enable SQL support")
+option(RESTLINK_SUPPORT_EXCEL  OFF "Enable EXCEL support")
 option(RESTLINK_BUILD_DOCS     OFF "Build documentation")
 option(RESTLINK_BUILD_CLI      OFF "Build cli tool")
 option(RESTLINK_BUILD_QML      OFF "Build QML Plugin")
@@ -20,11 +21,16 @@ set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml)
 set(CXX_STANDARD 17)
 set(CXX_STANDARD_REQUIRED TRUE)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
 list(PREPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+# Core dependencies
 find_package(Qt REQUIRED COMPONENTS Core Network)
+find_package(ZLIB)
+
+# Excel plugin dependencies
+if (RESTLINK_SUPPORT_EXCEL)
+    find_package(QXlsxQt6 REQUIRED)
+endif()
 
 include(cmake/Utils.cmake)
 
