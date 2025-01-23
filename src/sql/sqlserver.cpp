@@ -327,17 +327,10 @@ Response *SqlServer::createResponse(ApiBase::Operation operation, const Request 
     return response;
 }
 
-Response *SqlServer::sendRequest(ApiBase::Operation operation, const Request &request, const Body &body, Api *api)
-{
-    if (!isListening())
-        listen();
-
-    return Server::sendRequest(operation, request, body, api);
-}
-
 SqlServerPrivate::SqlServerPrivate(SqlServer *q)
     : ServerPrivate(Server::Synchronous, q)
 {
+    autoStart = true;
 }
 
 int SqlServerPrivate::extractDataFromPath(const QString &path, QString *table, QString *primary)
