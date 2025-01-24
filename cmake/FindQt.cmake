@@ -10,6 +10,10 @@ if (RESTLINK_SUPPORT_SQL)
     list(APPEND Modules Sql)
 endif()
 
+if (RESTLINK_SUPPORT_EXCEL)
+    list(APPEND Modules Gui)
+endif()
+
 if (RESTLINK_BUILD_QML)
     list(APPEND Modules Qml)
 
