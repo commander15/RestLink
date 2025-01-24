@@ -13,23 +13,25 @@ if (RestLink_FIND_VERSION_MAJOR)
 endif()
 
 # Check if RestLink is already found or installed
-if (NOT RESTLINK_FORCE_FETCH)
-    find_package(RestLink ${RestLink_VERSION_MAJOR} COMPONENTS "${RestLink_FIND_COMPONENTS}" PATHS ${CMAKE_BINARY_DIR})
-endif()
+    find_package(RestLink ${RestLink_VERSION} COMPONENTS "${RestLink_FIND_COMPONENTS}" PATHS ${CMAKE_BINARY_DIR})
 
 # If RestLink is found, check for ZLIB (optional dependency or requirement for the project)
 if (NOT RestLink_FOUND OR RESTLINK_FORCE_FETCH)
     # If RestLink is not found, download and build it using ExternalProject
-    
+    set(RESTLINK_GIT "https://github.com/commander15/RestLink.git")
+
     set(ARGS)
     foreach (Component ${RestLink_FIND_COMPONENTS})
         string(TOUPPER ${Component} COMPONENT)
-        list(APPEND ARGS -DRESTLINK_BUILD_${COMPONENT}=TRUE)
+        list(APPEND ARGS
+            -DRESTLINK_BUILD_${COMPONENT}=TRUE
+            -DRESTLINK_SUPPORT_${COMPONENT}=TRUE
+        )
     endforeach()
 
     include(ExternalProject)
     ExternalProject_Add(RestLink
-        GIT_REPOSITORY https://github.com/commander15/RestLink.git
+        GIT_REPOSITORY ${RESTLINK_GIT}
         GIT_TAG        origin/${RESTLINK_BRANCH}
         CMAKE_ARGS
             -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}
@@ -44,7 +46,8 @@ if (NOT RestLink_FOUND OR RESTLINK_FORCE_FETCH)
     )
 
     ExternalProject_Add_Step(RestLink preparation
-        COMMAND ${CMAKE_COMMAND} -E "🚨 Fetching and building RestLink from ${RESTLINK_BRANCH}..."
+        COMMAND ${CMAKE_COMMAND} -E echo "🚨 Fetching and building RestLink from ${RESTLINK_BRANCH}..."
+        COMMAND ${CMAKE_COMMAND} -E echo "${RESTLINK_GIT}"
         DEPENDERS mkdir
     )
 
