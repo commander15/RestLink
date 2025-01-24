@@ -1,29 +1,23 @@
 # RestLink Configuration file
 @PACKAGE_INIT@
 
-# Setting up variables
-set(RESTLINK_SQL  @RESTLINK_SUPPORT_SQL@)
-set(RESTLINK_CLI  @RESTLINK_BUILD_CLI@)
-set(RESTLINK_QML  @RESTLINK_BUILD_QML@)
-set(RESTLINK_DOCS @RESTLINK_BUILD_DOCS@)
-
 # Computing paths
 set(RESTLINK_ROOT "@PACKAGE_ROOT@")
 set(RESTLINK_LIB_DIR "${RESTLINK_ROOT}/lib")
 
+# Available modules
+set(RESTLINK_MODULES @RESTLINK_MODULES@)
+
+# Finding ZLIB
+find_package(ZLIB)
+
 # Find components
 foreach (Module ${RestLink_FIND_COMPONENTS})
-    if (${Module} STR_EQUAL "Core")
-        # Core
-    elseif (${Module} STR_EQUAL "Sql")
-        # Sql
-        if (RestLink_Sql_REQUIRED AND NOT RESTLINK_SQL)
-            message("RestLink: Sql support not found")
-            set(RestLink_FOUND FALSE)
-        endif()
-    else()
-        # Unknown
-        message(WARNING "RestLink: unknown module: ${Module}")
+    list(FIND RESTLINK_MODULES ${Module} INDEX)
+
+    if (INDEX EQUAL -1)
+        message("RestLink: ${Module} module not found")
+        set(RestLink_FOUND FALSE)
     endif()
 endforeach()
 
