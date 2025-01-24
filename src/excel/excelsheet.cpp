@@ -101,7 +101,12 @@ QXlsx::CellRange ExcelSheet::propertyDimension() const
 
 void ExcelSheet::setPropertyDimension(const QXlsx::CellRange &dim)
 {
-    m_propertyDimension = dim;
+    if (dim.isValid()) {
+        m_propertyDimension = dim;
+        m_dataDimension.setFirstRow(dim.firstRow() + 1);
+
+        updateProperties();
+    }
 }
 
 QXlsx::CellRange ExcelSheet::dataDimension() const
@@ -117,8 +122,15 @@ void ExcelSheet::setDataDimension(const QXlsx::CellRange &dim)
 void ExcelSheet::updateProperties()
 {
     m_properties.clear();
-    for (int i(m_propertyDimension.firstColumn()); i <= m_propertyDimension.lastColumn(); ++i)
-        m_properties.insert(i, m_sheet->read(m_propertyDimension.firstRow(), i).toString());
+    for (int i(m_propertyDimension.firstColumn()); i <= m_propertyDimension.lastColumn(); ++i) {
+        QVariant value = m_sheet->read(m_propertyDimension.firstRow(), i);
+
+        // If nothing found, consider there is a sub menu down
+        if (value.isNull())
+            value = m_sheet->read(m_propertyDimension.firstRow() + 1, i);
+
+        m_properties.insert(i, value.toString());
+    }
 }
 
 void ExcelSheet::computeDimensions()

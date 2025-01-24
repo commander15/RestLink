@@ -19,7 +19,7 @@ public:
     QStringList supportedSchemes() const override
     { return { "excel", "xlsx" }; }
 
-    void handleConfiguration(const Request &request, const QJsonObject &body, ExcelSheet *sheet, ServerResponse *response);
+    void handleConfiguration(Api::Operation op, const Request &request, const QJsonObject &body, ExcelSheet *sheet, ServerResponse *response);
 
     void handleGet(const Request &request, ExcelSheet *sheet, ServerResponse *response);
 

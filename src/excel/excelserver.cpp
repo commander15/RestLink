@@ -19,8 +19,14 @@ ExcelServer::ExcelServer(QObject *parent)
 {
 }
 
-void ExcelServer::handleConfiguration(const Request &request, const QJsonObject &body, ExcelSheet *sheet, ServerResponse *response)
+void ExcelServer::handleConfiguration(Api::Operation op, const Request &request, const QJsonObject &body, ExcelSheet *sheet, ServerResponse *response)
 {
+    if (op != Api::PostOperation) {
+        response->setHttpStatusCode(400);
+        response->complete();
+        return;
+    }
+
     if (body.contains("header_row")) {
         const int row = body.value("header_row").toInt();
 
@@ -29,6 +35,9 @@ void ExcelServer::handleConfiguration(const Request &request, const QJsonObject 
         dim.setLastRow(row);
         sheet->setPropertyDimension(dim);
     }
+
+    response->setHttpStatusCode(200);
+    response->complete();
 }
 
 void ExcelServer::handleGet(const Request &request, ExcelSheet *sheet, ServerResponse *response)
@@ -96,6 +105,33 @@ void ExcelServer::processRequest(ApiBase::Operation operation, const Request &re
         return;
     }
 
+    int headerRow = (request.hasHeader("X-EXCEL-HEADER-ROW") ? request.header("X-EXCEL-HEADER-ROW").value().toInt() : -1);
+    int startColumn = (request.hasHeader("X-EXCEL-START-COLUMN") ? request.header("X-EXCEL-START-COLUMN").value().toInt() : -1);
+    int stopColumn = (request.hasHeader("X-EXCEL-STOP-COLUMN") ? request.header("X-EXCEL-STOP-COLUMN").value().toInt() : -1);
+    QXlsx::CellRange dim = sheet->propertyDimension();
+
+    if (headerRow > 0) {
+        dim.setFirstRow(headerRow);
+        dim.setLastRow(headerRow);
+    }
+
+    if (startColumn > 0) {
+        dim.setFirstColumn(startColumn);
+    }
+
+    if (stopColumn > 0) {
+        dim.setLastColumn(stopColumn);
+    }
+
+    sheet->setPropertyDimension(dim);
+
+    int startRow = (request.hasHeader("X-EXCEL-START-ROW") ? request.header("X-EXCEL-START-ROW").value().toInt() : -1);
+    if (startRow > 0) {
+        QXlsx::CellRange dim = sheet->dataDimension();
+        dim.setFirstRow(startRow);
+        sheet->setDataDimension(dim);
+    }
+
     RequestProcessing processing = request.processing();
     if (processing) {
         document->selectSheet(sheet->name());
@@ -104,7 +140,7 @@ void ExcelServer::processRequest(ApiBase::Operation operation, const Request &re
         return;
     }
 
-    //QJsonObject object = QJsonDocument::fromJson(body.data()).object();
+    QJsonObject object = QJsonDocument::fromJson(body.data()).object();
 
     switch (operation) {
     case Api::GetOperation:
