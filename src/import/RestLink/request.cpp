@@ -85,6 +85,9 @@ void Request::run()
     Body body(m_body);
 
     m_response = m_api->send(operation, request, body);
+    if (!m_response)
+        return;
+
     connect(m_response, &Response::finished, this, [this] {
         emit finished(m_response);
     });

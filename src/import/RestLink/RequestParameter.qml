@@ -1,7 +1,5 @@
 import RestLink
 
-import QtQml
-
 RequestParameterBase {
     id: parameter
 

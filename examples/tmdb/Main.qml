@@ -80,6 +80,6 @@ ApplicationWindow {
         id: tmdb
 
         key: TMDB_API_KEY
-        locale: Qt.locale("fr_FR")
+        //locale: Qt.locale("fr_FR")
     }
 }

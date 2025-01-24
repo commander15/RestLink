@@ -14,11 +14,11 @@ class ApiPrivate;
 class RESTLINK_EXPORT Api : public ApiBase
 {
     Q_OBJECT
-    Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged FINAL)
-    Q_PROPERTY(QString version READ versionString WRITE setVersionString NOTIFY versionChanged FINAL)
-    Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged FINAL)
-    Q_PROPERTY(QLocale locale READ locale WRITE setLocale NOTIFY localeChanged FINAL)
-    Q_PROPERTY(QString userAgent READ userAgent WRITE setUserAgent NOTIFY userAgentChanged FINAL)
+    Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
+    Q_PROPERTY(QString version READ versionString WRITE setVersionString NOTIFY versionChanged)
+    Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
+    Q_PROPERTY(QLocale locale READ locale WRITE setLocale NOTIFY localeChanged)
+    Q_PROPERTY(QString userAgent READ userAgent WRITE setUserAgent NOTIFY userAgentChanged)
 
 public:
     explicit Api(QObject *parent = nullptr);

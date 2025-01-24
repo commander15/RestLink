@@ -3,9 +3,8 @@ qt_add_qml_module(RestLinkQml
     VERSION ${RestLink_VERSION_MAJOR}.${RestLink_VERSION_MINOR}
     TYPEINFO RestLink.qmltypes
     QML_FILES
-        Api.qml
-        Request.qml
-        RequestParameter.qml
+        Api.qml ApiParameter.qml
+        Request.qml RequestParameter.qml
     SOURCES
         restlinkplugin.cpp
     PLUGIN_TARGET RestLinkQml
