@@ -3,8 +3,8 @@ import RestLink
 Api {
     id: api
 
-    property string key
     property string token
+    property string key
     property bool adult: false
     property bool secure: false
 
@@ -12,27 +12,27 @@ Api {
     version: "3"
     url: "http" + (secure ? 's' : '') + "://api.themoviedb.org/" + version
 
-    RequestParameter {
+    ApiParameter {
         name: "Authorization"
         value: "Bearer " + api.token
-        type: RequestParameter.Header
+        type: ApiParameter.Header
         authentication: true
         enabled: api.token.length > 0
     }
 
-    RequestParameter {
+    ApiParameter {
         name: "api_key"
         value: api.key
         authentication: true
         enabled: api.key.length > 0
     }
 
-    RequestParameter {
+    ApiParameter {
         name: "language"
         locale: true
     }
 
-    RequestParameter {
+    ApiParameter {
         name: "adult"
         value: (api.adult ? "true" : "false")
     }
