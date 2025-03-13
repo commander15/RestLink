@@ -13,7 +13,11 @@ if (RestLink_FIND_VERSION_MAJOR)
 endif()
 
 # Check if RestLink is already found or installed
+if (NOT RESTLINK_FORCE_FETCH)
     find_package(RestLink ${RestLink_VERSION} COMPONENTS "${RestLink_FIND_COMPONENTS}" PATHS ${CMAKE_BINARY_DIR})
+else()
+    set(RestLink_FOUND FALSE)
+endif()
 
 # If RestLink is found, check for ZLIB (optional dependency or requirement for the project)
 if (NOT RestLink_FOUND OR RESTLINK_FORCE_FETCH)
