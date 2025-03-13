@@ -60,7 +60,7 @@ QLocale ApiBase::locale() const
  * @param request The Request object to be sent.
  * @param callback The callback function to be invoked once the request completes.
  */
-void ApiBase::head(const Request &request, std::function<ApiRunCallback> callback)
+void ApiBase::head(const Request &request, const ApiRunCallback &callback)
 {
     Response *response = head(request);
     connect(response, &Response::finished, this, [callback, response] { callback(response); });
@@ -84,7 +84,7 @@ Response *ApiBase::head(const Request &request)
  * @param request The Request object to be sent.
  * @param callback The callback function to be invoked once the request completes.
  */
-void ApiBase::get(const Request &request, std::function<ApiRunCallback> callback)
+void ApiBase::get(const Request &request, const ApiRunCallback &callback)
 {
     Response *response = get(request);
     connect(response, &Response::finished, this, [callback, response] { callback(response); });
@@ -109,7 +109,7 @@ Response *ApiBase::get(const Request &request)
  * @param body The Body object containing the data to be sent in the request.
  * @param callback The callback function to be invoked once the request completes.
  */
-void ApiBase::post(const Request &request, const Body &body, std::function<ApiRunCallback> callback)
+void ApiBase::post(const Request &request, const Body &body, const ApiRunCallback &callback)
 {
     Response *response = post(request, body);
     connect(response, &Response::finished, this, [callback, response] { callback(response); });
@@ -135,7 +135,7 @@ Response *ApiBase::post(const Request &request, const Body &body)
  * @param body The Body object containing the data to be sent in the request.
  * @param callback The callback function to be invoked once the request completes.
  */
-void ApiBase::put(const Request &request, const Body &body, std::function<ApiRunCallback> callback)
+void ApiBase::put(const Request &request, const Body &body, const ApiRunCallback &callback)
 {
     Response *response = put(request, body);
     connect(response, &Response::finished, this, [callback, response] { callback(response); });
@@ -161,7 +161,7 @@ Response *ApiBase::put(const Request &request, const Body &body)
  * @param body The Body object containing the data to be sent in the request.
  * @param callback The callback function to be invoked once the request completes.
  */
-void ApiBase::patch(const Request &request, const Body &body, std::function<ApiRunCallback> callback)
+void ApiBase::patch(const Request &request, const Body &body, const ApiRunCallback &callback)
 {
     Response *response = patch(request, body);
     connect(response, &Response::finished, this, [callback, response] { callback(response); });
@@ -186,7 +186,7 @@ Response *ApiBase::patch(const Request &request, const Body &body)
  * @param request The Request object to be sent.
  * @param callback The callback function to be invoked once the request completes.
  */
-void ApiBase::deleteResource(const Request &request, std::function<ApiRunCallback> callback)
+void ApiBase::deleteResource(const Request &request, const ApiRunCallback &callback)
 {
     Response *response = deleteResource(request);
     connect(response, &Response::finished, this, [callback, response] { callback(response); });

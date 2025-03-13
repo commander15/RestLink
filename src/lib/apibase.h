@@ -6,6 +6,8 @@
 
 #include <QtCore/qobject.h>
 
+#include <functional>
+
 namespace RestLink {
 
 class Request;
@@ -14,7 +16,7 @@ class Response;
 class RequestInterceptor;
 class NetworkManager;
 
-typedef void(ApiRunCallback)(Response *);
+typedef std::function<void(Response *)> ApiRunCallback;
 
 class ApiBasePrivate;
 class RESTLINK_EXPORT ApiBase : public QObject, public RequestInterface
@@ -40,22 +42,22 @@ public:
 
     virtual QLocale locale() const;
 
-    void head(const Request &request, std::function<ApiRunCallback> callback);
+    void head(const Request &request, const ApiRunCallback &callback);
     Response *head(const Request &request);
 
-    void get(const Request &request, std::function<ApiRunCallback> callback);
+    void get(const Request &request, const ApiRunCallback &callback);
     Response *get(const Request &request);
 
-    void post(const Request &request, const Body &body, std::function<ApiRunCallback> callback);
+    void post(const Request &request, const Body &body, const ApiRunCallback &callback);
     Response *post(const Request &request, const Body &body);
 
-    void put(const Request &request, const Body &body, std::function<ApiRunCallback> callback);
+    void put(const Request &request, const Body &body, const ApiRunCallback &callback);
     Response *put(const Request &request, const Body &body);
 
-    void patch(const Request &request, const Body &body, std::function<ApiRunCallback> callback);
+    void patch(const Request &request, const Body &body, const ApiRunCallback &callback);
     Response *patch(const Request &request, const Body &body);
 
-    void deleteResource(const Request &request, std::function<ApiRunCallback> callback);
+    void deleteResource(const Request &request, const ApiRunCallback &callback);
     Response *deleteResource(const Request &request);
 
     virtual Response *send(Operation operation, const Request &request, const Body &body);
