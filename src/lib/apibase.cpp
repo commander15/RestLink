@@ -32,13 +32,9 @@ ApiBase::ApiBase(ApiBasePrivate *d, QObject *parent) :
 
 /**
  * @brief Destructor for ApiBase.
- *
- * Deletes all request interceptors that are managed by ApiBase.
  */
 ApiBase::~ApiBase()
 {
-    for (RequestInterceptor *interceptor : d_ptr->requestInterceptors)
-        delete interceptor;
 }
 
 /**
