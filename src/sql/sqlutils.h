@@ -9,7 +9,7 @@ class QSqlRecord;
 
 namespace RestLink {
 
-class RESTLINK_EXPORT SqlUtils
+class SqlUtils
 {
 public:
     static QJsonObject recordToJsonObject(const QSqlRecord &record);

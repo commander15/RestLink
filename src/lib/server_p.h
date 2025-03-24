@@ -12,7 +12,7 @@
 
 namespace RestLink {
 
-class ServerPrivate : public QThread
+class RESTLINK_EXPORT ServerPrivate : public QThread
 {
     Q_OBJECT
 

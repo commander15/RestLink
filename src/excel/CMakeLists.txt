@@ -1,12 +1,7 @@
 qt_add_plugin(RestLinkExcel
     CLASS_NAME RestLink::ExcelPlugin
     excelplugin.h excelplugin.cpp
-)
-
-target_sources(RestLinkExcel
-  PRIVATE
-    excelserver.h excelserver.cpp
-    excelserver_p.h
+    excelserver.h excelserver_p.h excelserver.cpp
     exceldocument.h exceldocument.cpp
     excelsheet.h excelsheet.cpp
 )

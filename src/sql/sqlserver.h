@@ -1,7 +1,6 @@
 #ifndef RESTLINK_SQLSERVER_H
 #define RESTLINK_SQLSERVER_H
 
-#include <RestLink/global.h>
 #include <RestLink/server.h>
 
 class QJsonParseError;
@@ -14,7 +13,7 @@ namespace RestLink {
 class ServerResponse;
 
 class SqlServerPrivate;
-class RESTLINK_EXPORT SqlServer : public Server
+class SqlServer : public Server
 {
     Q_OBJECT
 
