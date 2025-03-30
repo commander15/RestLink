@@ -9,11 +9,8 @@ namespace RestLink {
 class RESTLINK_EXPORT HttpUtils
 {
 public:
-    static QString methodString(Api::Operation operation);
+    static QString verbString(Api::Operation operation);
     static QString reasonPhrase(int code);
-
-private:
-    static const QMap<int, QByteArray> s_httpStatusCodes;
 };
 
 }

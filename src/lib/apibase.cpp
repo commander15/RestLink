@@ -206,7 +206,7 @@ Response *ApiBase::send(Operation operation, const Request &request, const Body 
     Request finalRequest = Request::merge(request, d_ptr->internalRequest);
 
     // Preprocessing request by passing it to interceptors
-    for (RequestInterceptor *interceptor : d_ptr->requestInterceptors)
+    for (RequestInterceptor *interceptor : std::as_const(d_ptr->requestInterceptors))
         finalRequest = interceptor->intercept(finalRequest, body, operation);
 
     // Sending request and returning response

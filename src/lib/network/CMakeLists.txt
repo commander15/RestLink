@@ -4,6 +4,7 @@ target_headers(RestLink
         httputils.h
     PRIVATE
         cache_p.h
+        httputils_p.h
         networkresponse_p.h
 )
 

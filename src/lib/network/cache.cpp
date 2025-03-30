@@ -202,7 +202,7 @@ QIODevice *CachePrivate::prepare(const QNetworkCacheMetaData &metaData)
         }
     }
 
-    // Default behavior if no private directive is found
+    // Default behavior if no private directive found
     return QNetworkDiskCache::prepare(metaData);
 }
 

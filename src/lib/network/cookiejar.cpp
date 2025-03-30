@@ -24,4 +24,8 @@ CookieJar::CookieJar(QObject *parent)
 {
 }
 
+CookieJar::~CookieJar()
+{
+}
+
 } // namespace RestLink
