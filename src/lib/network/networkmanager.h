@@ -18,6 +18,8 @@ public:
 
     QStringList supportedSchemes() const override;
 
+    HandlerType handlerType() const override final;
+
 protected:
     Response *sendRequest(ApiBase::Operation operation, const Request &request, const Body &body, Api *api) override;
 

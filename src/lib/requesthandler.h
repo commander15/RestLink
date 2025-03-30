@@ -9,6 +9,13 @@ namespace RestLink {
 class RESTLINK_EXPORT RequestHandler
 {
 public:
+    enum HandlerType {
+        NetworkManager,
+        ServerHandler,
+
+        UnknownHandler = -1
+    };
+
     virtual ~RequestHandler();
 
     Response *head(const Request &request, Api *api);
@@ -22,6 +29,8 @@ public:
     Response *send(Api::Operation operation, const Request &request, const Body &body, ApiBase *api);
 
     virtual QStringList supportedSchemes() const = 0;
+
+    virtual HandlerType handlerType() const = 0;
 
 protected:
     enum UrlContext {

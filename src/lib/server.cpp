@@ -67,6 +67,11 @@ QString Server::errorString() const
     return d_ptr->errorString;
 }
 
+RequestHandler::HandlerType Server::handlerType() const
+{
+    return ServerHandler;
+}
+
 Response *Server::createResponse(ApiBase::Operation operation, const Request &request, const Body &body, Api *api)
 {
     ServerResponse *response = new ServerResponse(api);

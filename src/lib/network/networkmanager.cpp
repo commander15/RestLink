@@ -50,7 +50,7 @@ NetworkManager::NetworkManager(QObject *parent)
 
 Response *NetworkManager::sendRequest(Api::Operation operation, const Request &request, const Body &body, Api *api)
 {
-    restlinkInfo() << HttpUtils::methodString(operation) << ' ' << generateUrl(request, api, LogContext).toString(QUrl::DecodeReserved);
+    restlinkInfo() << HttpUtils::verbString(operation) << ' ' << generateUrl(request, api, LogContext).toString(QUrl::DecodeReserved);
 
     QList<RequestHandler *> handlers = Plugin::allHandlers();
 
@@ -92,6 +92,11 @@ QStringList NetworkManager::supportedSchemes() const
     // Removing duplicates and returning schemes
     schemes.removeDuplicates();
     return schemes;
+}
+
+RequestHandler::HandlerType NetworkManager::handlerType() const
+{
+    return RequestHandler::NetworkManager;
 }
 
 QNetworkRequest NetworkManager::generateNetworkRequest(ApiBase::Operation operation, const Request &request, const Body &body, ApiBase *api)

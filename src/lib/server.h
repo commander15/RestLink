@@ -30,6 +30,8 @@ public:
     int error() const;
     QString errorString() const;
 
+    HandlerType handlerType() const override;
+
 signals:
     void stateChanged(bool listening);
     void errorOccured(int error);
