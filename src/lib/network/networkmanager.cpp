@@ -104,7 +104,14 @@ QNetworkRequest NetworkManager::generateNetworkRequest(ApiBase::Operation operat
     netReq.setUrl(request.url());
 
     // User agent setting
-    netReq.setHeader(QNetworkRequest::UserAgentHeader, api->userAgent());
+    if (api)
+        netReq.setHeader(QNetworkRequest::UserAgentHeader, api->userAgent());
+
+    // Bearer token header setup (if applicable)
+    const QString token = (api ? api->bearerToken() : QString());
+    if (!token.isEmpty()) {
+        netReq.setRawHeader("Authorization", "Bearer " + token.toUtf8());
+    }
 
     // Accept headers setup
 
@@ -116,7 +123,7 @@ QNetworkRequest NetworkManager::generateNetworkRequest(ApiBase::Operation operat
             netReq.setRawHeader("Accept-Encoding", algorithms.join(", "));
     }
 
-    {
+    if (api) {
         const QString full = api->locale().name();
         const QString slim = full.section('_', 0, 0);
         netReq.setRawHeader("Accept-Language", QStringLiteral("%1,%2;q=0.5").arg(full, slim).toLatin1());
@@ -139,7 +146,7 @@ QNetworkRequest NetworkManager::generateNetworkRequest(ApiBase::Operation operat
     for (const Header &header : headers) {
         const QVariantList values = header.values();
         QByteArrayList rawValues;
-        if (header.hasFlag(Parameter::Locale) && values.isEmpty()) {
+        if (api && header.hasFlag(Parameter::Locale) && values.isEmpty()) {
             const QString language = api->locale().name();
             rawValues.append(language.section('_', 0, 0).toLatin1());
         } else {
