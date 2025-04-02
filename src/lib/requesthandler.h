@@ -18,33 +18,21 @@ public:
 
     virtual ~RequestHandler();
 
-    Response *head(const Request &request, Api *api);
-    Response *get(const Request &request, Api *api);
-    Response *post(const Request &request, const Body &body, Api *api);
-    Response *put(const Request &request, const Body &body, Api *api);
-    Response *patch(const Request &request, const Body &body, Api *api);
-    Response *deleteResource(const Request &request, Api *api);
-
-    Response *send(Api::Operation operation, const Request &request, const Body &body, Api *api);
-    Response *send(Api::Operation operation, const Request &request, const Body &body, ApiBase *api);
+    Response *head(const Request &request);
+    Response *get(const Request &request);
+    Response *post(const Request &request, const Body &body);
+    Response *put(const Request &request, const Body &body);
+    Response *patch(const Request &request, const Body &body);
+    Response *deleteResource(const Request &request);
+    Response *send(Api::Operation operation, const Request &request, const Body &body);
 
     virtual QStringList supportedSchemes() const = 0;
 
     virtual HandlerType handlerType() const = 0;
 
 protected:
-    enum UrlContext {
-        LogContext,
-        RequestContext
-    };
-
-    bool isApiSupported(ApiBase *api) const;
-
-    QUrl generateUrl(const Request &request, ApiBase *api, UrlContext context) const;
-
-    virtual Response *sendRequest(Api::Operation operation, const Request &request, const Body &body, Api *api) = 0;
-
-    friend class ApiBase;
+    virtual bool isRequestSupported(const Request &request) const;
+    virtual Response *sendRequest(Api::Operation operation, const Request &request, const Body &body) = 0;
 };
 
 } // namespace RestLink

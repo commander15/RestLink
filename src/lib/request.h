@@ -14,6 +14,7 @@ namespace RestLink {
 class Request;
 class Body;
 class Response;
+class Api;
 
 typedef std::function<void(const Request &, const Body &, void *, Response *)> RequestProcessing;
 
@@ -21,6 +22,11 @@ class RequestData;
 class RESTLINK_EXPORT Request : public RequestInterface
 {
 public:
+    enum UrlType {
+        PublicUrl,
+        SecretUrl
+    };
+
     Request();
     Request(const char *endpoint);
     Request(const QString &endpoint);
@@ -35,10 +41,17 @@ public:
     QString endpoint() const;
     void setEndpoint(const QString &endpoint);
 
+    QUrl baseUrl() const;
+    void setBaseUrl(const QUrl &url);
+
+    QUrl url(UrlType type = SecretUrl) const;
     QString urlPath() const;
 
     RequestProcessing processing() const;
     void setProcessing(RequestProcessing processing);
+
+    Api *api() const;
+    void setApi(Api *api);
 
     QJsonObject toJsonObject() const;
     static Request fromJsonbject(const QJsonObject &object);

@@ -3,6 +3,7 @@
 
 #include <QtCore/qjsonobject.h>
 #include <QtCore/qjsonarray.h>
+#include <QtCore/qurlquery.h>
 
 namespace RestLink {
 
@@ -145,12 +146,54 @@ QString Request::endpoint() const
 }
 
 /*!
- * \brief Retrieves the API endpoint associated with this request.
- * \return The endpoint as a QString.
+ * \brief Set the API endpoint associated with this request.
+ * \param endpoint The endpoint as a QString.
  */
 void Request::setEndpoint(const QString &endpoint)
 {
     d_ptr->endpoint = RequestData::validateEndpoint(endpoint);
+}
+
+/*!
+ * \brief Retrieves the API base url associated with this request.
+ * \return  The base url as a QUrl.
+ */
+QUrl Request::baseUrl() const
+{
+    return d_ptr->baseUrl;
+}
+
+/*!
+ * \brief Set the API base url associated with this request.
+ * \param url The new base url
+ */
+void Request::setBaseUrl(const QUrl &url)
+{
+    d_ptr->baseUrl = url;
+}
+
+/*!
+ * \brief Construct the full URL for the request.
+ * \param type The url type to return.
+ * \return The URL as a QUrl.
+ */
+QUrl Request::url(UrlType type) const
+{
+    QUrl url = d_ptr->baseUrl;
+
+    QString path = d_ptr->endpoint;
+    for (const PathParameter &parameter : d_ptr->pathParameters)
+        if (!parameter.flags().testFlags(Parameter::Secret))
+            path.replace('{' + parameter.name() + '}', parameter.value().toString());
+    url.setPath(url.path() + path);
+
+    QUrlQuery query(url.query());
+    for (const QueryParameter &parameter : d_ptr->queryParameters)
+        if (!parameter.flags().testFlags(Parameter::Secret))
+            query.addQueryItem(parameter.name(), parameter.value().toString());
+    url.setQuery(query);
+
+    return url;
 }
 
 /*!
@@ -173,6 +216,24 @@ RequestProcessing Request::processing() const
 void Request::setProcessing(RequestProcessing processing)
 {
     d_ptr->processing = processing;
+}
+
+/*!
+ * \brief return the Api associated to this request
+ * \return The Api.
+ */
+Api *Request::api() const
+{
+    return d_ptr->api;
+}
+
+/*!
+ * \brief Associate an Api to this request
+ * \param api The Api to associate
+ */
+void Request::setApi(Api *api)
+{
+    d_ptr->api = api;
 }
 
 QJsonObject Request::toJsonObject() const
@@ -204,6 +265,7 @@ QJsonObject Request::toJsonObject() const
 
     QJsonObject object;
     object.insert("endpoint", d_ptr->endpoint);
+    object.insert("base_url", d_ptr->baseUrl.toString());
     if (!parameters.isEmpty())
         object.insert("parameters", parameters);
     if (!headerArrays.isEmpty())
@@ -217,6 +279,7 @@ Request Request::fromJsonbject(const QJsonObject &object)
 
     RequestData *data = request.d_ptr;
     data->endpoint = RequestData::validateEndpoint(object.value("endpoint").toString());
+    data->baseUrl = QUrl(object.value("base_url").toString());
 
     if (object.contains("parameters")) {
         const QJsonObject parameters = object.value("parameters").toObject();
@@ -255,6 +318,10 @@ void Request::swap(Request &other)
 Request Request::merge(const Request &r1, const Request &r2)
 {
     Request request = r1;
+
+    // Adding base url from r2 if not present on r1
+    if (!request.baseUrl().isEmpty())
+        request.setBaseUrl(r2.baseUrl());
 
     // Adding path parameters that doesn't exists on r1 from r2 to r1
     const QList<PathParameter> parameters = r2.pathParameters();

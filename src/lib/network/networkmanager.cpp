@@ -1,8 +1,6 @@
 #include "networkmanager.h"
 
 #include <RestLink/debug.h>
-#include <RestLink/cache.h>
-#include <RestLink/cookiejar.h>
 #include <RestLink/request.h>
 #include <RestLink/pathparameter.h>
 #include <RestLink/queryparameter.h>
@@ -43,18 +41,16 @@ NetworkManager::NetworkManager(QObject *parent)
     : QNetworkAccessManager{parent}
 {
     setRedirectPolicy(QNetworkRequest::SameOriginRedirectPolicy);
-
-    setCache(new Cache(this));
-    setCookieJar(new CookieJar(this));
 }
 
-Response *NetworkManager::sendRequest(Api::Operation operation, const Request &request, const Body &body, Api *api)
+Response *NetworkManager::sendRequest(Api::Operation operation, const Request &request, const Body &body)
 {
-    restlinkInfo() << HttpUtils::verbString(operation) << ' ' << generateUrl(request, api, LogContext).toString(QUrl::DecodeReserved);
+    const QUrl url = request.url();
+    restlinkInfo() << HttpUtils::verbString(operation) << ' ' << url.toString(QUrl::DecodeReserved);
 
     QList<RequestHandler *> handlers = Plugin::allHandlers();
 
-    const QString urlSheme = api->url().scheme();
+    const QString urlSheme = url.scheme();
     QList<RequestHandler *>::Iterator it = std::find_if(handlers.begin(), handlers.end(), [urlSheme](const RequestHandler *handler) {
         return handler->supportedSchemes().contains(urlSheme);
     });
@@ -63,12 +59,12 @@ Response *NetworkManager::sendRequest(Api::Operation operation, const Request &r
 
     if (it != handlers.end()) {
         RequestHandler *handler = *it;
-        response = handler->send(operation, request, body, api);
+        response = handler->send(operation, request, body);
     } else {
-        QNetworkRequest networkRequest = generateNetworkRequest(operation, request, body, api);
-        QNetworkReply *networkReply = generateNetworkReply(operation, networkRequest, body, api);
+        QNetworkRequest networkRequest = generateNetworkRequest(operation, request, body);
+        QNetworkReply *networkReply = generateNetworkReply(operation, networkRequest, body);
 
-        NetworkResponse *networkResponse = new NetworkResponse(api);
+        NetworkResponse *networkResponse = new NetworkResponse(request.api());
 
         RequestProcessing processing = request.processing();
         if (processing)
@@ -85,7 +81,7 @@ QStringList NetworkManager::supportedSchemes() const
 {
     // Getting schemes from QNetworkAccessManager and network handlers
     QStringList schemes = QNetworkAccessManager::supportedSchemes();
-    QList<RequestHandler *> handlers = Plugin::allHandlers();
+    const QList<RequestHandler *> handlers = Plugin::allHandlers();
     for (RequestHandler *handler : handlers)
         schemes.append(handler->supportedSchemes());
 
@@ -99,14 +95,16 @@ RequestHandler::HandlerType NetworkManager::handlerType() const
     return RequestHandler::NetworkManager;
 }
 
-QNetworkRequest NetworkManager::generateNetworkRequest(ApiBase::Operation operation, const Request &request, const Body &body, ApiBase *api)
+QNetworkRequest NetworkManager::generateNetworkRequest(ApiBase::Operation operation, const Request &request, const Body &body)
 {
+    Api *api = request.api();
+
     QNetworkRequest netReq;
     netReq.setOriginatingObject(api);
     netReq.setAttribute(QNetworkRequest::UserMax, QVariant::fromValue(request));
 
     // Url generation
-    netReq.setUrl(generateUrl(request, api, RequestContext));
+    netReq.setUrl(request.url());
 
     // User agent setting
     netReq.setHeader(QNetworkRequest::UserAgentHeader, api->userAgent());
@@ -140,7 +138,8 @@ QNetworkRequest NetworkManager::generateNetworkRequest(ApiBase::Operation operat
     }
 
     // Request headers setup
-    for (const Header &header : request.headers() + body.headers()) {
+    const QList<Header> headers = request.headers() + body.headers();
+    for (const Header &header : headers) {
         const QVariantList values = header.values();
         QByteArrayList rawValues;
         if (header.hasFlag(Parameter::Locale) && values.isEmpty()) {
@@ -164,7 +163,7 @@ QNetworkRequest NetworkManager::generateNetworkRequest(ApiBase::Operation operat
     return netReq;
 }
 
-QNetworkReply *NetworkManager::generateNetworkReply(ApiBase::Operation operation, const QNetworkRequest &request, const Body &body, ApiBase *api)
+QNetworkReply *NetworkManager::generateNetworkReply(ApiBase::Operation operation, const QNetworkRequest &request, const Body &body)
 {
     QNetworkAccessManager *man = this;
     QNetworkReply *reply;
@@ -230,8 +229,6 @@ QNetworkReply *NetworkManager::generateNetworkReply(ApiBase::Operation operation
         if (!device->parent())
             device->setParent(reply ? static_cast<QObject *>(reply) : static_cast<QObject *>(this));
     }
-
-    Q_UNUSED(api);
 
     return reply;
 }

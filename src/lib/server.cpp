@@ -75,17 +75,17 @@ RequestHandler::HandlerType Server::handlerType() const
 Response *Server::createResponse(ApiBase::Operation operation, const Request &request, const Body &body, Api *api)
 {
     ServerResponse *response = new ServerResponse(api);
-    response->setNetworkRequest(QNetworkRequest(generateUrl(request, api, RequestContext)));
+    response->setNetworkRequest(QNetworkRequest(request.url()));
     return response;
 }
 
-Response *Server::sendRequest(ApiBase::Operation operation, const Request &request, const Body &body, Api *api)
+Response *Server::sendRequest(ApiBase::Operation operation, const Request &request, const Body &body)
 {
     ServerPrivate::PendingRequest pending;
     pending.operation = operation;
     pending.request = request;
     pending.body = body;
-    pending.response = createResponse(operation, request, body, api);
+    pending.response = createResponse(operation, request, body, request.api());
 
     d_ptr->mutex.lock();
     d_ptr->pendingRequests.enqueue(pending);

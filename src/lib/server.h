@@ -45,7 +45,7 @@ protected:
 
     virtual void processRequest(ApiBase::Operation operation, const Request &request, const Body &body, Response *response) = 0;
     virtual Response *createResponse(ApiBase::Operation operation, const Request &request, const Body &body, Api *api);
-    Response *sendRequest(ApiBase::Operation operation, const Request &request, const Body &body, Api *api) override;
+    Response *sendRequest(ApiBase::Operation operation, const Request &request, const Body &body) override final;
 
     void setError(int code, const QString &str);
 

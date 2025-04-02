@@ -1,13 +1,8 @@
 #include "requesthandler.h"
 
 #include <RestLink/request.h>
-#include <RestLink/pathparameter.h>
-#include <RestLink/queryparameter.h>
-#include <RestLink/response.h>
 #include <RestLink/body.h>
-
-#include <QtCore/qurl.h>
-#include <QtCore/qurlquery.h>
+#include <RestLink/response.h>
 
 namespace RestLink {
 
@@ -15,40 +10,40 @@ RequestHandler::~RequestHandler()
 {
 }
 
-Response *RequestHandler::head(const Request &request, Api *api)
+Response *RequestHandler::head(const Request &request)
 {
-    return send(Api::HeadOperation, request, Body(), api);
+    return send(Api::HeadOperation, request, Body());
 }
 
-Response *RequestHandler::get(const Request &request, Api *api)
+Response *RequestHandler::get(const Request &request)
 {
-    return send(Api::GetOperation, request, Body(), api);
+    return send(Api::GetOperation, request, Body());
 }
 
-Response *RequestHandler::post(const Request &request, const Body &body, Api *api)
+Response *RequestHandler::post(const Request &request, const Body &body)
 {
-    return send(Api::PostOperation, request, body, api);
+    return send(Api::PostOperation, request, body);
 }
 
-Response *RequestHandler::put(const Request &request, const Body &body, Api *api)
+Response *RequestHandler::put(const Request &request, const Body &body)
 {
-    return send(Api::PutOperation, request, body, api);
+    return send(Api::PutOperation, request, body);
 }
 
-Response *RequestHandler::patch(const Request &request, const Body &body, Api *api)
+Response *RequestHandler::patch(const Request &request, const Body &body)
 {
-    return send(Api::PatchOperation, request, body, api);
+    return send(Api::PatchOperation, request, body);
 }
 
-Response *RequestHandler::deleteResource(const Request &request, Api *api)
+Response *RequestHandler::deleteResource(const Request &request)
 {
-    return send(Api::DeleteOperation, request, Body(), api);
+    return send(Api::DeleteOperation, request, Body());
 }
 
-Response *RequestHandler::send(ApiBase::Operation operation, const Request &request, const Body &body, Api *api)
+Response *RequestHandler::send(ApiBase::Operation operation, const Request &request, const Body &body)
 {
-    if (isApiSupported(api)) {
-        Response *response = sendRequest(operation, request, body, api);
+    if (isRequestSupported(request)) {
+        Response *response = sendRequest(operation, request, body);
         if (response)
             response->setRequest(request);
         return response;
@@ -57,46 +52,9 @@ Response *RequestHandler::send(ApiBase::Operation operation, const Request &requ
     }
 }
 
-Response *RequestHandler::send(ApiBase::Operation operation, const Request &request, const Body &body, ApiBase *api)
+bool RequestHandler::isRequestSupported(const Request &request) const
 {
-    if (api->inherits("RestLink::Api"))
-        return send(operation, request, body, static_cast<Api *>(api));
-    else
-        return nullptr;
-}
-
-bool RequestHandler::isApiSupported(ApiBase *api) const
-{
-    return supportedSchemes().contains(api->url().scheme());
-}
-
-QUrl RequestHandler::generateUrl(const Request &request, ApiBase *api, UrlContext context) const
-{
-    QUrl url = api->url();
-
-    QString urlPath = url.path() + request.urlPath();
-    url.setPath(urlPath);
-
-    QUrlQuery urlQuery(url.query());
-    for (const QueryParameter &param : request.queryParameters()) {
-        if (context == LogContext && param.hasFlag(Parameter::Secret))
-            continue;
-
-        if (param.values().isEmpty()) {
-            if (param.hasFlag(Parameter::Locale)) {
-                const QString language = api->locale().name();
-                urlQuery.addQueryItem(param.name(), language.section('_', 0, 0));
-            }
-
-            continue;
-        }
-
-        for (const QVariant &value : param.values())
-            urlQuery.addQueryItem(param.name(), value.toString());
-    }
-    url.setQuery(urlQuery);
-
-    return url;
+    return supportedSchemes().contains(request.baseUrl().scheme());
 }
 
 } // namespace RestLink

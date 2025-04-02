@@ -7,6 +7,7 @@
 #include <RestLink/pathparameter.h>
 #include <RestLink/header.h>
 
+#include <QtCore/qurl.h>
 #include <QtCore/qlist.h>
 
 namespace RestLink {
@@ -26,11 +27,14 @@ public:
     QList<Header>::iterator findHeader(const QString &name);
 
     QString endpoint;
+    QUrl baseUrl;
     QList<PathParameter> pathParameters;
     QList<QueryParameter> queryParameters;
     QList<Header> headers;
 
     RequestProcessing processing;
+
+    Api *api = nullptr;
 };
 
 }

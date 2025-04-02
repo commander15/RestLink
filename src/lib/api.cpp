@@ -218,7 +218,7 @@ void Api::configure(const QUrl &url)
 {
     RESTLINK_D(Api);
 
-    QNetworkRequest request = d_ptr->networkManager()->generateNetworkRequest(GetOperation, Request(), Body(), this);
+    QNetworkRequest request = d_ptr->networkManager()->generateNetworkRequest(GetOperation, Request(), Body());
     request.setUrl(url);
     request.setPriority(QNetworkRequest::HighPriority);
     request.setTransferTimeout(3000);
