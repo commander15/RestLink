@@ -30,6 +30,8 @@ public:
     QUrl url;
 
     QLocale locale;
+    QString bearerToken;
+
     QString userAgent;
 
     struct RemoteRequest {

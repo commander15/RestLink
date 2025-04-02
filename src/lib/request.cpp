@@ -342,6 +342,9 @@ Request Request::merge(const Request &r1, const Request &r2)
         request.setHeader(header);
     }
 
+    if (!request.api())
+        request.setApi(r2.api());
+
     return request;
 }
 

@@ -206,9 +206,6 @@ Response *ApiBase::send(Operation operation, const Request &request, const Body 
     Request finalRequest = Request::merge(request, d_ptr->internalRequest);
     finalRequest.setBaseUrl(url());
 
-    if (inherits("RestLink::Api"))
-        finalRequest.setApi(static_cast<Api *>(this));
-
     // Preprocessing request by passing it to interceptors
     for (RequestInterceptor *interceptor : std::as_const(d_ptr->requestInterceptors))
         finalRequest = interceptor->intercept(finalRequest, body, operation);

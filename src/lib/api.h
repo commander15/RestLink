@@ -18,6 +18,7 @@ class RESTLINK_EXPORT Api : public ApiBase
     Q_PROPERTY(QString version READ versionString WRITE setVersionString NOTIFY versionChanged)
     Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
     Q_PROPERTY(QLocale locale READ locale WRITE setLocale NOTIFY localeChanged)
+    Q_PROPERTY(QString bearerToken READ bearerToken WRITE setBearerToken NOTIFY bearerTokenChanged FINAL)
     Q_PROPERTY(QString userAgent READ userAgent WRITE setUserAgent NOTIFY userAgentChanged)
 
 public:
@@ -39,6 +40,10 @@ public:
     QLocale locale() const override;
     Q_SLOT void setLocale(const QLocale &locale);
     Q_SIGNAL void localeChanged(const QLocale &locale);
+
+    QString bearerToken() const;
+    Q_SLOT void setBearerToken(const QString &token);
+    Q_SIGNAL void bearerTokenChanged(const QString &token);
 
     QString userAgent() const override;
     Q_SLOT void setUserAgent(const QString &agent);

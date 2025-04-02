@@ -68,6 +68,7 @@ namespace RestLink {
 Api::Api(QObject *parent) :
     ApiBase(new ApiPrivate(this), parent)
 {
+    d_ptr->internalRequest.setApi(this);
 }
 
 Api::~Api()
@@ -175,6 +176,21 @@ void Api::setLocale(const QLocale &locale)
     if (d->locale != locale) {
         d->locale = locale;
         emit localeChanged(locale);
+    }
+}
+
+QString Api::bearerToken() const
+{
+    RESTLINK_D(const Api);
+    return d->bearerToken;
+}
+
+void Api::setBearerToken(const QString &token)
+{
+    RESTLINK_D(Api);
+    if (d->bearerToken != token) {
+        d->bearerToken = token;
+        emit bearerTokenChanged(token);
     }
 }
 
