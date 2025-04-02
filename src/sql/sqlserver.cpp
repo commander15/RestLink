@@ -45,13 +45,18 @@ bool SqlServer::init()
 void SqlServer::cleanup()
 {
     RESTLINK_D(SqlServer);
-    for (const SqlServerPrivate::DatabaseInfos &info : d->databaseInfos)
+    for (const SqlServerPrivate::DatabaseInfos &info : std::as_const(d->databaseInfos))
         QSqlDatabase::removeDatabase(info.connection);
 }
 
 bool SqlServer::maintain()
 {
     return true;
+}
+
+void SqlServer::handlePostConfiguration(const Request &request, const QJsonObject &body, QSqlQuery *query, ServerResponse *response)
+{
+    //
 }
 
 void SqlServer::handleGet(const Request &request, QSqlQuery *query, ServerResponse *response)
@@ -143,6 +148,9 @@ void SqlServer::handleGet(const Request &request, QSqlQuery *query, ServerRespon
 void SqlServer::handlePost(const Request &request, const QJsonObject &body, QSqlQuery *query, ServerResponse *response)
 {
     RESTLINK_D(SqlServer);
+
+    if (request.endpoint() == "/configuration")
+        return handlePostConfiguration(request, body, query, response);
 
     QString table;
     QString primary;
@@ -274,6 +282,14 @@ void SqlServer::processRequest(ApiBase::Operation operation, const Request &requ
     }
 
     QSqlQuery query(db);
+
+    if (request.endpoint() == "/configuration") {
+        // Handle there
+    }
+
+    if (request.endpoint() == "/query") {
+        //
+    }
 
     QJsonObject object;
     {
