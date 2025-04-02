@@ -11,17 +11,22 @@ namespace RestLink {
 
 QByteArray CompressionUtils::decompress(const QByteArray &input, const QByteArray &algorithm)
 {
-    if (algorithm == "gzip")
+    if (algorithm.isEmpty())
+        return input;
+#ifdef ZLIB_LIB
+    else if (algorithm == "gzip")
         return decompressGzip(input);
     else if (algorithm == "deflate")
         return decompressDeflate(input);
+#endif
     else
         return input;
 }
 
+#ifdef ZLIB_LIB
+
 QByteArray CompressionUtils::decompressGzip(const QByteArray &input)
 {
-#ifdef ZLIB_LIB
     z_stream strm = {};
     inflateInit2(&strm, 16 + MAX_WBITS); // 16 + MAX_WBITS enables gzip decoding
 
@@ -40,14 +45,10 @@ QByteArray CompressionUtils::decompressGzip(const QByteArray &input)
 
     inflateEnd(&strm);
     return output;
-#else
-    return input;
-#endif
 }
 
 QByteArray CompressionUtils::decompressDeflate(const QByteArray &input)
 {
-#ifdef ZLIB_LIB
     z_stream strm = {};
     inflateInit(&strm); // Only deflate decoding
 
@@ -65,10 +66,9 @@ QByteArray CompressionUtils::decompressDeflate(const QByteArray &input)
 
     inflateEnd(&strm);
     return output;
-#else
-    return input;
-#endif
 }
+
+#endif
 
 QList<QByteArray> CompressionUtils::supportedAlgorithms()
 {

@@ -9,8 +9,11 @@ class RESTLINK_EXPORT CompressionUtils
 {
 public:
     static QByteArray decompress(const QByteArray &input, const QByteArray &algorithm);
+
+#ifdef ZLIB_LIB
     static QByteArray decompressGzip(const QByteArray &input);
     static QByteArray decompressDeflate(const QByteArray &input);
+#endif
 
     static QList<QByteArray> supportedAlgorithms();
 };
