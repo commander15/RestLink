@@ -45,13 +45,13 @@ NetworkManager::NetworkManager(QObject *parent)
 
 Response *NetworkManager::sendRequest(Api::Operation operation, const Request &request, const Body &body)
 {
-    const QUrl url = request.url();
+    const QUrl url = request.url(Request::PublicUrl);
     restlinkInfo() << HttpUtils::verbString(operation) << ' ' << url.toString(QUrl::DecodeReserved);
 
     QList<RequestHandler *> handlers = Plugin::allHandlers();
 
     const QString urlSheme = url.scheme();
-    QList<RequestHandler *>::Iterator it = std::find_if(handlers.begin(), handlers.end(), [urlSheme](const RequestHandler *handler) {
+    auto it = std::find_if(handlers.begin(), handlers.end(), [urlSheme](const RequestHandler *handler) {
         return handler->supportedSchemes().contains(urlSheme);
     });
 
@@ -64,16 +64,13 @@ Response *NetworkManager::sendRequest(Api::Operation operation, const Request &r
         QNetworkRequest networkRequest = generateNetworkRequest(operation, request, body);
         QNetworkReply *networkReply = generateNetworkReply(operation, networkRequest, body);
 
-        NetworkResponse *networkResponse = new NetworkResponse(request.api());
+        Api *api = request.api();
+        response = new NetworkResponse(networkReply, api);
 
-        RequestProcessing processing = request.processing();
-        if (processing)
-            processing(request, body, this, networkResponse);
-        else
-            networkResponse->setReply(networkReply);
-
-        response = networkResponse;
+        if (!api)
+            response->setParent(this);
     }
+
     return response;
 }
 

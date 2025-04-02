@@ -12,7 +12,7 @@ class RESTLINK_EXPORT NetworkResponse : public Response
     Q_OBJECT
 
 public:
-    explicit NetworkResponse(Api *api);
+    explicit NetworkResponse(QNetworkReply *reply, Api *api);
 
     Api::Operation operation() const override;
 

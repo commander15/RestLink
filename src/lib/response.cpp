@@ -140,7 +140,7 @@ Api *Response::api() const
  */
 QUrl Response::url() const
 {
-    return networkRequest().url();
+    return d_ptr->request.url();
 }
 
 /*!
@@ -317,8 +317,7 @@ QString Response::networkErrorString() const
 
 Response *Response::create(QNetworkReply *reply, QObject *parent)
 {
-    NetworkResponse *response = new NetworkResponse(nullptr);
-    response->setReply(reply);
+    NetworkResponse *response = new NetworkResponse(reply, nullptr);
     response->setParent(parent);
     return response;
 }
