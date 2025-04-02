@@ -17,8 +17,8 @@ target_compile_definitions(RestLink
 target_link_libraries(RestLink PUBLIC Qt::Network)
 
 if (ZLIB_FOUND)
-    target_compile_definitions(RestLink PRIVATE ZLIB_LIB)
-    target_link_libraries(RestLink PRIVATE ZLIB::ZLIB)
+    target_compile_definitions(RestLink PUBLIC ZLIB_LIB)
+    target_link_libraries(RestLink PUBLIC ZLIB::ZLIB)
 endif()
 
 configure_file(config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h @ONLY)
