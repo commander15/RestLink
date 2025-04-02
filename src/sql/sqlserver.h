@@ -27,14 +27,11 @@ protected:
     void cleanup() override;
     bool maintain() override;
 
-    void handlePostConfiguration(const Request &request, const QJsonObject &body, QSqlQuery *query, ServerResponse *response);
-
     void handleGet(const Request &request, QSqlQuery *query, ServerResponse *response);
     void handlePost(const Request &request, const QJsonObject &body, QSqlQuery *query, ServerResponse *response);
     void handlePut(const Request &request, const QJsonObject &body, QSqlQuery *query, ServerResponse *response);
     void handlePatch(const Request &request, const QJsonObject &body, QSqlQuery *query, ServerResponse *response);
     void handleDelete(const Request &request, QSqlQuery *query, ServerResponse *response);
-
     void handleError(const QJsonParseError &error, ServerResponse *response);
     void handleError(QSqlQuery *query, ServerResponse *response);
     void handleError(const QSqlError &error, ServerResponse *response);

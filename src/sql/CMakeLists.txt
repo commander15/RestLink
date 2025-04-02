@@ -5,13 +5,6 @@ qt_add_plugin(RestLinkSql
     sqlutils.h sqlutils.cpp
 )
 
-target_sources(RestLinkSql
-  PRIVATE
-    sqldatabaseinfo.h sqldatabaseinfo.cpp
-    sqldatabasemanager.h sqldatabasemanager.cpp
-    sqldatabase.h sqldatabase.cpp
-)
-
 set(OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/restlink)
 set_target_properties(RestLinkSql PROPERTIES
     OUTPUT_NAME restlinksql

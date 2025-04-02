@@ -2,7 +2,6 @@
 #define RESTLINK_SQLUTILS_H
 
 #include <RestLink/global.h>
-#include <RestLink/request.h>
 
 class QJsonObject;
 
@@ -13,8 +12,6 @@ namespace RestLink {
 class SqlUtils
 {
 public:
-    static QString tableNameFromRequest(const Request &request);
-
     static QJsonObject recordToJsonObject(const QSqlRecord &record);
     static QSqlRecord jsonObjectToRecord(const QJsonObject &object);
 
