@@ -7,10 +7,11 @@
 #include <RestLink/header.h>
 #include <RestLink/body.h>
 #include <RestLink/response.h>
-#include <RestLink/private/networkresponse_p.h>
 #include <RestLink/httputils.h>
 #include <RestLink/compressionutils.h>
-#include <RestLink/plugin.h>
+#include <RestLink/pluginmanager.h>
+
+#include <RestLink/private/networkresponse_p.h>
 
 #include <QtCore/qcoreapplication.h>
 
@@ -48,7 +49,7 @@ Response *NetworkManager::sendRequest(Api::Operation operation, const Request &r
     const QUrl url = request.url(Request::PublicUrl);
     restlinkInfo() << HttpUtils::verbString(operation) << ' ' << url.toString(QUrl::DecodeReserved);
 
-    QList<RequestHandler *> handlers = Plugin::allHandlers();
+    QList<RequestHandler *> handlers = PluginManager::global()->handlers();
 
     const QString urlSheme = url.scheme();
     auto it = std::find_if(handlers.begin(), handlers.end(), [urlSheme](const RequestHandler *handler) {
@@ -78,7 +79,7 @@ QStringList NetworkManager::supportedSchemes() const
 {
     // Getting schemes from QNetworkAccessManager and network handlers
     QStringList schemes = QNetworkAccessManager::supportedSchemes();
-    const QList<RequestHandler *> handlers = Plugin::allHandlers();
+    const QList<RequestHandler *> handlers = PluginManager::global()->handlers();
     for (RequestHandler *handler : handlers)
         schemes.append(handler->supportedSchemes());
 
@@ -94,77 +95,31 @@ RequestHandler::HandlerType NetworkManager::handlerType() const
 
 QNetworkRequest NetworkManager::generateNetworkRequest(ApiBase::Operation operation, const Request &request, const Body &body)
 {
-    Api *api = request.api();
+    const QUrl url = request.url();
+    QHttpHeaders headers = request.httpHeaders();
 
-    QNetworkRequest netReq;
-    netReq.setOriginatingObject(api);
-    netReq.setAttribute(QNetworkRequest::UserMax, QVariant::fromValue(request));
-
-    // Url generation
-    netReq.setUrl(request.url());
-
-    // User agent setting
-    if (api)
-        netReq.setHeader(QNetworkRequest::UserAgentHeader, api->userAgent());
-
-    // Bearer token header setup (if applicable)
-    const QString token = (api ? api->bearerToken() : QString());
-    if (!token.isEmpty()) {
-        netReq.setRawHeader("Authorization", "Bearer " + token.toUtf8());
-    }
-
-    // Accept headers setup
-
-    netReq.setRawHeader("Accept", "*/*");
-
+    // Compression support
     {
         const QByteArrayList algorithms = CompressionUtils::supportedAlgorithms();
         if (!algorithms.isEmpty())
-            netReq.setRawHeader("Accept-Encoding", algorithms.join(", "));
+            headers.append(QHttpHeaders::WellKnownHeader::AcceptEncoding, algorithms.join(", "));
     }
 
-    if (api) {
-        const QString full = api->locale().name();
-        const QString slim = full.section('_', 0, 0);
-        netReq.setRawHeader("Accept-Language", QStringLiteral("%1,%2;q=0.5").arg(full, slim).toLatin1());
-    }
-
-    // Make keep alive
-    netReq.setRawHeader("Connection", "keep-alive");
+    QNetworkRequest netRequest(url);
+    netRequest.setOriginatingObject(request.api());
+    netRequest.setHeaders(headers);
+    netRequest.setAttribute(QNetworkRequest::UserMax, QVariant::fromValue(request));
 
     // Cache settings
     if (true) {
-        netReq.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
-        netReq.setAttribute(QNetworkRequest::CacheSaveControlAttribute, true);
+        netRequest.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
+        netRequest.setAttribute(QNetworkRequest::CacheSaveControlAttribute, true);
     } else {
-        netReq.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
-        netReq.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
+        netRequest.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
+        netRequest.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
     }
 
-    // Request headers setup
-    const QList<Header> headers = request.headers() + body.headers();
-    for (const Header &header : headers) {
-        const QVariantList values = header.values();
-        QByteArrayList rawValues;
-        if (api && header.hasFlag(Parameter::Locale) && values.isEmpty()) {
-            const QString language = api->locale().name();
-            rawValues.append(language.section('_', 0, 0).toLatin1());
-        } else {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-            rawValues.reserve(values.size());
-            std::transform(values.begin(), values.end(), std::back_inserter(rawValues), [](const QVariant &value) {
-                return value.toByteArray();
-            });
-#else
-            for (const QVariant &value : values)
-                rawValues.append(value.toByteArray());
-#endif
-        }
-
-        netReq.setRawHeader(header.name().toUtf8(), rawValues.join(','));
-    }
-
-    return netReq;
+    return netRequest;
 }
 
 QNetworkReply *NetworkManager::generateNetworkReply(ApiBase::Operation operation, const QNetworkRequest &request, const Body &body)

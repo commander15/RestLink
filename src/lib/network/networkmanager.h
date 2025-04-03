@@ -16,8 +16,14 @@ class RESTLINK_EXPORT NetworkManager : public QNetworkAccessManager, public Requ
 public:
     explicit NetworkManager(QObject *parent = nullptr);
 
-    QStringList supportedSchemes() const override;
+    using RequestHandler::head;
+    using RequestHandler::get;
+    using RequestHandler::post;
+    using RequestHandler::put;
+    using RequestHandler::patch;
+    using RequestHandler::deleteResource;
 
+    QStringList supportedSchemes() const override final;
     HandlerType handlerType() const override final;
 
 protected:

@@ -1,9 +1,14 @@
 #include "request.h"
 #include "request_p.h"
 
+#include <RestLink/api.h>
+
+#include <QtNetwork/qhttpheaders.h>
+
 #include <QtCore/qjsonobject.h>
 #include <QtCore/qjsonarray.h>
 #include <QtCore/qurlquery.h>
+#include <qnetworkrequest.h>
 
 namespace RestLink {
 
@@ -58,13 +63,38 @@ Request::Request(const char *endpoint) :
 Request::Request(const QString &endpoint) :
     d_ptr(new RequestData())
 {
-    d_ptr->endpoint = RequestData::validateEndpoint(endpoint);
+    if (endpoint.startsWith('/'))
+        d_ptr->endpoint = RequestData::validateEndpoint(endpoint);
+    else
+        d_ptr->baseUrl = QUrl(endpoint);
+}
+
+/*!
+ * \brief Construct a Request object with a specified URL.
+ *
+ * This constructor initialize the Request object with the given URL.
+ * The url must be include the scheme i.e starting with http/https.
+ *
+ * \param url The url as a QUrl.
+ *
+ * @note The provided url will be used as the base url, you can then launch the request directly on a RequestHandler
+ * without an Api object.
+ */
+Request::Request(const QUrl &url)
+    : d_ptr(new RequestData())
+{
+    d_ptr->baseUrl = url;
 }
 
 Request::Request(const RequestProcessing &processing) :
     d_ptr(new RequestData())
 {
     d_ptr->processing = processing;
+}
+
+Request::Request(RequestData *d)
+    : d_ptr(d)
+{
 }
 
 /*!
@@ -157,9 +187,14 @@ void Request::setEndpoint(const QString &endpoint)
 /*!
  * \brief Retrieves the API base url associated with this request.
  * \return  The base url as a QUrl.
+ * \note If not base url has been explicitly set or is invalid,
+ * this method return the base url of the associated Api if it has been set.
  */
 QUrl Request::baseUrl() const
 {
+    if (!d_ptr->baseUrl.isValid() && d_ptr->api)
+        return d_ptr->api->url();
+
     return d_ptr->baseUrl;
 }
 
@@ -179,18 +214,41 @@ void Request::setBaseUrl(const QUrl &url)
  */
 QUrl Request::url(UrlType type) const
 {
-    QUrl url = d_ptr->baseUrl;
+    QUrl url = baseUrl();
+
+    Api *api = d_ptr->api;
+
+    auto canUseParameter = [&type](const Parameter &param) {
+        return RequestData::canUseUrlParameter(param, type);
+    };
+
+    auto parameterValue = [&api](const Parameter &param) {
+        return (api ? param.specialValue(api) : param.value());
+    };
+
+    auto parameterValues = [&api](const Parameter &param) {
+        return (api ? param.specialValues(api) : param.values());
+    };
 
     QString path = d_ptr->endpoint;
-    for (const PathParameter &parameter : d_ptr->pathParameters)
-        if (!parameter.flags().testFlags(Parameter::Secret))
-            path.replace('{' + parameter.name() + '}', parameter.value().toString());
+    const PathParameterList apiPathParameters = (api ? api->pathParameters() : PathParameterList());
+    const PathParameterList pathParameters = d_ptr->pathParameters + apiPathParameters;
+    for (const PathParameter &parameter : pathParameters)
+        if (canUseParameter(parameter))
+            path.replace('{' + parameter.name() + '}', parameterValue(parameter).toString());
     url.setPath(url.path() + path);
 
     QUrlQuery query(url.query());
-    for (const QueryParameter &parameter : d_ptr->queryParameters)
-        if (!parameter.flags().testFlags(Parameter::Secret))
-            query.addQueryItem(parameter.name(), parameter.value().toString());
+    const QueryParameterList apiQueryParameters = (api ? api->queryParameters() : QueryParameterList());
+    const QueryParameterList queryParameters = d_ptr->queryParameters + apiQueryParameters;
+    for (const QueryParameter &parameter : queryParameters) {
+        if (!canUseParameter(parameter))
+            continue;
+
+        const QVariantList values = parameterValues(parameter);
+        for (const QVariant &value : values)
+            query.addQueryItem(parameter.name(), value.toString());
+    }
     url.setQuery(query);
 
     return url;
@@ -199,13 +257,59 @@ QUrl Request::url(UrlType type) const
 /*!
  * \brief Constructs the URL path for the request based on its parameters and endpoint.
  * \return The constructed URL path as a QString.
+ * \deprecated
  */
 QString Request::urlPath() const
 {
-    QString path = d_ptr->endpoint;
-    for (const PathParameter &param : d_ptr->pathParameters)
-        path.replace('{' + param.name() + '}', param.value().toString());
-    return path;
+    return url().path();
+}
+
+/*!
+ * \brief Return the corresponding http headers for the request.
+ * \return The corresponding http headers for the request.
+ */
+QHttpHeaders Request::httpHeaders() const
+{
+    QHttpHeaders httpHeaders;
+
+    Api *api = d_ptr->api;
+
+    const HeaderList apiHeaders = (api ? api->headers() : HeaderList());
+    const HeaderList headers = d_ptr->headers + apiHeaders;
+    for (const Header &header : headers) {
+        const QVariantList values = header.values();
+        for (const QVariant &value : values)
+            httpHeaders.append(header.name(), value.toByteArray());
+    }
+
+    // Make keep alive
+    httpHeaders.append(QHttpHeaders::WellKnownHeader::Connection, "keep-alive");
+
+    // Default Accept all kind of media types
+    httpHeaders.append(QHttpHeaders::WellKnownHeader::Accept, "*/*");
+
+    // User Agent
+    httpHeaders.append(QHttpHeaders::WellKnownHeader::UserAgent, "libRestLink/" + QStringLiteral(RESTLINK_VERSION_STR));
+
+    if (!api)
+        return httpHeaders;
+
+    // Bearer token
+    const QString bearerToken = api->bearerToken();
+    if (!bearerToken.isEmpty())
+        httpHeaders.append(QHttpHeaders::WellKnownHeader::Authorization, "Bearer " + bearerToken);
+
+    // User Agent override
+    httpHeaders.replace(0, QHttpHeaders::WellKnownHeader::UserAgent, api->userAgent());
+
+    // Accept language
+    if (api) {
+        const QString full = api->locale().name();
+        const QString slim = full.section('_', 0, 0);
+        httpHeaders.append(QHttpHeaders::WellKnownHeader::AcceptLanguage, QStringLiteral("%1,%2;q=0.5").arg(full, slim).toLatin1());
+    }
+
+    return httpHeaders;
 }
 
 RequestProcessing Request::processing() const
@@ -342,9 +446,6 @@ Request Request::merge(const Request &r1, const Request &r2)
         request.setHeader(header);
     }
 
-    if (!request.api())
-        request.setApi(r2.api());
-
     return request;
 }
 
@@ -381,6 +482,14 @@ QList<Header> *Request::mutableHeaders()
 QString RequestData::validateEndpoint(const QString &input)
 {
     return input;
+}
+
+bool RequestData::canUseUrlParameter(const Parameter &parameter, Request::UrlType type)
+{
+    if (parameter.hasFlag(Parameter::Secret) && type == Request::PublicUrl)
+        return false;
+
+    return true;
 }
 
 }

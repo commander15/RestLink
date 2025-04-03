@@ -26,8 +26,9 @@ public:
     Response *deleteResource(const Request &request);
     Response *send(Api::Operation operation, const Request &request, const Body &body);
 
-    virtual QStringList supportedSchemes() const = 0;
+    bool isLoggingEnabled() const;
 
+    virtual QStringList supportedSchemes() const = 0;
     virtual HandlerType handlerType() const = 0;
 
 protected:

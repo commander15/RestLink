@@ -6,12 +6,15 @@
 #include <RestLink/request.h>
 #include <RestLink/requestinterceptor.h>
 
+#include <RestLink/private/request_p.h>
+
 namespace RestLink {
 
-class ApiBasePrivate
+class ApiBasePrivate : public RequestData
 {
 public:
     ApiBasePrivate(ApiBase *q);
+    ~ApiBasePrivate();
 
     NetworkManager *networkManager() const;
     void setNetworkManager(NetworkManager *manager);
@@ -20,7 +23,7 @@ public:
 
     ApiBase *q_ptr;
 
-    Request internalRequest;
+    RequestData *internalRequestData;
     QVector<RequestInterceptor *> requestInterceptors;
 
 private:

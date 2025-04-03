@@ -1,6 +1,7 @@
 #include "parameter.h"
 #include "parameter_p.h"
 
+#include <RestLink/api.h>
 #include <RestLink/pathparameter.h>
 #include <RestLink/queryparameter.h>
 #include <RestLink/header.h>
@@ -93,6 +94,36 @@ void Parameter::setValue(const QVariant &value)
     const QVariant finalValue = d_ptr->validateValue(value);
     if (finalValue.isValid())
         d_ptr->values = { finalValue };
+    else
+        d_ptr->values.clear();
+}
+
+QVariant Parameter::specialValue(Api *api) const
+{
+    // ToDo: Optimize for better performances
+    const QVariantList values = specialValues(api);
+    return !values.isEmpty() ? values.first() : QVariant();
+}
+
+QVariantList Parameter::specialValues(Api *api) const
+{
+    QVariantList values;
+
+    std::transform(d_ptr->values.begin(), d_ptr->values.end(), std::back_inserter(values), [this, api](const QVariant &value) {
+        // ToDo: wrap in a private method for reusability
+        if (!d_ptr->values.isEmpty())
+            return d_ptr->values.first();
+
+        if (hasFlag(Locale)) {
+            const QString full = api->locale().name();
+            //const QString slim = full.section('_', 0, 0);
+            return QVariant(full);
+        }
+
+        return value;
+    });
+
+    return values;
 }
 
 bool Parameter::hasValue(const QVariant &value) const
@@ -148,7 +179,7 @@ Parameter::Flags Parameter::flags() const
  */
 void Parameter::setFlag(Flag flag, bool on)
 {
-    d_ptr->flags = d_ptr->validateFlags(flag);
+    d_ptr->flags |= d_ptr->validateFlags(flag);
 }
 
 /*!
@@ -278,10 +309,11 @@ void Parameter::dataFromJsonObject(ParameterData *data, const QJsonObject &objec
     data->values = data->validateValues({object.value("value").toVariant()});
 
     auto setFlag = [object, data](const QString &name, Flag flag, bool defaultValue) {
-        if (object.contains(name))
-            data->flags.setFlag(flag, object.value(name).toBool());
+        bool value = (object.contains(name) ? object.value(name).toBool() : defaultValue);
+        if (value)
+            data->flags |= data->validateFlags(flag);
         else
-            data->flags.setFlag(flag, defaultValue);
+            data->flags &= flag;
     };
 
     setFlag("authentication", Authentication, false);

@@ -15,4 +15,7 @@
 #include <RestLink/cookiejar.h>
 #include <RestLink/networkmanager.h>
 
+#include <RestLink/httputils.h>
+#include <RestLink/compressionutils.h>
+
 #endif // RESTLINK_H

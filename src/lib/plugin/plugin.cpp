@@ -1,13 +1,6 @@
 #include "plugin.h"
 #include "plugin_p.h"
 
-#include <RestLink/debug.h>
-#include <RestLink/requesthandler.h>
-
-#include <QtCore/qcoreapplication.h>
-#include <QtCore/qpluginloader.h>
-#include <QtCore/qdir.h>
-
 namespace RestLink {
 
 Plugin::Plugin(QObject *parent)
@@ -15,125 +8,23 @@ Plugin::Plugin(QObject *parent)
 {
 }
 
-QList<RequestHandler *> Plugin::allHandlers()
+Plugin::~Plugin()
 {
-    static bool loaded = false;
-
-    if (loaded)
-        return s_handlers;
-
-    QPluginLoader loader;
-
-    // Define plugin names or use a configuration file
-    const QStringList pluginNames = Plugin::pluginNames();
-
-    for (const QString &name : pluginNames) {
-        // Construct the plugin path (could be dynamic)
-        loader.setFileName(name);
-        if (!loader.load()) {
-            qWarning() << "Failed to load plugin:" << name << loader.errorString();
-            continue;
-        }
-
-        // Loading meta data
-        const QJsonObject metaData = loader.metaData();
-        if (metaData.value("IID") != RESTLINK_PLUGIN_IID) {
-            qWarning() << "invalid plugin";
-            loader.unload();
-            continue;
-        }
-
-        // loading plugin
-        Plugin *plugin = reinterpret_cast<Plugin *>(loader.instance());
-        if (!plugin) {
-            qWarning() << "Invalid plugin interface for:" << name;
-            loader.unload();
-            continue;
-        }
-
-        const QJsonObject pluginObject = metaData.value("MetaData").toObject();
-        const QString pluginName = pluginObject.value("name").toString();
-
-        // Retrieve handler
-        RequestHandler *handler = plugin->createHandler();
-        if (handler) {
-            const QStringList schemes = handler->supportedSchemes();
-            const Qt::CaseSensitivity sensitivity = Qt::CaseInsensitive;
-            if (schemes.contains("http", sensitivity) && schemes.contains("https", sensitivity)) {
-                restlinkWarning() << "an HTTP/HTTPS handler has been detected on '" << pluginName << "' plugin, this is unsuported for security reasons";
-                delete handler;
-            } else {
-                s_handlers.append(handler);
-            }
-        } else {
-            restlinkWarning() << "failed to create handler for plugin: " << pluginName;
-        }
-
-        loader.unload();
-    }
-
-    loaded = true;
-
-    return s_handlers;
 }
 
-bool Plugin::isDiscoveryEnabled()
+QString Plugin::name() const
 {
-    return s_discoveryEnabled;
+    return m_metaData.value("name").toString();
 }
 
-void Plugin::enableDiscovery()
+QJsonObject Plugin::metaData() const
 {
-    s_discoveryEnabled = true;
+    return m_metaData;
 }
 
-void Plugin::setDiscoveryEnabled(bool enable)
+void Plugin::setMetaData(const QJsonObject &metaData)
 {
-    s_discoveryEnabled = enable;
+    m_metaData = metaData;
 }
-
-QStringList Plugin::pluginNames()
-{
-    QStringList pluginNames;
-    const QStringList searchPaths = QCoreApplication::libraryPaths();
-
-    {
-        QStringList names = { "sql" };
-
-        std::transform(names.begin(), names.end(), names.begin(), [&searchPaths](const QString &name) {
-            return "restlink/restlink" + name;
-        });
-
-        pluginNames.append(names);
-    }
-
-    if (isDiscoveryEnabled()) {
-        for (const QString &path : searchPaths) {
-            QDir dir(path + "/restlink");
-
-            QStringList files = dir.entryList(QDir::Files);
-
-            for (const QString &file : files) {
-                const QString pluginName = file.section('.', 0, -2);
-                auto it = std::find_if(pluginNames.begin(), pluginNames.end(), [&pluginName](const QString &name) {
-                    return name.endsWith(pluginName);
-                });
-
-                const QString fileName = dir.filePath(file);
-                if (QLibrary::isLibrary(fileName)) {
-                    if (it == pluginNames.end())
-                        pluginNames.append(fileName);
-                    else
-                        *it = fileName;
-                }
-            }
-        }
-    }
-
-    return pluginNames;
-}
-
-bool Plugin::s_discoveryEnabled(false);
-QList<RequestHandler *> Plugin::s_handlers;
 
 } // namespace RestLink

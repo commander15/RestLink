@@ -203,18 +203,15 @@ Response *ApiBase::deleteResource(const Request &request)
 Response *ApiBase::send(Operation operation, const Request &request, const Body &body)
 {
     // Preprocessing request by adding api url parameters and headers
-    Request finalRequest = Request::merge(request, d_ptr->internalRequest);
-    finalRequest.setBaseUrl(url());
+    Request finalRequest = request;
+    finalRequest.setApi(d_ptr->internalRequestData->api);
 
     // Preprocessing request by passing it to interceptors
     for (RequestInterceptor *interceptor : std::as_const(d_ptr->requestInterceptors))
         finalRequest = interceptor->intercept(finalRequest, body, operation);
 
-    // Sending request
-    Response *response = d_ptr->networkManager()->send(operation, finalRequest, body);
-
-    // Returning response
-    return response;
+    // Sending request and return response
+    return d_ptr->networkManager()->send(operation, finalRequest, body);
 }
 
 /**
@@ -284,38 +281,46 @@ void ApiBase::setNetworkManager(NetworkManager *manager)
 
 const QList<PathParameter> *ApiBase::constPathParameters() const
 {
-    return &d_ptr->internalRequest.d_ptr->pathParameters;
+    return &d_ptr->internalRequestData->pathParameters;
 }
 
 QList<PathParameter> *ApiBase::mutablePathParameters()
 {
-    return &d_ptr->internalRequest.d_ptr->pathParameters;
+    return &d_ptr->internalRequestData->pathParameters;
 }
 
 const QList<QueryParameter> *ApiBase::constQueryParameters() const
 {
-    return &d_ptr->internalRequest.d_ptr->queryParameters;
+    return &d_ptr->internalRequestData->queryParameters;
 }
 
 QList<QueryParameter> *ApiBase::mutableQueryParameters()
 {
-    return &d_ptr->internalRequest.d_ptr->queryParameters;
+    return &d_ptr->internalRequestData->queryParameters;
 }
 
 const QList<Header> *ApiBase::constHeaders() const
 {
-    return &d_ptr->internalRequest.d_ptr->headers;
+    return &d_ptr->internalRequestData->headers;
 }
 
 QList<Header> *ApiBase::mutableHeaders()
 {
-    return &d_ptr->internalRequest.d_ptr->headers;
+    return &d_ptr->internalRequestData->headers;
 }
 
-ApiBasePrivate::ApiBasePrivate(ApiBase *q) :
-    q_ptr(q),
-    m_networkManager(nullptr)
+ApiBasePrivate::ApiBasePrivate(ApiBase *q)
+    : q_ptr(q)
+    , internalRequestData(new RequestData())
+    , m_networkManager(nullptr)
 {
+    internalRequestData->ref.ref();
+}
+
+ApiBasePrivate::~ApiBasePrivate()
+{
+    if (!internalRequestData->ref.deref())
+        delete internalRequestData;
 }
 
 NetworkManager *ApiBasePrivate::networkManager() const

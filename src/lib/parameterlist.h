@@ -13,6 +13,9 @@ template<typename P = Parameter>
 class RESTLINK_EXPORT ParameterList : public QList<P>
 {
 public:
+    ParameterList();
+    ParameterList(const QList<P> &other);
+
     bool contains(const QString &name) const;
     QVariant value(const QString &name) const;
     QVariantList values(const QString &name) const;
@@ -38,6 +41,17 @@ private:
     typename QList<P>::ConstIterator find(const QString &name, bool *found) const;
     typename QList<P>::Iterator find(const QString &name, bool *found);
 };
+
+template<typename P>
+inline ParameterList<P>::ParameterList()
+{
+}
+
+template<typename P>
+inline ParameterList<P>::ParameterList(const QList<P> &other)
+    : QList<P>(other)
+{
+}
 
 template<typename P>
 bool ParameterList<P>::contains(const QString &name) const

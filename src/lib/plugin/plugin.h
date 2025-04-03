@@ -4,6 +4,7 @@
 #include <RestLink/global.h>
 
 #include <QtCore/qobject.h>
+#include <QtCore/qjsonobject.h>
 
 #define RESTLINK_PLUGIN_IID "com.restlink.plugin"
 
@@ -17,20 +18,17 @@ class RESTLINK_EXPORT Plugin : public QObject
 
 public:
     explicit Plugin(QObject *parent = nullptr);
-    virtual ~Plugin() = default;
+    virtual ~Plugin();
+
+    QString name() const;
+
+    QJsonObject metaData() const;
+    void setMetaData(const QJsonObject &metaData);
 
     virtual RequestHandler *createHandler() = 0;
-    static QList<RequestHandler *> allHandlers();
-
-    static bool isDiscoveryEnabled();
-    static void enableDiscovery();
-    static void setDiscoveryEnabled(bool enable = true);
 
 private:
-    static QStringList pluginNames();
-
-    static bool s_discoveryEnabled;
-    static QList<RequestHandler *> s_handlers;
+    QJsonObject m_metaData;
 };
 
 } // namespace RestLink

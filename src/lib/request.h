@@ -8,6 +8,7 @@
 #include <QtCore/qmetatype.h>
 
 class QJsonObject;
+class QHttpHeaders;
 
 namespace RestLink {
 
@@ -30,6 +31,7 @@ public:
     Request();
     Request(const char *endpoint);
     Request(const QString &endpoint);
+    Request(const QUrl &url);
     Request(const RequestProcessing &processing);
     Request(const Request &other);
     Request(Request &&other);
@@ -47,6 +49,8 @@ public:
     QUrl url(UrlType type = SecretUrl) const;
     QString urlPath() const;
 
+    QHttpHeaders httpHeaders() const;
+
     RequestProcessing processing() const;
     void setProcessing(RequestProcessing processing);
 
@@ -61,6 +65,8 @@ public:
     static Request merge(const Request &r1, const Request &r2);
 
 private:
+    Request(RequestData *d);
+
     const QList<PathParameter> *constPathParameters() const override;
     QList<PathParameter> *mutablePathParameters() override;
     const QList<QueryParameter> *constQueryParameters() const override;
@@ -71,6 +77,7 @@ private:
     QSharedDataPointer<RequestData> d_ptr;
 
     friend class ApiBase;
+    friend class Api;
 };
 
 }

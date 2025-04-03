@@ -35,12 +35,10 @@ target_headers(RestLink
         compressionutils.h
         requestinterceptor.h
         requesthandler.h
-        server.h serverresponse.h
     PRIVATE
         apibase_p.h api_p.h
         parameter_p.h pathparameter_p.h queryparameter_p.h header_p.h
         request_p.h response_p.h
-        server_p.h serverresponse_p.h
 )
 
 target_sources(RestLink
@@ -54,11 +52,11 @@ target_sources(RestLink
         compressionutils.cpp
         requestinterceptor.cpp
         requesthandler.cpp
-        server.cpp serverresponse.cpp
 )
 
 add_subdirectory(network)
 add_subdirectory(plugin)
+add_subdirectory(server)
 
 install(TARGETS RestLink
     EXPORT RestLinkTargets

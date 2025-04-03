@@ -10,6 +10,7 @@ class QJsonObject;
 
 namespace RestLink {
 
+class Api;
 class PathParameter;
 class QueryParameter;
 class Header;
@@ -20,9 +21,11 @@ class RESTLINK_EXPORT Parameter
 public:
     enum Flag {
         NoFlag = 0x0,
+
         Authentication = 0x1,
         Secret = 0x2,
-        Locale = 0x4
+
+        Locale = 0x16
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -46,6 +49,9 @@ public:
 
     QVariant value() const;
     void setValue(const QVariant &value);
+
+    QVariant specialValue(Api *api) const;
+    QVariantList specialValues(Api *api) const;
 
     bool hasValue(const QVariant &value) const;
     void addValue(const QVariant &value);

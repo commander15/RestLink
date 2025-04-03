@@ -68,7 +68,7 @@ namespace RestLink {
 Api::Api(QObject *parent) :
     ApiBase(new ApiPrivate(this), parent)
 {
-    d_ptr->internalRequest.setApi(this);
+    d_ptr->internalRequestData->api = this;
 }
 
 Api::~Api()
@@ -234,32 +234,28 @@ void Api::configure(const QUrl &url)
 {
     RESTLINK_D(Api);
 
-    QNetworkRequest request = d_ptr->networkManager()->generateNetworkRequest(GetOperation, Request(), Body());
-    request.setUrl(url);
-    request.setPriority(QNetworkRequest::HighPriority);
-    request.setTransferTimeout(3000);
-    request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferNetwork);
-    request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, true);
+    Request request;
+    request.setBaseUrl(url);
 
-    Response *reply = Response::create(static_cast<QNetworkAccessManager *>(d->networkManager())->get(request), this);
-    connect(reply, &Response::finished, this, [reply, this] {
-        if (reply->isSuccess() && configure(reply->readJsonObject())) {
+    Response *response = d_ptr->networkManager()->get(request);
+    connect(response, &Response::finished, this, [response, this] {
+        if (response->isSuccess() && configure(response->readJsonObject())) {
 #ifdef RESTLINK_DEBUG
-            restlinkInfo() << "API configured from " << reply->networkReply()->url().toString();
+            restlinkInfo() << "API configured from " << response->networkReply()->url().toString();
 #endif
             emit configurationCompleted();
         } else {
             emit configurationFailed();
 
-            if (reply->hasNetworkError())
-                restlinkWarning() << reply->networkErrorString();
-            else if (!reply->isHttpStatusSuccess())
-                restlinkWarning() << reply->httpReasonPhrase();
+            if (response->hasNetworkError())
+                restlinkWarning() << response->networkErrorString();
+            else if (!response->isHttpStatusSuccess())
+                restlinkWarning() << response->httpReasonPhrase();
             else
                 restlinkWarning() << "Unknown error during configuration file download";
         }
 
-        reply->deleteLater();
+        response->deleteLater();
     });
 }
 
@@ -300,7 +296,11 @@ bool Api::configure(const QJsonObject &config)
     if (config.contains("url"))
         setUrl(config.value("url").toString());
 
-    d_ptr->internalRequest = Request::fromJsonbject(config);
+    const Request request = Request::fromJsonbject(config);
+    const RequestData *data = request.d_ptr.get();
+    d_ptr->internalRequestData->pathParameters = data->pathParameters;
+    d_ptr->internalRequestData->queryParameters = data->queryParameters;
+    d_ptr->internalRequestData->headers = data->headers;
 
     d->remoteRequests.clear();
     if (config.contains("requests")) {
