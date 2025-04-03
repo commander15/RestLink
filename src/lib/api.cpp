@@ -234,10 +234,7 @@ void Api::configure(const QUrl &url)
 {
     RESTLINK_D(Api);
 
-    Request request;
-    request.setBaseUrl(url);
-
-    Response *response = d_ptr->networkManager()->get(request);
+    Response *response = d_ptr->networkManager()->get(Request(url));
     connect(response, &Response::finished, this, [response, this] {
         if (response->isSuccess() && configure(response->readJsonObject())) {
 #ifdef RESTLINK_DEBUG
