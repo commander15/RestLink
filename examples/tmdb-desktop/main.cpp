@@ -5,11 +5,7 @@
 #include <QtCore/qtimer.h>
 #include <QtCore/qstandardpaths.h>
 
-#include <RestLink/api.h>
-#include <RestLink/request.h>
-#include <RestLink/response.h>
-#include <RestLink/cache.h>
-#include <RestLink/requestinterceptor.h>
+#include <RestLink/restlink.h>
 
 using namespace RestLink;
 
@@ -84,6 +80,7 @@ class Interceptor : public RequestInterceptor
 public:
     Request intercept(const Request &request, const Body &body, ApiBase::Operation operation) override
     {
+        //qDebug().noquote() << HttpUtils::verbString(operation) << request.url(Request::PublicUrl).toString() << Qt::endl;
         return request;
     }
 };
@@ -95,10 +92,12 @@ int main(int argc, char *argv[])
     QLoggingCategory::setFilterRules("restlink.info=true");
 
     Api api;
-    api.addRequestInterceptor(new Interceptor());
     api.configure(QUrl::fromLocalFile(QStandardPaths::writableLocation(QStandardPaths::DownloadLocation) + "/TmdbConfig.json"));
     QObject::connect(&api, &Api::configurationCompleted, &app, [&api] { run(&api); });
     QObject::connect(&api, &Api::configurationFailed, &app, &QCoreApplication::quit);
+
+    Interceptor interceptor;
+    api.addRequestInterceptor(&interceptor);
 
     return app.exec();
 }
