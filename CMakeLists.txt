@@ -25,6 +25,9 @@ list(PREPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # Core dependencies
 find_package(Qt REQUIRED COMPONENTS Core Network)
+
+qt_standard_project_setup(REQUIRES 6.8)
+
 find_package(ZLIB)
 
 # Excel plugin dependencies
