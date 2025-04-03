@@ -91,6 +91,8 @@ int main(int argc, char *argv[])
 
     QLoggingCategory::setFilterRules("restlink.info=true");
 
+    RestLink::PluginManager::enableDiscovery();
+
     Api api;
     api.configure(QUrl::fromLocalFile(QStandardPaths::writableLocation(QStandardPaths::DownloadLocation) + "/TmdbConfig.json"));
     QObject::connect(&api, &Api::configurationCompleted, &app, [&api] { run(&api); });
