@@ -102,7 +102,7 @@ RequestHandler *PluginManager::createHandler(Plugin *plugin)
     }
 
     restlinkInfo() << plugin->name() << " plugin loaded, supported schemes: "
-                   << schemes.join(", ") << Qt::endl;
+                   << schemes.join(", ");
     return handler;
 }
 
@@ -137,6 +137,13 @@ Plugin *PluginManager::loadPlugin(const QString &name)
     }
 
     plugin->setMetaData(metaData.value("MetaData").toObject());
+
+    // We can't identify ? Right, just skip it
+    if (plugin->name().isEmpty()) {
+        restlinkWarning() << "suspect plugin detected: " << d_ptr->pluginLoader.fileName();
+        return nullptr;
+    }
+
     return plugin;
 }
 

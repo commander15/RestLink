@@ -48,7 +48,7 @@ Response *RequestHandler::send(ApiBase::Operation operation, const Request &requ
         const bool log = isLoggingEnabled();
 
         if (log)
-            restlinkInfo() << HttpUtils::verbString(operation) << ' ' << request.url(Request::PublicUrl).toString(QUrl::DecodeReserved) << Qt::endl;
+            restlinkInfo() << HttpUtils::verbString(operation) << ' ' << request.url(Request::PublicUrl).toString(QUrl::DecodeReserved);
 
         Response *response = sendRequest(operation, request, body);
         if (response) {
@@ -61,15 +61,15 @@ Response *RequestHandler::send(ApiBase::Operation operation, const Request &requ
                         return;
 
                     if (response->hasHttpStatusCode())
-                        restlinkWarning() << "HTTP " << response->httpStatusCode() << ' ' << response->httpReasonPhrase() << Qt::endl;
+                        restlinkWarning() << "HTTP " << response->httpStatusCode() << ' ' << response->httpReasonPhrase();
                     else if (response->hasNetworkError())
-                        restlinkWarning() << response->networkErrorString() << Qt::endl;
+                        restlinkWarning() << response->networkErrorString();
                     else
-                        restlinkWarning() << "Unkown error occured" << Qt::endl;
+                        restlinkWarning() << "Unkown error occured";
                 });
             }
         } else if (log) {
-            restlinkWarning() << "Response object creation failed, perhaps a plugin related error" << Qt::endl;
+            restlinkWarning() << "Response object creation failed, perhaps a plugin related error";
         }
 
         return response;
