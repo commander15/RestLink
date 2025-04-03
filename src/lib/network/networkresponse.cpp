@@ -8,10 +8,9 @@
 
 namespace RestLink {
 
-NetworkResponse::NetworkResponse(QNetworkReply *reply, Api *api)
-    : Response(new NetworkResponsePrivate(this), api)
+NetworkResponse::NetworkResponse(QObject *parent)
+    : Response(new NetworkResponsePrivate(this), parent)
 {
-    setReply(reply);
 }
 
 ApiBase::Operation NetworkResponse::operation() const

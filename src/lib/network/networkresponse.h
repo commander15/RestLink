@@ -12,7 +12,7 @@ class RESTLINK_EXPORT NetworkResponse : public Response
     Q_OBJECT
 
 public:
-    explicit NetworkResponse(QNetworkReply *reply, Api *api);
+    explicit NetworkResponse(QObject *parent);
 
     Api::Operation operation() const override;
 
@@ -41,7 +41,6 @@ public slots:
 private:
     void setReply(QNetworkReply *reply);
 
-    friend class Response;
     friend class NetworkManager;
 };
 

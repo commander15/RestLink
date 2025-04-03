@@ -76,12 +76,11 @@ public:
 
     virtual QNetworkReply *networkReply() const = 0;
 
-    static Response *create(QNetworkReply *reply, QObject *parent = nullptr);
-
 protected:
-    Response(ResponsePrivate *d, Api *api);
+    Response(ResponsePrivate *d, QObject *parent);
 
     void setRequest(const Request &request);
+    void setApi(Api *api);
 
     QByteArray body();
 

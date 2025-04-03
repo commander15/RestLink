@@ -85,11 +85,10 @@ namespace RestLink {
  * \brief Emitted when a network error occurs during the request.
  */
 
-Response::Response(ResponsePrivate *d, Api *api)
-    : QObject(api)
+Response::Response(ResponsePrivate *d, QObject *parent)
+    : QObject(parent)
     , d_ptr(d)
 {
-    d_ptr->api = api;
 }
 
 /*!
@@ -309,22 +308,14 @@ QString Response::networkErrorString() const
     return (reply ? reply->errorString() : QString());
 }
 
-/*!
- * \fn Response::networkReply
- * \brief Retrieves the QNetworkReply instance associated with this response.
- * \return A pointer to the QNetworkReply.
- */
-
-Response *Response::create(QNetworkReply *reply, QObject *parent)
-{
-    NetworkResponse *response = new NetworkResponse(reply, nullptr);
-    response->setParent(parent);
-    return response;
-}
-
 void Response::setRequest(const Request &request)
 {
     d_ptr->request = request;
+}
+
+void Response::setApi(Api *api)
+{
+    d_ptr->api = api;
 }
 
 QByteArray Response::body()

@@ -53,6 +53,7 @@ Response *RequestHandler::send(ApiBase::Operation operation, const Request &requ
         Response *response = sendRequest(operation, request, body);
         if (response) {
             response->setRequest(request);
+            response->setApi(request.api());
 
             if (log) {
                 QObject::connect(response, &Response::finished, response, [response] {
@@ -80,7 +81,7 @@ Response *RequestHandler::send(ApiBase::Operation operation, const Request &requ
 bool RequestHandler::isLoggingEnabled() const
 {
 #ifdef RESTLINK_DEBUG
-    return true;
+    return handlerType() == NetworkManager;
 #else
     return false;
 #endif
