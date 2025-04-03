@@ -18,4 +18,6 @@
 #include <RestLink/httputils.h>
 #include <RestLink/compressionutils.h>
 
+#include <RestLink/pluginmanager.h>
+
 #endif // RESTLINK_H

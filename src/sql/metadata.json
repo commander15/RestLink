@@ -1,7 +1,4 @@
 {
     "uuid": "6a789948-d196-11ef-af72-8f7d83c3d7d1",
-    "name": "sql",
-    "schemes": [
-        "sql"
-    ]
+    "name": "SQL"
 }

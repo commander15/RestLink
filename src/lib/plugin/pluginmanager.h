@@ -13,17 +13,17 @@ public:
     PluginManager();
     ~PluginManager();
 
-    QList<RequestHandler *> handlers();
+    static QList<RequestHandler *> handlers();
 
-    bool isDiscoveryEnabled();
-    void enableDiscovery();
-    void setDiscoveryEnabled(bool enable = true);
+    static bool isDiscoveryEnabled();
+    static void enableDiscovery();
+    static void setDiscoveryEnabled(bool enable = true);
 
-    void registerPlugin(const QString &name);
+    static void registerPlugin(const QString &name);
 
     RequestHandler *createHandler(Plugin *plugin);
     Plugin *loadPlugin(const QString &name);
-    QList<Plugin *> loadPlugins(const QStringList &names);
+    void unloadPlugin();
 
     static PluginManager *global();
 

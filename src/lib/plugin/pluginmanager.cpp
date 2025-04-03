@@ -29,7 +29,10 @@ QList<RequestHandler *> PluginManager::handlers()
     QStringList pluginNames;
     QPluginLoader loader;
 
-    if (d_ptr->discoveryEnabled) {
+    PluginManager *manager = global();
+    PluginManagerPrivate *data = manager->d_ptr.get();
+
+    if (data->discoveryEnabled) {
         const QStringList searchPaths = QCoreApplication::libraryPaths();
 
         for (const QString &path : searchPaths) {
@@ -39,19 +42,19 @@ QList<RequestHandler *> PluginManager::handlers()
 
             for (const QString &file : files) {
                 // loading plugin
-                Plugin *plugin = loadPlugin(dir.filePath(file));
+                Plugin *plugin = manager->loadPlugin(dir.filePath(file));
                 if (!plugin)
                     continue;
 
                 // Retrieve handler
-                RequestHandler *handler = createHandler(plugin);
+                RequestHandler *handler = manager->createHandler(plugin);
 
                 if (handler) {
                     pluginNames.append(plugin->name());
                     handlers.append(handler);
                 }
 
-                loader.unload();
+                manager->unloadPlugin();
             }
         }
     }
@@ -61,23 +64,24 @@ QList<RequestHandler *> PluginManager::handlers()
 
 bool PluginManager::isDiscoveryEnabled()
 {
-    return d_ptr->discoveryEnabled;
+    return global()->d_ptr->discoveryEnabled;
 }
 
 void PluginManager::enableDiscovery()
 {
-    d_ptr->discoveryEnabled = true;
+    global()->d_ptr->discoveryEnabled = true;
 }
 
 void PluginManager::setDiscoveryEnabled(bool enable)
 {
-    d_ptr->discoveryEnabled = enable;
+    global()->d_ptr->discoveryEnabled = enable;
 }
 
 void PluginManager::registerPlugin(const QString &name)
 {
-    if (!d_ptr->names.contains(name))
-        d_ptr->names.append(name);
+    QStringList *names = &global()->d_ptr->names;
+    if (!names->contains(name))
+        names->append(name);
 }
 
 RequestHandler *PluginManager::createHandler(Plugin *plugin)
@@ -90,56 +94,56 @@ RequestHandler *PluginManager::createHandler(Plugin *plugin)
     }
 
     const QStringList schemes = handler->supportedSchemes();
-    if (schemes.contains("http", Qt::CaseInsensitive)) {
+    if (schemes.contains("http", Qt::CaseInsensitive) || schemes.contains("https", Qt::CaseInsensitive)) {
         restlinkWarning() << "an HTTP/HTTPS handler has been detected on '" << plugin->name()
                           << "' plugin, this is unsuported for security reasons";
         delete handler;
         return nullptr;
     }
 
-    restlinkWarning() << "failed to create handler for plugin: " << plugin->name();
-    return nullptr;
+    restlinkInfo() << plugin->name() << " plugin loaded, supported schemes: "
+                   << schemes.join(", ") << Qt::endl;
+    return handler;
 }
 
 Plugin *PluginManager::loadPlugin(const QString &name)
 {
-    const QList<Plugin *> plugins = loadPlugins({ name });
-    return (!plugins.isEmpty() ? plugins.first() : nullptr);
-}
+    unloadPlugin();
 
-QList<Plugin *> PluginManager::loadPlugins(const QStringList &names)
-{
-    QList<Plugin *> plugins;
-
-    for (const QString &name : names) {
-        // Construct the plugin path (could be dynamic)
+    if (QDir::isAbsolutePath(name))
+        d_ptr->pluginLoader.setFileName(name);
+    else
         d_ptr->pluginLoader.setFileName("restlink/" + name);
-        if (!d_ptr->pluginLoader.load()) {
-            qWarning() << "Failed to load plugin:" << name << d_ptr->pluginLoader.errorString();
-            continue;
-        }
 
-        // Loading meta data
-        const QJsonObject metaData = d_ptr->pluginLoader.metaData();
-        if (metaData.value("IID") != RESTLINK_PLUGIN_IID) {
-            qWarning() << "invalid plugin";
-            d_ptr->pluginLoader.unload();
-            continue;
-        }
-
-        // loading plugin
-        Plugin *plugin = reinterpret_cast<Plugin *>(d_ptr->pluginLoader.instance());
-        if (!plugin) {
-            qWarning() << "Invalid plugin interface for:" << name;
-            d_ptr->pluginLoader.unload();
-            continue;
-        }
-
-        plugin->setMetaData(metaData.value("MetaData").toObject());
-        plugins.append(plugin);
+    if (!d_ptr->pluginLoader.load()) {
+        restlinkWarning() << "Failed to load plugin: " << name << d_ptr->pluginLoader.errorString();
+        return nullptr;
     }
 
-    return plugins;
+    // Loading meta data
+    const QJsonObject metaData = d_ptr->pluginLoader.metaData();
+    if (metaData.value("IID") != RESTLINK_PLUGIN_IID) {
+        restlinkWarning() << "invalid plugin";
+        unloadPlugin();
+        return nullptr;
+    }
+
+    // loading plugin
+    Plugin *plugin = reinterpret_cast<Plugin *>(d_ptr->pluginLoader.instance());
+    if (!plugin) {
+        restlinkWarning() << "Invalid plugin interface for:" << name;
+        unloadPlugin();
+        return nullptr;
+    }
+
+    plugin->setMetaData(metaData.value("MetaData").toObject());
+    return plugin;
+}
+
+void PluginManager::unloadPlugin()
+{
+    if (d_ptr->pluginLoader.isLoaded())
+        d_ptr->pluginLoader.unload();
 }
 
 PluginManager *PluginManager::global()

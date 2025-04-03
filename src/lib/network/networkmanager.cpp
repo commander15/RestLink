@@ -46,40 +46,41 @@ NetworkManager::NetworkManager(QObject *parent)
 
 Response *NetworkManager::sendRequest(Api::Operation operation, const Request &request, const Body &body)
 {
-    const QUrl url = request.url(Request::PublicUrl);
-    restlinkInfo() << HttpUtils::verbString(operation) << ' ' << url.toString(QUrl::DecodeReserved);
+    const QString scheme = request.baseUrl().scheme();
 
-    QList<RequestHandler *> handlers = PluginManager::global()->handlers();
+    // If it's supported, send though QNetworkAccessManager base
+    const QStringList networkSchemes = QNetworkAccessManager::supportedSchemes();
+    if (networkSchemes.contains(scheme)) {
+        QNetworkRequest netRequest = generateNetworkRequest(operation, request, body);
+        QNetworkReply *netReply = generateNetworkReply(operation, netRequest, body);
 
-    const QString urlSheme = url.scheme();
-    auto it = std::find_if(handlers.begin(), handlers.end(), [urlSheme](const RequestHandler *handler) {
-        return handler->supportedSchemes().contains(urlSheme);
+        NetworkResponse *response = new NetworkResponse(request.api());
+        response->setReply(netReply);
+        return response;
+    }
+
+    // Otherwise, try using plugin handlers
+    QList<RequestHandler *> handlers = PluginManager::handlers();
+
+    auto it = std::find_if(handlers.begin(), handlers.end(), [&scheme](const RequestHandler *handler) {
+        return handler->supportedSchemes().contains(scheme);
     });
-
-    Response *response;
 
     if (it != handlers.end()) {
         RequestHandler *handler = *it;
-        response = handler->send(operation, request, body);
-    } else {
-        QNetworkRequest networkRequest = generateNetworkRequest(operation, request, body);
-        QNetworkReply *networkReply = generateNetworkReply(operation, networkRequest, body);
-
-        Api *api = request.api();
-        response = new NetworkResponse(networkReply, api);
-
-        if (!api)
-            response->setParent(this);
+        return handler->send(operation, request, body);
     }
 
-    return response;
+    // We don't known the scheme, we just go null ;)
+    restlinkWarning() << "NetworkManager: unsupported scheme usage detected !";
+    return nullptr;
 }
 
 QStringList NetworkManager::supportedSchemes() const
 {
     // Getting schemes from QNetworkAccessManager and network handlers
     QStringList schemes = QNetworkAccessManager::supportedSchemes();
-    const QList<RequestHandler *> handlers = PluginManager::global()->handlers();
+    const QList<RequestHandler *> handlers = PluginManager::handlers();
     for (RequestHandler *handler : handlers)
         schemes.append(handler->supportedSchemes());
 

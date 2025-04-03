@@ -15,11 +15,14 @@ class RequestHandler;
 class RESTLINK_EXPORT Plugin : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(QString uuid READ uuid CONSTANT)
+    Q_PROPERTY(QString name READ name CONSTANT)
 
 public:
     explicit Plugin(QObject *parent = nullptr);
     virtual ~Plugin();
 
+    QString uuid() const;
     QString name() const;
 
     QJsonObject metaData() const;

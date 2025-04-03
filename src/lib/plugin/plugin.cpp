@@ -12,6 +12,11 @@ Plugin::~Plugin()
 {
 }
 
+QString Plugin::uuid() const
+{
+    return m_metaData.value("uuid").toString();
+}
+
 QString Plugin::name() const
 {
     return m_metaData.value("name").toString();
