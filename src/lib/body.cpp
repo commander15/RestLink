@@ -185,6 +185,16 @@ QByteArray Body::data() const
     return m_data.toByteArray();
 }
 
+QString Body::contentType() const
+{
+    return m_type;
+}
+
+qint64 Body::contentLength() const
+{
+    return m_length;
+}
+
 HeaderList Body::headers() const
 {
     HeaderList headers;

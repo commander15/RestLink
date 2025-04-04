@@ -57,6 +57,9 @@ public:
     bool isData() const;
     QByteArray data() const;
 
+    QString contentType() const;
+    qint64 contentLength() const;
+
     HeaderList headers() const;
     void setHeaders(const HeaderList &headers);
 
