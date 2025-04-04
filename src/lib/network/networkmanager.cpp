@@ -99,6 +99,17 @@ QNetworkRequest NetworkManager::generateNetworkRequest(ApiBase::Operation operat
     const QUrl url = request.url();
     QHttpHeaders headers = request.httpHeaders();
 
+    // Body headers
+    const HeaderList bodyHeaders = body.headers();
+    for (const Header &header : bodyHeaders) {
+        if (headers.contains(header.name()))
+            headers.removeAll(header.name());
+
+        const QVariantList values = header.values();
+        for (const QVariant &value : values)
+            headers.append(header.name(), value.toByteArray());
+    }
+
     // Compression support
     {
         const QByteArrayList algorithms = CompressionUtils::supportedAlgorithms();
