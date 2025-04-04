@@ -80,7 +80,6 @@ class Interceptor : public RequestInterceptor
 public:
     Request intercept(const Request &request, const Body &body, ApiBase::Operation operation) override
     {
-        //qDebug().noquote() << HttpUtils::verbString(operation) << request.url(Request::PublicUrl).toString() << Qt::endl;
         return request;
     }
 };
