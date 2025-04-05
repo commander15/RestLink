@@ -2,7 +2,7 @@
 
 #include <QtCore/qloggingcategory.h>
 
-#include <RestLink/plugin.h>
+#include <RestLink/pluginmanager.h>
 #include <RestLink/api.h>
 
 using namespace RestLink;
@@ -14,9 +14,7 @@ int main(int argc, char *argv[])
     app.setApplicationVersion(RESTLINK_VERSION_STR);
     app.initParser();
 
-    RestLink::Plugin::enableDiscovery();
-
-    //QLoggingCategory::setFilterRules("restlink.info=true");
+    PluginManager::enableDiscovery();
 
     Api api;
     app.setApi(&api);
