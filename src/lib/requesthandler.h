@@ -18,6 +18,8 @@ public:
 
     virtual ~RequestHandler();
 
+    virtual QString handlerName() const;
+
     Response *head(const Request &request);
     Response *get(const Request &request);
     Response *post(const Request &request, const Body &body);
@@ -26,13 +28,12 @@ public:
     Response *deleteResource(const Request &request);
     Response *send(Api::Operation operation, const Request &request, const Body &body);
 
-    bool isLoggingEnabled() const;
-
     virtual QStringList supportedSchemes() const = 0;
     virtual HandlerType handlerType() const = 0;
 
 protected:
-    virtual bool isRequestSupported(const Request &request) const;
+    bool isRequestSupported(const Request &request) const;
+    void initResponse(Response *response, const Request &request, ApiBase::Operation operation);
     virtual Response *sendRequest(Api::Operation operation, const Request &request, const Body &body) = 0;
 };
 

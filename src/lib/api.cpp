@@ -243,13 +243,7 @@ void Api::configure(const QUrl &url)
             emit configurationCompleted();
         } else {
             emit configurationFailed();
-
-            if (response->hasNetworkError())
-                restlinkWarning() << response->networkErrorString();
-            else if (!response->isHttpStatusSuccess())
-                restlinkWarning() << response->httpReasonPhrase();
-            else
-                restlinkWarning() << "Unknown error during configuration file download";
+            restlinkWarning() << "Error during configuration file download";
         }
 
         response->deleteLater();
@@ -294,7 +288,7 @@ bool Api::configure(const QJsonObject &config)
         setUrl(config.value("url").toString());
 
     const Request request = Request::fromJsonbject(config);
-    const RequestData *data = request.d_ptr.get();
+    const RequestPrivate *data = request.d_ptr.get();
     d_ptr->internalRequestData->pathParameters = data->pathParameters;
     d_ptr->internalRequestData->queryParameters = data->queryParameters;
     d_ptr->internalRequestData->headers = data->headers;

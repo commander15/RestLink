@@ -29,7 +29,7 @@ namespace RestLink {
  * object with default values for its members, ensuring a consistent state.
  */
 Request::Request() :
-    d_ptr(new RequestData())
+    d_ptr(new RequestPrivate())
 {
 }
 
@@ -61,10 +61,10 @@ Request::Request(const char *endpoint) :
  * \note endpoint must not include full path, only the url path relative to the base url provided on Api object.
  */
 Request::Request(const QString &endpoint) :
-    d_ptr(new RequestData())
+    d_ptr(new RequestPrivate())
 {
     if (endpoint.startsWith('/'))
-        d_ptr->endpoint = RequestData::validateEndpoint(endpoint);
+        d_ptr->endpoint = RequestPrivate::validateEndpoint(endpoint);
     else
         d_ptr->baseUrl = QUrl(endpoint);
 }
@@ -81,18 +81,18 @@ Request::Request(const QString &endpoint) :
  * without an Api object.
  */
 Request::Request(const QUrl &url)
-    : d_ptr(new RequestData())
+    : d_ptr(new RequestPrivate())
 {
     d_ptr->baseUrl = url;
 }
 
 Request::Request(const RequestProcessing &processing) :
-    d_ptr(new RequestData())
+    d_ptr(new RequestPrivate())
 {
     d_ptr->processing = processing;
 }
 
-Request::Request(RequestData *d)
+Request::Request(RequestPrivate *d)
     : d_ptr(d)
 {
 }
@@ -181,7 +181,7 @@ QString Request::endpoint() const
  */
 void Request::setEndpoint(const QString &endpoint)
 {
-    d_ptr->endpoint = RequestData::validateEndpoint(endpoint);
+    d_ptr->endpoint = RequestPrivate::validateEndpoint(endpoint);
 }
 
 /*!
@@ -219,7 +219,7 @@ QUrl Request::url(UrlType type) const
     Api *api = d_ptr->api;
 
     auto canUseParameter = [&type](const Parameter &param) {
-        return RequestData::canUseUrlParameter(param, type);
+        return RequestPrivate::canUseUrlParameter(param, type);
     };
 
     auto parameterValue = [&api](const Parameter &param) {
@@ -312,6 +312,41 @@ QHttpHeaders Request::httpHeaders() const
     return httpHeaders;
 }
 
+/*!
+ * \brief Returns the attribute associated with the code code.
+ * \param attribute The attribute for which we want value.
+ * \return The attribute value as a QVariant
+ */
+QVariant Request::attribute(Attribute attribute) const
+{
+    return d_ptr->attributes.value(attribute);
+}
+
+/*!
+ * \brief Returns the attribute associated with the code code.
+ * Return defaultValue if the attribute has not been set.
+ *
+ * \param attribute The attribute for which we want value.
+ * \return The attribute value as a QVariant
+ */
+QVariant Request::attribute(Attribute attribute, const QVariant &defaultValue) const
+{
+    return (d_ptr->attributes.contains(attribute) ? d_ptr->attributes.value(attribute) : defaultValue);
+}
+
+/*!
+ * \brief Set attribute value to the provided one.
+ * \param attribute The attribute for which value must ve set.
+ * \param value The value of the attribute to set.
+ */
+void Request::setAttribute(Attribute attribute, const QVariant &value)
+{
+    if (value.isValid())
+        d_ptr->attributes.insert(attribute, value);
+    else if (d_ptr->attributes.contains(attribute))
+        d_ptr->attributes.remove(attribute);
+}
+
 RequestProcessing Request::processing() const
 {
     return d_ptr->processing;
@@ -320,6 +355,25 @@ RequestProcessing Request::processing() const
 void Request::setProcessing(RequestProcessing processing)
 {
     d_ptr->processing = processing;
+}
+
+/*!
+ * \brief Get the controller associated with the request.
+ */
+AbstractController *Request::controller() const
+{
+    return d_ptr->controller;
+}
+
+/*!
+ * \brief Associate a controller to the request.
+ * \param controller The controller to set.
+ * \note The controller will be used to process the request in meantime except if it's used with
+ * a special RestLink endpoint such as /restlink/register-controller.
+ */
+void Request::setController(AbstractController *controller)
+{
+    d_ptr->controller = controller;
 }
 
 /*!
@@ -381,8 +435,8 @@ Request Request::fromJsonbject(const QJsonObject &object)
 {
     Request request;
 
-    RequestData *data = request.d_ptr;
-    data->endpoint = RequestData::validateEndpoint(object.value("endpoint").toString());
+    RequestPrivate *data = request.d_ptr;
+    data->endpoint = RequestPrivate::validateEndpoint(object.value("endpoint").toString());
     data->baseUrl = QUrl(object.value("base_url").toString());
 
     if (object.contains("parameters")) {
@@ -479,12 +533,12 @@ QList<Header> *Request::mutableHeaders()
     return &d_ptr->headers;
 }
 
-QString RequestData::validateEndpoint(const QString &input)
+QString RequestPrivate::validateEndpoint(const QString &input)
 {
     return input;
 }
 
-bool RequestData::canUseUrlParameter(const Parameter &parameter, Request::UrlType type)
+bool RequestPrivate::canUseUrlParameter(const Parameter &parameter, Request::UrlType type)
 {
     if (parameter.hasFlag(Parameter::Secret) && type == Request::PublicUrl)
         return false;

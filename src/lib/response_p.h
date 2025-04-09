@@ -15,7 +15,6 @@ public:
     Response *q_ptr;
 
     Request request;
-    Api *api;
     QByteArray body;
 };
 

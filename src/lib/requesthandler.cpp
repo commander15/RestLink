@@ -12,6 +12,20 @@ RequestHandler::~RequestHandler()
 {
 }
 
+QString RequestHandler::handlerName() const
+{
+    switch (handlerType()) {
+    case NetworkManager:
+        return QStringLiteral("NetworkManager");
+
+    case ServerHandler:
+        return QStringLiteral("UnknownServer");
+
+    default:
+        return QStringLiteral("UnknownHandler");
+    };
+}
+
 Response *RequestHandler::head(const Request &request)
 {
     return send(Api::HeadOperation, request, Body());
@@ -44,52 +58,23 @@ Response *RequestHandler::deleteResource(const Request &request)
 
 Response *RequestHandler::send(ApiBase::Operation operation, const Request &request, const Body &body)
 {
-    if (isRequestSupported(request)) {
-        const bool log = isLoggingEnabled();
-
-        if (log)
-            restlinkInfo() << HttpUtils::verbString(operation) << ' ' << request.url(Request::PublicUrl).toString(QUrl::DecodeReserved);
-
-        Response *response = sendRequest(operation, request, body);
-        if (response) {
-            response->setRequest(request);
-            response->setApi(request.api());
-
-            if (log) {
-                QObject::connect(response, &Response::finished, response, [response] {
-                    if (response->isSuccess())
-                        return;
-
-                    if (response->hasHttpStatusCode())
-                        restlinkWarning() << "HTTP " << response->httpStatusCode() << ' ' << response->httpReasonPhrase();
-                    else if (response->hasNetworkError())
-                        restlinkWarning() << response->networkErrorString();
-                    else
-                        restlinkWarning() << "Unkown error occured";
-                });
-            }
-        } else if (log) {
-            restlinkWarning() << "Response object creation failed, perhaps a plugin related error";
-        }
-
-        return response;
-    } else {
+    if (!isRequestSupported(request)) {
+        restlinkWarning() << handlerName() << ": trying to send an unsupported request !";
         return nullptr;
     }
-}
 
-bool RequestHandler::isLoggingEnabled() const
-{
-#ifdef RESTLINK_DEBUG
-    return handlerType() == NetworkManager;
-#else
-    return false;
-#endif
+    return sendRequest(operation, request, body);
 }
 
 bool RequestHandler::isRequestSupported(const Request &request) const
 {
     return supportedSchemes().contains(request.baseUrl().scheme());
+}
+
+void RequestHandler::initResponse(Response *response, const Request &request, ApiBase::Operation operation)
+{
+    Q_UNUSED(operation);
+    response->setRequest(request);
 }
 
 } // namespace RestLink

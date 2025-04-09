@@ -1,11 +1,18 @@
 #include "sqlutils.h"
 
+#include <QtCore/qjsondocument.h>
 #include <QtCore/qjsonobject.h>
 
 #include <QtSql/qsqlrecord.h>
 #include <QtSql/qsqlfield.h>
 
 namespace RestLink {
+
+QSqlRecord SqlUtils::jsonToRecord(const QByteArray &json)
+{
+    QJsonDocument doc = QJsonDocument::fromJson(json);
+    return jsonObjectToRecord(doc.object());
+}
 
 QJsonObject SqlUtils::recordToJsonObject(const QSqlRecord &record)
 {

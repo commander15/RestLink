@@ -10,7 +10,7 @@
 
 namespace RestLink {
 
-class ApiBasePrivate : public RequestData
+class ApiBasePrivate : public RequestPrivate
 {
 public:
     ApiBasePrivate(ApiBase *q);
@@ -23,7 +23,7 @@ public:
 
     ApiBase *q_ptr;
 
-    RequestData *internalRequestData;
+    RequestPrivate *internalRequestData;
     QVector<RequestInterceptor *> requestInterceptors;
 
 private:

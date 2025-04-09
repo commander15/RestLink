@@ -8,7 +8,7 @@ namespace RestLink {
 class SqlPlugin : public Plugin
 {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID RESTLINK_PLUGIN_IID FILE "metadata.json")
+    Q_PLUGIN_METADATA(IID "com.restlink.sql" FILE "metadata.json")
 
 public:
     explicit SqlPlugin(QObject *parent = nullptr);

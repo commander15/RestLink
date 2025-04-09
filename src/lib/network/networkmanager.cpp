@@ -46,6 +46,24 @@ NetworkManager::NetworkManager(QObject *parent)
 
 Response *NetworkManager::sendRequest(Api::Operation operation, const Request &request, const Body &body)
 {
+#ifdef RESTLINK_DEBUG
+    restlinkInfo() << HttpUtils::verbString(operation) << ' ' << request.url(Request::PublicUrl).toString(QUrl::DecodeReserved);
+#endif
+
+    static auto registerForLogging = [](Response *response) {
+        QObject::connect(response, &Response::finished, response, [response] {
+            if (response->isSuccess())
+                return;
+
+            if (response->hasHttpStatusCode())
+                restlinkWarning() << "HTTP " << response->httpStatusCode() << ' ' << response->httpReasonPhrase();
+            else if (response->hasNetworkError())
+                restlinkWarning() << "Network error: " << response->networkErrorString();
+            else
+                restlinkWarning() << "Unkown error occured";
+        });
+    };
+
     const QString scheme = request.baseUrl().scheme();
 
     // If it's supported, send though QNetworkAccessManager base
@@ -54,8 +72,10 @@ Response *NetworkManager::sendRequest(Api::Operation operation, const Request &r
         QNetworkRequest netRequest = generateNetworkRequest(operation, request, body);
         QNetworkReply *netReply = generateNetworkReply(operation, netRequest, body);
 
-        NetworkResponse *response = new NetworkResponse(request.api());
+        NetworkResponse *response = new NetworkResponse(this);
+        initResponse(response, request, operation);
         response->setReply(netReply);
+        registerForLogging(response);
         return response;
     }
 
@@ -68,7 +88,13 @@ Response *NetworkManager::sendRequest(Api::Operation operation, const Request &r
 
     if (it != handlers.end()) {
         RequestHandler *handler = *it;
-        return handler->send(operation, request, body);
+
+        Response *response = handler->send(operation, request, body);
+        if (!response)
+            restlinkWarning() << handler->handlerName() << ": response object creation failed, probably plugin related error";
+        else
+            registerForLogging(response);
+        return response;
     }
 
     // We don't known the scheme, we just go null ;)
@@ -111,7 +137,7 @@ QNetworkRequest NetworkManager::generateNetworkRequest(ApiBase::Operation operat
     }
 
     // Compression support
-    {
+    if (request.attribute(Request::CompressionAllowedAttribute, true).toBool()) {
         const QByteArrayList algorithms = CompressionUtils::supportedAlgorithms();
         if (!algorithms.isEmpty())
             headers.append(QHttpHeaders::WellKnownHeader::AcceptEncoding, algorithms.join(", "));
@@ -122,14 +148,16 @@ QNetworkRequest NetworkManager::generateNetworkRequest(ApiBase::Operation operat
     netRequest.setHeaders(headers);
     netRequest.setAttribute(QNetworkRequest::UserMax, QVariant::fromValue(request));
 
+    // Request attributes
+    auto applyAttribute = [&request, &netRequest](Request::Attribute source, QNetworkRequest::Attribute target) {
+        const QVariant value = request.attribute(source);
+        if (value.isValid())
+            netRequest.setAttribute(target, value);
+    };
+
     // Cache settings
-    if (true) {
-        netRequest.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
-        netRequest.setAttribute(QNetworkRequest::CacheSaveControlAttribute, true);
-    } else {
-        netRequest.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
-        netRequest.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
-    }
+    applyAttribute(Request::CacheLoadControlAttribute, QNetworkRequest::CacheLoadControlAttribute);
+    applyAttribute(Request::CacheSaveControlAttribute, QNetworkRequest::CacheSaveControlAttribute);
 
     return netRequest;
 }

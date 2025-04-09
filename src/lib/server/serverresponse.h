@@ -6,12 +6,14 @@
 
 namespace RestLink {
 
+class Server;
+
 class RESTLINK_EXPORT ServerResponse : public RestLink::Response
 {
     Q_OBJECT
 
 public:
-    explicit ServerResponse(Api *api);
+    explicit ServerResponse(Server *server);
 
     Api::Operation operation() const override;
     void setOperation(Api::Operation operation);
@@ -33,6 +35,8 @@ public:
     void setNetworkRequest(const QNetworkRequest &request);
 
     QNetworkReply *networkReply() const override;
+
+    Server *server() const;
 
 public slots:
     void updateDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);

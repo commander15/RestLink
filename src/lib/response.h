@@ -2,6 +2,7 @@
 #define RESTLINK_RESPONSE_H
 
 #include <RestLink/global.h>
+#include <RestLink/responsebase.h>
 #include <RestLink/api.h>
 
 #include <QtCore/qobject.h>
@@ -18,7 +19,7 @@ class Request;
 
 class ResponsePrivate;
 class NetworkResponsePrivate;
-class RESTLINK_EXPORT Response : public QObject
+class RESTLINK_EXPORT Response : public ResponseBase
 {
     Q_OBJECT
     Q_PROPERTY(QString endpoint READ endpoint CONSTANT)
@@ -64,12 +65,6 @@ public:
     Q_INVOKABLE virtual QByteArray header(const QByteArray &name) const = 0;
     virtual QByteArrayList headerList() const = 0;
 
-    QJsonObject readJsonObject(QJsonParseError *error = nullptr);
-    QJsonArray readJsonArray(QJsonParseError *error = nullptr);
-    virtual QJsonValue readJson(QJsonParseError *error = nullptr);
-    QString readString();
-    Q_INVOKABLE virtual QByteArray readBody() = 0;
-
     inline bool hasNetworkError() const { return networkError() != 0; }
     virtual int networkError() const;
     virtual QString networkErrorString() const;
@@ -80,7 +75,6 @@ protected:
     Response(ResponsePrivate *d, QObject *parent);
 
     void setRequest(const Request &request);
-    void setApi(Api *api);
 
     QByteArray body();
 
@@ -94,7 +88,6 @@ signals:
     void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
     void uploadProgress(qint64 bytesSent, qint64 bytesTotal);
     void networkErrorOccured(int error);
-    void readyRead();
     void finished();
 
     void sslErrorsOccured(const QList<QSslError> &errors);

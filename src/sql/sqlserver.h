@@ -3,23 +3,19 @@
 
 #include <RestLink/server.h>
 
-class QJsonParseError;
-
-class QSqlQuery;
-class QSqlError;
+#include "sqldatabasemanager.h"
 
 namespace RestLink {
 
-class ServerResponse;
-
-class SqlServerPrivate;
 class SqlServer : public Server
 {
     Q_OBJECT
 
 public:
     explicit SqlServer(QObject *parent = nullptr);
+    ~SqlServer();
 
+    QString handlerName() const override;
     QStringList supportedSchemes() const override;
 
 protected:
@@ -27,19 +23,12 @@ protected:
     void cleanup() override;
     bool maintain() override;
 
-    void handleGet(const Request &request, QSqlQuery *query, ServerResponse *response);
-    void handlePost(const Request &request, const QJsonObject &body, QSqlQuery *query, ServerResponse *response);
-    void handlePut(const Request &request, const QJsonObject &body, QSqlQuery *query, ServerResponse *response);
-    void handlePatch(const Request &request, const QJsonObject &body, QSqlQuery *query, ServerResponse *response);
-    void handleDelete(const Request &request, QSqlQuery *query, ServerResponse *response);
-    void handleError(const QJsonParseError &error, ServerResponse *response);
-    void handleError(QSqlQuery *query, ServerResponse *response);
-    void handleError(const QSqlError &error, ServerResponse *response);
+    AbstractController *findController(const ServerRequest &request) const override;
+    void prepareController(AbstractController *controller, Api::Operation operation, const ServerRequest &request, ServerResponse *response) override;
+    void processRequest(ApiBase::Operation operation, const ServerRequest &request, ServerResponse *response) override;
 
-    QJsonObject validate(ApiBase::Operation operation, const Request &request, const QJsonObject &body, ServerResponse *response) const;
-
-    void processRequest(ApiBase::Operation operation, const Request &request, const Body &body, Response *r) override;
-    Response *createResponse(ApiBase::Operation operation, const Request &request, const Body &body, Api *api) override;
+private:
+    SqlDatabaseManager *m_manager;
 };
 
 } // namespace RestLink

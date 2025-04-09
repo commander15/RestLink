@@ -8,10 +8,6 @@
 #include <QtNetwork/qnetworkaccessmanager.h>
 #include <QtNetwork/qnetworkreply.h>
 
-#include <QtCore/qjsondocument.h>
-#include <QtCore/qjsonobject.h>
-#include <QtCore/qjsonarray.h>
-
 namespace RestLink {
 
 /*!
@@ -86,7 +82,7 @@ namespace RestLink {
  */
 
 Response::Response(ResponsePrivate *d, QObject *parent)
-    : QObject(parent)
+    : ResponseBase(parent)
     , d_ptr(d)
 {
 }
@@ -130,7 +126,7 @@ Request Response::request() const
  */
 Api *Response::api() const
 {
-    return d_ptr->api;
+    return d_ptr->request.api();
 }
 
 /*!
@@ -172,13 +168,8 @@ QUrl Response::url() const
  */
 bool Response::isHttpStatusSuccess() const
 {
-    const QUrl url = this->url();
-    if (url.scheme().startsWith("http")) {
-        const int code = httpStatusCode();
-        return (code >= 200 && code <= 299);
-    } else {
-        return !hasNetworkError();
-    }
+    const int code = httpStatusCode();
+    return (code >= 200 && code <= 299);
 }
 
 /*!
@@ -232,57 +223,6 @@ bool Response::hasHeader(const QByteArray &name) const
  */
 
 /*!
- * \brief Reads the response body as a JSON object.
- * \param error An optional pointer to a QJsonParseError to capture any parsing errors.
- * \return The response body as a QJsonObject.
- */
-QJsonObject Response::readJsonObject(QJsonParseError *error)
-{
-    return readJson(error).toObject();
-}
-
-/*!
- * \brief Reads the response body as a JSON array.
- * \param error An optional pointer to a QJsonParseError to capture any parsing errors.
- * \return The response body as a QJsonArray.
- */
-QJsonArray Response::readJsonArray(QJsonParseError *error)
-{
-    return readJson(error).toArray();
-}
-
-/*!
- * \brief Reads the response body as a JSON value.
- * \param error An optional pointer to a QJsonParseError to capture any parsing errors.
- * \return The response body as a QJsonValue.
- */
-QJsonValue Response::readJson(QJsonParseError *error)
-{
-    const QJsonDocument doc = QJsonDocument::fromJson(readBody(), error);
-    if (doc.isObject())
-        return doc.object();
-    else if (doc.isArray())
-        return doc.array();
-    else
-        return QJsonValue();
-}
-
-/*!
- * \brief Reads the response body as a QString.
- * \return The response body as a QString.
- */
-QString Response::readString()
-{
-    return QString::fromUtf8(readBody());
-}
-
-/*!
- * \fn Response::readBody
- * \brief Reads the raw response body as a QByteArray.
- * \return The response body as a QByteArray.
- */
-
-/*!
  * \fn Response::hasNetworkError
  * \brief Checks if a network error occurred during the request.
  * \return \c true if a network error occurred, otherwise \c false.
@@ -313,11 +253,6 @@ void Response::setRequest(const Request &request)
     d_ptr->request = request;
 }
 
-void Response::setApi(Api *api)
-{
-    d_ptr->api = api;
-}
-
 QByteArray Response::body()
 {
     d_ptr->body.append(readBody());
@@ -333,7 +268,6 @@ void Response::ignoreSslErrors()
 
 ResponsePrivate::ResponsePrivate(Response *q)
     : q_ptr(q)
-    , api(nullptr)
 {
 }
 

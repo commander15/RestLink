@@ -12,6 +12,8 @@ namespace RestLink {
 class SqlUtils
 {
 public:
+    static QSqlRecord jsonToRecord(const QByteArray &json);
+
     static QJsonObject recordToJsonObject(const QSqlRecord &record);
     static QSqlRecord jsonObjectToRecord(const QJsonObject &object);
 

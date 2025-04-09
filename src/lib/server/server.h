@@ -3,10 +3,14 @@
 
 #include <RestLink/global.h>
 #include <RestLink/requesthandler.h>
+#include <RestLink/serverrequest.h>
+#include <RestLink/serverresponse.h>
 
 #include <QtCore/qobject.h>
 
 namespace RestLink {
+
+class AbstractController;
 
 class ServerPrivate;
 class RESTLINK_EXPORT Server : public QObject, public RequestHandler
@@ -30,6 +34,8 @@ public:
     int error() const;
     QString errorString() const;
 
+    void registerController(AbstractController *controller);
+
     HandlerType handlerType() const override;
 
 signals:
@@ -43,9 +49,12 @@ protected:
     virtual void cleanup() = 0;
     virtual bool maintain() = 0;
 
-    virtual void processRequest(ApiBase::Operation operation, const Request &request, const Body &body, Response *response) = 0;
-    virtual Response *createResponse(ApiBase::Operation operation, const Request &request, const Body &body, Api *api);
-    Response *sendRequest(ApiBase::Operation operation, const Request &request, const Body &body) override final;
+    ServerResponse *sendRequest(ApiBase::Operation operation, const Request &request, const Body &body) override final;
+    virtual void processInternalRequest(ApiBase::Operation operation, const ServerRequest &request, ServerResponse *response);
+    virtual void processRequest(ApiBase::Operation operation, const ServerRequest &request, ServerResponse *response);
+
+    virtual AbstractController *findController(const ServerRequest &request) const;
+    virtual void prepareController(AbstractController *controller, Api::Operation operation, const ServerRequest &request, ServerResponse *response);
 
     void setError(int code, const QString &str);
 
@@ -55,6 +64,7 @@ private:
     void setListening(bool listening);
 
     friend class ServerPrivate;
+    friend class ResourceHandler;
 };
 
 } // namespace RestLink

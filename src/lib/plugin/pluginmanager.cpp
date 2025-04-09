@@ -122,7 +122,7 @@ Plugin *PluginManager::loadPlugin(const QString &name)
 
     // Loading meta data
     const QJsonObject metaData = d_ptr->pluginLoader.metaData();
-    if (metaData.value("IID") != RESTLINK_PLUGIN_IID) {
+    if (!metaData.value("IID").toString().startsWith("com.restlink.")) {
         restlinkWarning() << "invalid plugin";
         unloadPlugin();
         return nullptr;

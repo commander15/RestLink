@@ -12,11 +12,12 @@
 
 namespace RestLink {
 
-class RequestData : public QSharedData
+class RequestPrivate : public QSharedData
 {
 public:
-    RequestData() = default;
-    RequestData(const RequestData &other) = default;
+    RequestPrivate() = default;
+    RequestPrivate(const RequestPrivate &other) = default;
+    virtual ~RequestPrivate() = default;
 
     static QString validateEndpoint(const QString &input);
 
@@ -27,8 +28,10 @@ public:
     QList<PathParameter> pathParameters;
     QList<QueryParameter> queryParameters;
     QList<Header> headers;
+    QHash<Request::Attribute, QVariant> attributes;
 
     RequestProcessing processing;
+    AbstractController *controller = nullptr;
 
     Api *api = nullptr;
 };

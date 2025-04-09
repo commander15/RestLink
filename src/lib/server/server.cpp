@@ -1,7 +1,9 @@
 #include "server.h"
 #include "server_p.h"
 
+#include <RestLink/serverrequest.h>
 #include <RestLink/serverresponse.h>
+#include <RestLink/resourcecontroller.h>
 
 #include <QtCore/qtimer.h>
 
@@ -35,6 +37,9 @@ Server::~Server()
         d_ptr->requestInterruption();
         d_ptr->wait();
     }
+
+    while (!d_ptr->controllers.isEmpty())
+        delete d_ptr->controllers.takeFirst();
 }
 
 bool Server::isListening() const
@@ -67,25 +72,35 @@ QString Server::errorString() const
     return d_ptr->errorString;
 }
 
+void Server::registerController(AbstractController *controller)
+{
+
+}
+
 RequestHandler::HandlerType Server::handlerType() const
 {
     return ServerHandler;
 }
 
-Response *Server::createResponse(ApiBase::Operation operation, const Request &request, const Body &body, Api *api)
+ServerResponse *Server::sendRequest(ApiBase::Operation operation, const Request &request, const Body &body)
 {
-    ServerResponse *response = new ServerResponse(api);
-    response->setNetworkRequest(QNetworkRequest(request.url()));
-    return response;
-}
+    const ServerRequest serverRequest(request, body);
 
-Response *Server::sendRequest(ApiBase::Operation operation, const Request &request, const Body &body)
-{
+    ServerResponse *serverResponse = new ServerResponse(this);
+    initResponse(serverResponse, request, operation);
+    serverResponse->setOperation(operation);
+    serverResponse->setNetworkRequest(QNetworkRequest(request.url()));
+
+    if (request.endpoint().startsWith("/restlink")) {
+        processInternalRequest(operation, serverRequest, serverResponse);
+        return serverResponse;
+    }
+
     ServerPrivate::PendingRequest pending;
     pending.operation = operation;
     pending.request = request;
     pending.body = body;
-    pending.response = createResponse(operation, request, body, request.api());
+    pending.response = serverResponse;
 
     d_ptr->mutex.lock();
     d_ptr->pendingRequests.enqueue(pending);
@@ -94,7 +109,32 @@ Response *Server::sendRequest(ApiBase::Operation operation, const Request &reque
     if (d_ptr->autoStart && !isListening())
         listen();
 
-    return pending.response;
+    return serverResponse;
+}
+
+void Server::processInternalRequest(ApiBase::Operation operation, const ServerRequest &request, ServerResponse *response)
+{
+    if (request.endpoint() == "/restlink/register-controller") {
+        AbstractController *controller = request.controller();
+        if (controller && !d_ptr->controllers.contains(controller)) {
+            d_ptr->controllers.append(controller);
+            response->setHttpStatusCode(200);
+        } else {
+            response->setHttpStatusCode(403);
+        }
+
+        QTimer::singleShot(0, response, &ServerResponse::complete);
+    }
+}
+
+void Server::processRequest(ApiBase::Operation operation, const ServerRequest &request, ServerResponse *response)
+{
+    class AbstractController *controller = findController(request);
+
+    if (controller) {
+        prepareController(controller, operation, request, response);
+        controller->processRequest(operation, request, response);
+    }
 }
 
 void Server::setError(int code, const QString &str)
@@ -106,6 +146,26 @@ void Server::setError(int code, const QString &str)
 
     if (code != 0)
         emit errorOccured(code);
+}
+
+AbstractController *Server::findController(const ServerRequest &request) const
+{
+    auto it = std::find_if(d_ptr->controllers.begin(), d_ptr->controllers.end(), [&request](class AbstractController *handler) {
+        return handler->canProcessRequest(request);
+    });
+
+    if (it != d_ptr->controllers.end())
+        return *it;
+
+    return nullptr;
+}
+
+void Server::prepareController(AbstractController *controller, Api::Operation operation, const ServerRequest &request, ServerResponse *response)
+{
+    Q_UNUSED(controller);
+    Q_UNUSED(operation);
+    Q_UNUSED(request);
+    Q_UNUSED(response);
 }
 
 void Server::setListening(bool listening)
@@ -120,7 +180,7 @@ void Server::setListening(bool listening)
 ServerPrivate::ServerPrivate(Server::ServerType type, Server *q)
     : q_ptr(q)
     , listening(false)
-    , autoStart(false)
+    , autoStart(true)
     , type(type)
     , bypassCleanup(false)
 {
@@ -130,13 +190,14 @@ ServerPrivate::ServerPrivate(Server::ServerType type, Server *q)
 bool ServerPrivate::processNext()
 {
     PendingRequest pending;
+
     mutex.lock();
     if (!pendingRequests.isEmpty())
         pending = pendingRequests.dequeue();
     mutex.unlock();
 
     if (pending.response) {
-        q_ptr->processRequest(pending.operation, pending.request, pending.body, pending.response);
+        q_ptr->processRequest(pending.operation, ServerRequest(pending.request, pending.body), pending.response);
         return true;
     } else {
         return false;

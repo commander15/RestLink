@@ -16,13 +16,20 @@ class Request;
 class Body;
 class Response;
 class Api;
+class AbstractController;
 
 typedef std::function<void(const Request &, const Body &, void *, Response *)> RequestProcessing;
 
-class RequestData;
+class RequestPrivate;
 class RESTLINK_EXPORT Request : public RequestInterface
 {
 public:
+    enum Attribute {
+        CacheLoadControlAttribute,
+        CacheSaveControlAttribute,
+        CompressionAllowedAttribute
+    };
+
     enum UrlType {
         PublicUrl,
         SecretUrl
@@ -35,7 +42,7 @@ public:
     Request(const RequestProcessing &processing);
     Request(const Request &other);
     Request(Request &&other);
-    ~Request();
+    virtual ~Request();
 
     Request &operator=(const Request &other);
     Request &operator=(const Request &&other);
@@ -51,8 +58,15 @@ public:
 
     QHttpHeaders httpHeaders() const;
 
+    QVariant attribute(Attribute attribute) const;
+    QVariant attribute(Attribute attribute, const QVariant &defaultValue) const;
+    void setAttribute(Attribute attribute, const QVariant &value);
+
     RequestProcessing processing() const;
     void setProcessing(RequestProcessing processing);
+
+    AbstractController *controller() const;
+    void setController(AbstractController *controller);
 
     Api *api() const;
     void setApi(Api *api);
@@ -64,9 +78,12 @@ public:
 
     static Request merge(const Request &r1, const Request &r2);
 
-private:
-    Request(RequestData *d);
+protected:
+    Request(RequestPrivate *d);
 
+    QSharedDataPointer<RequestPrivate> d_ptr;
+
+private:
     const QList<PathParameter> *constPathParameters() const override;
     QList<PathParameter> *mutablePathParameters() override;
     const QList<QueryParameter> *constQueryParameters() const override;
@@ -74,10 +91,9 @@ private:
     const QList<Header> *constHeaders() const override;
     QList<Header> *mutableHeaders() override;
 
-    QSharedDataPointer<RequestData> d_ptr;
-
     friend class ApiBase;
     friend class Api;
+    friend class ServerRequest;
 };
 
 }

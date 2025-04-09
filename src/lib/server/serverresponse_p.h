@@ -29,6 +29,8 @@ public:
 
     QNetworkRequest networkRequest;
 
+    Server *server;
+
     mutable QMutex mutex;
 };
 

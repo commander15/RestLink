@@ -311,7 +311,7 @@ QList<Header> *ApiBase::mutableHeaders()
 
 ApiBasePrivate::ApiBasePrivate(ApiBase *q)
     : q_ptr(q)
-    , internalRequestData(new RequestData())
+    , internalRequestData(new RequestPrivate())
     , m_networkManager(nullptr)
 {
     internalRequestData->ref.ref();

@@ -30,7 +30,7 @@ target_headers(RestLink
         apibase.h api.h
         requestinterface.h
         parameter.h parameterlist.h pathparameter.h queryparameter.h
-        request.h response.h
+        request.h responsebase.h response.h
         header.h body.h
         compressionutils.h
         requestinterceptor.h
@@ -47,7 +47,7 @@ target_sources(RestLink
         apibase.cpp api.cpp
         requestinterface.cpp
         parameter.cpp pathparameter.cpp queryparameter.cpp
-        request.cpp response.cpp
+        request.cpp responsebase.cpp response.cpp
         header.cpp body.cpp
         compressionutils.cpp
         requestinterceptor.cpp

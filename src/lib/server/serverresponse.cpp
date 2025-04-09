@@ -1,15 +1,20 @@
 #include "serverresponse.h"
 #include "serverresponse_p.h"
 
+#include <RestLink/server.h>
+
 #include <QtCore/qjsondocument.h>
 #include <QtCore/qjsonobject.h>
 #include <QtCore/qjsonarray.h>
+#include <QtCore/qtimer.h>
 
 namespace RestLink {
 
-ServerResponse::ServerResponse(Api *api)
-    : Response(new ServerResponsePrivate(this), api)
+ServerResponse::ServerResponse(Server *server)
+    : Response(new ServerResponsePrivate(this), server)
 {
+    RESTLINK_D(ServerResponse);
+    d->server = server;
 }
 
 ApiBase::Operation ServerResponse::operation() const
@@ -103,6 +108,7 @@ void ServerResponse::setHeaders(const QList<Header> &headers)
 QByteArray ServerResponse::readBody()
 {
     RESTLINK_D(ServerResponse);
+    QMutexLocker locker(&d->mutex);
     return d->body.data();
 }
 
@@ -129,6 +135,12 @@ void ServerResponse::setNetworkRequest(const QNetworkRequest &request)
 QNetworkReply *ServerResponse::networkReply() const
 {
     return nullptr;
+}
+
+Server *ServerResponse::server() const
+{
+    RESTLINK_D(const ServerResponse);
+    return d->server;
 }
 
 void ServerResponse::updateDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
@@ -166,6 +178,7 @@ ServerResponsePrivate::ServerResponsePrivate(ServerResponse *q)
     , operation(Api::UnknownOperation)
     , httpStatusCode(0)
     , finished(false)
+    , server(nullptr)
 {
 }
 

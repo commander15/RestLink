@@ -53,6 +53,12 @@ bool NetworkResponse::isFinished() const
 int NetworkResponse::httpStatusCode() const
 {
     RESTLINK_D(const NetworkResponse);
+
+    // Return HTTP 200 instead of 0 for file scheme when file is accessible and readable
+    if (d->netReply->url().scheme() == "file") {
+        return (d->netReply->error() == QNetworkReply::NoError ? 200 : 0);
+    }
+
     return d->netReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 }
 
@@ -129,12 +135,13 @@ void NetworkResponse::setReply(QNetworkReply *reply)
     d->netReply = reply;
 
     reply->setParent(this);
-    connect(reply, &QNetworkReply::readyRead, this, &Response::readyRead);
     connect(reply, &QNetworkReply::downloadProgress, this, &Response::downloadProgress);
     connect(reply, &QNetworkReply::uploadProgress, this, &Response::uploadProgress);
     connect(reply, &QNetworkReply::sslErrors, this, &Response::sslErrorsOccured);
     connect(reply, &QNetworkReply::errorOccurred, this, &Response::networkErrorOccured);
     connect(reply, &QNetworkReply::finished, this, &Response::finished);
+
+    setResponseDevice(reply);
 }
 
 NetworkResponsePrivate::NetworkResponsePrivate(Response *q) :

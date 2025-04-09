@@ -21,7 +21,7 @@ public:
         Api::Operation operation;
         Request request;
         Body body;
-        Response *response = nullptr;
+        ServerResponse *response = nullptr;
     };
 
     ServerPrivate(Server::ServerType type, Server *q);
@@ -40,6 +40,8 @@ public:
     const Server::ServerType type;
     QQueue<PendingRequest> pendingRequests;
     bool bypassCleanup;
+
+    QList<class AbstractController *> controllers;
 
     mutable QMutex mutex;
 
