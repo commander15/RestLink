@@ -5,6 +5,7 @@ link_libraries(RestLink)
 message("QML: ${QT_QML_ROOT_PATH}")
 
 add_subdirectory(tmdb-desktop)
+add_subdirectory(custom)
 
 if (RESTLINK_BUILD_QML)
     link_libraries(RestLinkQml)
