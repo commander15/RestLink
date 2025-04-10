@@ -1,6 +1,6 @@
 target_headers(RestLink
     PUBLIC
-        server.h resourcecontroller.h
+        server.h abstractcontroller.h resourcecontroller.h
         serverrequest.h serverresponse.h
     PRIVATE
         server_p.h

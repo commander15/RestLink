@@ -1,0 +1,6 @@
+#ifndef RESTLINK_ABSTRACTCONTROLLER_H
+#define RESTLINK_ABSTRACTCONTROLLER_H
+
+#include "resourcecontroller.h"
+
+#endif // RESTLINK_ABSTRACTCONTROLLER_H
