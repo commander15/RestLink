@@ -4,8 +4,8 @@
 
 namespace RestLink {
 
-ExcelDocument::ExcelDocument(const QString &fileName, QObject *parent)
-    : QXlsx::Document(fileName, parent)
+ExcelDocument::ExcelDocument(const QUrl &url, QObject *parent)
+    : QXlsx::Document(url.path(), parent)
 {
 }
 

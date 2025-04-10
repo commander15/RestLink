@@ -9,6 +9,8 @@
 #include <QtCore/qjsonobject.h>
 #include <QtCore/qjsonvalue.h>
 
+using namespace QXlsx;
+
 namespace RestLink {
 
 ExcelSheet::ExcelSheet(const QString &sheetName, ExcelDocument *doc)
@@ -16,9 +18,9 @@ ExcelSheet::ExcelSheet(const QString &sheetName, ExcelDocument *doc)
     , m_sheet(nullptr)
     , m_doc(doc)
 {
-    auto sheet = static_cast<QXlsx::Document *>(doc)->sheet(sheetName);
-    if (sheet) {
-        m_sheet = static_cast<QXlsx::Worksheet *>(sheet);
+    auto sheet = static_cast<Document *>(doc)->sheet(sheetName);
+    if (sheet && sheet->sheetType() == AbstractSheet::ST_WorkSheet) {
+        m_sheet = static_cast<Worksheet *>(sheet);
         computeDimensions();
         updateProperties();
     }
@@ -27,6 +29,11 @@ ExcelSheet::ExcelSheet(const QString &sheetName, ExcelDocument *doc)
 QString ExcelSheet::name() const
 {
     return m_sheet->sheetName();
+}
+
+bool ExcelSheet::isValid() const
+{
+    return m_sheet != nullptr;
 }
 
 QStringList ExcelSheet::propertyNames() const
@@ -94,12 +101,12 @@ int ExcelSheet::objectCount() const
     return m_dataDimension.lastRow() - m_dataDimension.firstRow();
 }
 
-QXlsx::CellRange ExcelSheet::propertyDimension() const
+CellRange ExcelSheet::propertyDimension() const
 {
     return m_propertyDimension;
 }
 
-void ExcelSheet::setPropertyDimension(const QXlsx::CellRange &dim)
+void ExcelSheet::setPropertyDimension(const CellRange &dim)
 {
     if (dim.isValid()) {
         m_propertyDimension = dim;
@@ -109,12 +116,12 @@ void ExcelSheet::setPropertyDimension(const QXlsx::CellRange &dim)
     }
 }
 
-QXlsx::CellRange ExcelSheet::dataDimension() const
+CellRange ExcelSheet::dataDimension() const
 {
     return m_dataDimension;
 }
 
-void ExcelSheet::setDataDimension(const QXlsx::CellRange &dim)
+void ExcelSheet::setDataDimension(const CellRange &dim)
 {
     m_dataDimension = dim;
 }
@@ -135,7 +142,7 @@ void ExcelSheet::updateProperties()
 
 void ExcelSheet::computeDimensions()
 {
-    QXlsx::CellRange dim = m_sheet->dimension();
+    CellRange dim = m_sheet->dimension();
 
     m_propertyDimension.setFirstRow(dim.firstRow());
     m_propertyDimension.setLastRow(dim.firstRow());

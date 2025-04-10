@@ -16,20 +16,18 @@ class ExcelServer : public Server
 public:
     explicit ExcelServer(QObject *parent = nullptr);
 
+    QString handlerName() const override
+    { return QStringLiteral("Excel"); }
+
     QStringList supportedSchemes() const override
-    { return { "excel", "xlsx" }; }
+    { return { "xlsx" }; }
 
-    void handleConfiguration(Api::Operation op, const Request &request, const QJsonObject &body, ExcelSheet *sheet, ServerResponse *response);
-
-    void handleGet(const Request &request, ExcelSheet *sheet, ServerResponse *response);
+    void configure(Api::Operation op, const ServerRequest &request, ServerResponse *response);
 
 protected:
     bool init() override;
     void cleanup() override;
     bool maintain() override;
-
-    void processRequest(ApiBase::Operation operation, const Request &request, const Body &body, Response *res) override;
-    Response *createResponse(ApiBase::Operation operation, const Request &request, const Body &body, Api *api) override;
 };
 
 } // namespace RestLink

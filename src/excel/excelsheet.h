@@ -18,6 +18,8 @@ public:
 
     QString name() const;
 
+    bool isValid() const;
+
     QStringList propertyNames() const;
 
     QJsonArray readObjects(int page = -1, int limit = -1) const;
