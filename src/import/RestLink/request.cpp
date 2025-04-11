@@ -121,8 +121,6 @@ Parameter RequestParameter::parameter() const
         break;
     }
 
-    bool auth = property("locale").toBool();
-
     auto setFlag = [this, &p](const char *property, Parameter::Flag flag) {
         if (this->property(property).toBool())
             p.setFlag(flag, true);
