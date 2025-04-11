@@ -6,6 +6,7 @@
 class QJsonObject;
 
 class QSqlRecord;
+class QSqlDatabase;
 
 namespace RestLink {
 
@@ -17,8 +18,11 @@ public:
     static QJsonObject recordToJsonObject(const QSqlRecord &record);
     static QSqlRecord jsonObjectToRecord(const QJsonObject &object);
 
-    static QString formatValue(const QVariant &value);
-    static QStringList formatValues(const QVariantList &values);
+    static QString fieldName(const QString &name, const QSqlDatabase *database);
+    static QString tableName(const QString &name, const QSqlDatabase *database);
+
+    static QString formatValue(const QVariant &value, const QSqlDatabase *database);
+    static QStringList formatValues(const QVariantList &values, const QSqlDatabase *database);
 };
 
 }

@@ -5,6 +5,8 @@
 
 #include <QtSql/qsqlrecord.h>
 #include <QtSql/qsqlfield.h>
+#include <QtSql/qsqldatabase.h>
+#include <QtSql/qsqldriver.h>
 
 namespace RestLink {
 
@@ -42,15 +44,29 @@ QSqlRecord SqlUtils::jsonObjectToRecord(const QJsonObject &object)
     return record;
 }
 
-QString SqlUtils::formatValue(const QVariant &value)
+QString SqlUtils::fieldName(const QString &name, const QSqlDatabase *database)
 {
-    return value.toString();
+    return database->driver()->escapeIdentifier(name, QSqlDriver::FieldName);
 }
 
-QStringList SqlUtils::formatValues(const QVariantList &values)
+QString SqlUtils::tableName(const QString &name, const QSqlDatabase *database)
+{
+    return database->driver()->escapeIdentifier(name, QSqlDriver::TableName);
+}
+
+QString SqlUtils::formatValue(const QVariant &value, const QSqlDatabase *database)
+{
+    QSqlField field(QString(), value.metaType());
+    field.setValue(value);
+    return database->driver()->formatValue(field);
+}
+
+QStringList SqlUtils::formatValues(const QVariantList &values, const QSqlDatabase *database)
 {
     QStringList strings(values.size());
-    std::transform(values.begin(), values.end(), strings.begin(), &formatValue);
+    std::transform(values.begin(), values.end(), strings.begin(), [database](const QVariant &value) {
+        return formatValue(value, database);
+    });
     return strings;
 }
 
