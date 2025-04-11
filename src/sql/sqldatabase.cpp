@@ -424,9 +424,9 @@ QString SqlDatabase::whereClause(const ServerRequest &request, bool idOnly) cons
         else if (op == "like")
             addCondition(field, "LIKE", value);
         else if (op == "in")
-            addCondition(field, "IN", '(' + SqlUtils::formatValues(values).join(", ") + ')', false);
+            addCondition(field, "IN", '(' + SqlUtils::formatValues(values, this).join(", ") + ')', false);
         else if (op == "notin")
-            addCondition(field, "NOT IN", '(' + SqlUtils::formatValues(values).join(", ") + ')', false);
+            addCondition(field, "NOT IN", '(' + SqlUtils::formatValues(values, this).join(", ") + ')', false);
     }
 
     return (!conditions.isEmpty() ? "WHERE " + conditions.join(" AND ") : QString());
