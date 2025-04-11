@@ -27,6 +27,8 @@ protected:
     void prepareController(AbstractController *controller, Api::Operation operation, const ServerRequest &request, ServerResponse *response) override;
     void processRequest(ApiBase::Operation operation, const ServerRequest &request, ServerResponse *response) override;
 
+    void processInternalRequest(ApiBase::Operation operation, const ServerRequest &request, ServerResponse *response) override;
+
 private:
     SqlDatabaseManager *m_manager;
 };

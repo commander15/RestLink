@@ -84,4 +84,13 @@ void SqlServer::processRequest(ApiBase::Operation operation, const ServerRequest
     db->processRequest(operation, request, response);
 }
 
+void SqlServer::processInternalRequest(ApiBase::Operation operation, const ServerRequest &request, ServerResponse *response)
+{
+    Server::processInternalRequest(operation, request, response);
+
+    if (request.endpoint() == "/restlink/configuration") {
+        // Update databases configuration here !
+    }
+}
+
 } // namespace RestLink
