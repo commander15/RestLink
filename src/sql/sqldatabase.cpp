@@ -40,6 +40,11 @@ QUrl SqlDatabase::url() const
     return m_url;
 }
 
+void SqlDatabase::updateConfiguration(const QJsonObject &config)
+{
+    m_configuration = config;
+}
+
 bool SqlDatabase::canProcessRequest(const ServerRequest &request) const
 {
     return request.baseUrl() == m_url;

@@ -21,6 +21,8 @@ public:
     QString endpoint() const override;
     QUrl url() const;
 
+    void updateConfiguration(const QJsonObject &config);
+
     bool canProcessRequest(const ServerRequest &request) const override;
     void processRequest(ApiBase::Operation operation, const ServerRequest &request, ServerResponse *response) override;
 
