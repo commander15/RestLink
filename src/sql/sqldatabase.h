@@ -6,6 +6,7 @@
 #include <QtSql/qsqldatabase.h>
 
 #include <QtCore/qurl.h>
+#include <QtCore/qjsonobject.h>
 
 namespace RestLink {
 
@@ -35,6 +36,8 @@ public:
     QString tableName(const ServerRequest &request) const;
     QSqlRecord tableRecord(const ServerRequest &request, bool filled = true) const;
 
+    QJsonObject configurationFor(const QString &tableName) const;
+
     QSqlQuery exec(const QString &query, ServerResponse *response = nullptr);
 
 private:
@@ -51,6 +54,7 @@ private:
     void handleError(const QSqlError &error, ServerResponse *response);
 
     const QUrl m_url;
+    QJsonObject m_configuration;
 };
 
 } // namespace RestLink

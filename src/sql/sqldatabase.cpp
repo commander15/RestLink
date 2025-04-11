@@ -4,6 +4,7 @@
 #include <RestLink/serverresponse.h>
 
 #include <QtSql/qsqlquery.h>
+#include <QtSql/qsqlindex.h>
 #include <QtSql/qsqlrecord.h>
 #include <QtSql/qsqlfield.h>
 #include <QtSql/qsqlerror.h>
@@ -267,6 +268,38 @@ QSqlRecord SqlDatabase::tableRecord(const ServerRequest &request, bool filled) c
         record.setValue(record2.fieldName(i), record2.value(i));
 
     return record;
+}
+
+QJsonObject SqlDatabase::configurationFor(const QString &tableName) const
+{
+    const QJsonArray resources = m_configuration.value("resources").toArray();
+    auto it = std::find_if(resources.begin(), resources.end(), [&tableName](const QJsonValue &value) {
+        return value.toObject().value("table") == tableName;
+    });
+
+    QJsonObject configuration = (it != resources.end() ? it->toObject() : QJsonObject());
+
+    if (!configuration.contains("primary")) {
+        const QSqlIndex index = primaryIndex(tableName);
+        configuration.insert("primary", index.count() > 0 ? index.fieldName(0) : "id");
+    }
+
+    if (!configuration.contains("fillable")) {
+        const QString primary = configuration.value("primary").toString();
+        QJsonArray fillable;
+
+        const QSqlRecord record = QSqlDatabase::record(tableName);
+        for (int i(0); i < record.count(); ++i) {
+            const QString fieldName = record.fieldName(i);
+
+            if (fieldName == primary)
+                continue;
+
+            fillable.append(fieldName);
+        }
+    }
+
+    return configuration;
 }
 
 QSqlQuery SqlDatabase::exec(const QString &query, ServerResponse *response)
