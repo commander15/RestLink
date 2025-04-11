@@ -31,6 +31,8 @@ public:
     void listen();
     void close();
 
+    QJsonObject configuration() const;
+
     int error() const;
     QString errorString() const;
 

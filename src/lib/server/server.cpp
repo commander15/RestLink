@@ -6,6 +6,8 @@
 #include <RestLink/resourcecontroller.h>
 
 #include <QtCore/qtimer.h>
+#include <QtCore/qjsondocument.h>
+#include <QtCore/qjsonobject.h>
 
 #include <QtNetwork/qnetworkrequest.h>
 
@@ -58,6 +60,11 @@ void Server::close()
 {
     if (d_ptr->isRunning())
         d_ptr->requestInterruption();
+}
+
+QJsonObject Server::configuration() const
+{
+    return d_ptr->configuration;
 }
 
 int Server::error() const
@@ -114,7 +121,37 @@ ServerResponse *Server::sendRequest(ApiBase::Operation operation, const Request 
 
 void Server::processInternalRequest(ApiBase::Operation operation, const ServerRequest &request, ServerResponse *response)
 {
-    if (request.endpoint() == "/restlink/register-controller") {
+    const QString function = request.endpoint().section('/', 1, -1, QString::SectionFlag::SectionSkipEmpty);
+
+    if (function == "configuration") {
+        switch (operation) {
+        case ApiBase::GetOperation:
+            response->setBody(d_ptr->configuration);
+            response->setHttpStatusCode(200);
+            break;
+
+        case ApiBase::PostOperation:
+        case ApiBase::PutOperation:
+        case ApiBase::PatchOperation:
+            d_ptr->configuration = QJsonDocument::fromJson(request.body().data()).object();
+            response->setBody(request.body());
+            response->setHttpStatusCode(200);
+            break;
+
+        case Api::DeleteOperation:
+            d_ptr->configuration = QJsonObject();
+            response->setBody(QJsonObject({ {"message", "configuration reseted successfully !"} }));
+            response->setHttpStatusCode(200);
+
+        default:
+            break;
+        }
+
+        response->complete();
+        return;
+    }
+
+    if (function == "register-controller") {
         AbstractController *controller = request.controller();
         if (controller && !d_ptr->controllers.contains(controller)) {
             d_ptr->controllers.append(controller);
@@ -124,6 +161,7 @@ void Server::processInternalRequest(ApiBase::Operation operation, const ServerRe
         }
 
         QTimer::singleShot(0, response, &ServerResponse::complete);
+        return;
     }
 }
 

@@ -9,6 +9,7 @@
 #include <QtCore/qthread.h>
 #include <QtCore/qqueue.h>
 #include <QtCore/qmutex.h>
+#include <QtCore/qjsonobject.h>
 
 namespace RestLink {
 
@@ -42,6 +43,8 @@ public:
     bool bypassCleanup;
 
     QList<class AbstractController *> controllers;
+
+    QJsonObject configuration;
 
     mutable QMutex mutex;
 
