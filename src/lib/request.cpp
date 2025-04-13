@@ -277,19 +277,13 @@ QHttpHeaders Request::httpHeaders() const
     const HeaderList apiHeaders = (api ? api->headers() : HeaderList());
     const HeaderList headers = d_ptr->headers + apiHeaders;
     for (const Header &header : headers) {
+        if (httpHeaders.contains(header.name()))
+            httpHeaders.removeAll(header.name());
+
         const QVariantList values = header.values();
         for (const QVariant &value : values)
             httpHeaders.append(header.name(), value.toByteArray());
     }
-
-    // Make keep alive
-    httpHeaders.append(QHttpHeaders::WellKnownHeader::Connection, "keep-alive");
-
-    // Default Accept all kind of media types
-    httpHeaders.append(QHttpHeaders::WellKnownHeader::Accept, "*/*");
-
-    // User Agent
-    httpHeaders.append(QHttpHeaders::WellKnownHeader::UserAgent, "libRestLink/" + QStringLiteral(RESTLINK_VERSION_STR));
 
     if (!api)
         return httpHeaders;
@@ -300,7 +294,7 @@ QHttpHeaders Request::httpHeaders() const
         httpHeaders.append(QHttpHeaders::WellKnownHeader::Authorization, "Bearer " + bearerToken);
 
     // User Agent override
-    httpHeaders.replace(0, QHttpHeaders::WellKnownHeader::UserAgent, api->userAgent());
+    httpHeaders.append(QHttpHeaders::WellKnownHeader::UserAgent, api->userAgent());
 
     // Accept language
     if (api) {
