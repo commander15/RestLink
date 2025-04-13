@@ -137,7 +137,9 @@ void NetworkResponse::setReply(QNetworkReply *reply)
     reply->setParent(this);
     connect(reply, &QNetworkReply::downloadProgress, this, &Response::downloadProgress);
     connect(reply, &QNetworkReply::uploadProgress, this, &Response::uploadProgress);
+#ifndef QT_NO_SSL
     connect(reply, &QNetworkReply::sslErrors, this, &Response::sslErrorsOccured);
+#endif
     connect(reply, &QNetworkReply::errorOccurred, this, &Response::networkErrorOccured);
     connect(reply, &QNetworkReply::finished, this, &Response::finished);
 

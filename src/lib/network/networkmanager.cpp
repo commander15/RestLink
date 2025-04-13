@@ -42,6 +42,12 @@ NetworkManager::NetworkManager(QObject *parent)
     : QNetworkAccessManager{parent}
 {
     setRedirectPolicy(QNetworkRequest::SameOriginRedirectPolicy);
+
+    static bool firstLoad = true;
+    if (firstLoad) {
+        restlinkInfo() << "supported network schemes: " << QNetworkAccessManager::supportedSchemes().join(", ");
+        firstLoad = false;
+    }
 }
 
 Response *NetworkManager::sendRequest(Api::Operation operation, const Request &request, const Body &body)
@@ -133,15 +139,29 @@ QNetworkRequest NetworkManager::generateNetworkRequest(ApiBase::Operation operat
 
         const QVariantList values = header.values();
         for (const QVariant &value : values)
-            headers.append(header.name(), value.toByteArray());
+            headers.append(header.name(), value.toString());
     }
 
     // Compression support
-    if (request.attribute(Request::CompressionAllowedAttribute, true).toBool()) {
+    if (request.attribute(Request::CompressionAllowedAttribute, true).toBool() && !headers.contains(QHttpHeaders::WellKnownHeader::AcceptEncoding)) {
         const QByteArrayList algorithms = CompressionUtils::supportedAlgorithms();
         if (!algorithms.isEmpty())
             headers.append(QHttpHeaders::WellKnownHeader::AcceptEncoding, algorithms.join(", "));
     }
+
+    auto fillGap = [&headers](QHttpHeaders::WellKnownHeader header, const QAnyStringView &value) {
+        if (!headers.contains(header))
+            headers.append(header, value);
+    };
+
+    // Make keep alive
+    fillGap(QHttpHeaders::WellKnownHeader::Connection, "keep-alive");
+
+    // Default Accept all kind of media types
+    fillGap(QHttpHeaders::WellKnownHeader::Accept, "*/*");
+
+    // User Agent
+    fillGap(QHttpHeaders::WellKnownHeader::UserAgent, "libRestLink/" + QStringLiteral(RESTLINK_VERSION_STR));
 
     QNetworkRequest netRequest(url);
     netRequest.setOriginatingObject(request.api());

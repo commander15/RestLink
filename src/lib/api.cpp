@@ -326,8 +326,10 @@ ApiPrivate::ApiPrivate(Api *qq) :
     locale(QLocale::system()),
     userAgent(QStringLiteral("libRestLink/") + QStringLiteral(RESTLINK_VERSION_STR))
 {
+#ifndef QT_NO_SSL
     if (!QSslSocket::supportsSsl())
         restlinkWarning() << "SSL support disabled, seem that relevant libraries are missing";
+#endif
 }
 
 bool ApiPrivate::hasRemoteRequest(const Request &request) const
