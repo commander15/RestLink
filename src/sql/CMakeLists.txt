@@ -9,6 +9,7 @@ target_sources(RestLinkSql
   PRIVATE
     sqldatabase.h sqldatabase.cpp
     sqldatabasemanager.h sqldatabasemanager.cpp
+    sqlmodel.h sqlmodel.cpp
 )
 
 set(OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/restlink)
