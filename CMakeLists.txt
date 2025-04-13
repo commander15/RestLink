@@ -28,6 +28,9 @@ find_package(Qt REQUIRED COMPONENTS Core Network)
 
 qt_standard_project_setup(REQUIRES 6.8)
 
+qt_policy(SET QTP0001 NEW)
+qt_policy(SET QTP0003 NEW)
+
 find_package(ZLIB)
 
 # Excel plugin dependencies
