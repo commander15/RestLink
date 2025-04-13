@@ -1,10 +1,20 @@
+set(TMDB_BEARER_TOKEN "" CACHE STRING "TMDB Bearer token for TMDB examples")
+
 set(CMAKE_AUTORCC ON)
+
+if (EMSCRIPTEN)
+    set(QT_FEATURE_webassembly_fetch 1)
+endif()
 
 link_libraries(RestLink)
 
+add_compile_definitions(TMDB_BEARER_TOKEN="${TMDB_BEARER_TOKEN}")
+
 message("QML: ${QT_QML_ROOT_PATH}")
 
-add_subdirectory(tmdb-desktop)
+if (TMDB_BEARER_TOKEN)
+    add_subdirectory(tmdb-desktop)
+endif()
 
 if (RESTLINK_BUILD_SQL)
     add_subdirectory(custom)
@@ -24,6 +34,10 @@ if (RESTLINK_BUILD_QML)
     set(RestLink_LIBRARIES ${RestLink_BINARY_DIR}/lib/libRestLink.so)
 
     #add_subdirectory(client)
-    add_subdirectory(tmdb)
+
+    if (TMDB_BEARER_TOKEN)
+        add_subdirectory(tmdb)
+    endif()
+
     #add_subdirectory(blagues)
 endif()

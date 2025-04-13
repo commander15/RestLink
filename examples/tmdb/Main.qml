@@ -56,13 +56,12 @@ ApplicationWindow {
 
         onFinished: function(response) {
             if (response.success) {
-                const rawJson = response.body;
-                //console.log(rawJson);
+                console.log(response.body)
 
-                var json = JSON.parse(rawJson).results;
+                var json = JSON.parse(response.body).results;
                 view.model = json;
 
-                console.log(response.header('Content-Encoding'));
+                console.log("Compression: " + response.header('Content-Encoding'));
             } else if (response.hasHttpStatusCode) {
                 console.log(response.httpReasonPhrase);
             } else if (response.hasNetworkError) {
@@ -79,7 +78,7 @@ ApplicationWindow {
     Tmdb {
         id: tmdb
 
-        key: TMDB_API_KEY
+        bearerToken: TMDB_BEARER_TOKEN
         //locale: Qt.locale("fr_FR")
     }
 }

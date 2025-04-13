@@ -90,15 +90,16 @@ int main(int argc, char *argv[])
 
     QLoggingCategory::setFilterRules("restlink.info=true");
 
-    RestLink::PluginManager::enableDiscovery();
-
     Api api;
-    api.configure(QUrl::fromLocalFile(QStandardPaths::writableLocation(QStandardPaths::DownloadLocation) + "/TmdbConfig.json"));
-    QObject::connect(&api, &Api::configurationCompleted, &app, [&api] { run(&api); });
-    QObject::connect(&api, &Api::configurationFailed, &app, &QCoreApplication::quit);
+    api.setName("TMDB");
+    api.setVersion(QVersionNumber(3));
+    api.setUrl(QUrl("http://api.themoviedb.org/3"));
+    api.setBearerToken(TMDB_BEARER_TOKEN);
 
     Interceptor interceptor;
     api.addRequestInterceptor(&interceptor);
+
+    run(&api);
 
     return app.exec();
 }
