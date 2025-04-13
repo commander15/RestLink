@@ -25,7 +25,6 @@ qt_query_qml_module(RestLinkQml
 install(FILES ${DIR} ${FILES} ${TYPES} DESTINATION qml/RestLink)
 
 install(TARGETS ${TARGET}
-    EXPORT RestLinkTargets
     ARCHIVE DESTINATION qml/RestLink
     LIBRARY DESTINATION qml/RestLink
     RUNTIME DESTINATION qml/RestLink

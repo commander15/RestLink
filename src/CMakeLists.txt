@@ -14,6 +14,11 @@ set(RESTLINK_MODULES Core)
 
 add_subdirectory(lib)
 
+if (RESTLINK_BUILD_QML)
+    list(APPEND RESTLINK_MODULES Qml)
+    add_subdirectory(import)
+endif()
+
 if (RESTLINK_SUPPORT_SQL)
     list(APPEND RESTLINK_MODULES Sql)
     add_subdirectory(sql)
@@ -26,11 +31,6 @@ endif()
 
 if (RESTLINK_BUILD_CLI)
     add_subdirectory(cli)
-endif()
-
-if (RESTLINK_BUILD_QML)
-    list(APPEND RESTLINK_MODULES Qml)
-    add_subdirectory(import)
 endif()
 
 include(CMakePackageConfigHelpers)

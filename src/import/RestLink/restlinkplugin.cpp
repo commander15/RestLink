@@ -28,5 +28,5 @@ void RestLinkPlugin::registerTypes(const char *uri)
     qmlRegisterType<RestLink::Cache>(uri, major, 0, "Cache");
     qmlRegisterType<RestLink::CookieJar>(uri, major, 0, "CookieJar");
 
-    //qml_register_types_RestLink();
+    qml_register_types_RestLink();
 }
