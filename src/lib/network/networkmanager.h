@@ -12,6 +12,7 @@ namespace RestLink {
 class RESTLINK_EXPORT NetworkManager : public QNetworkAccessManager, public RequestHandler
 {
     Q_OBJECT
+    Q_PROPERTY(QStringList supportedSchemes READ supportedSchemes CONSTANT FINAL)
 
 public:
     explicit NetworkManager(QObject *parent = nullptr);
