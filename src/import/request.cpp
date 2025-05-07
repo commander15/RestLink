@@ -1,5 +1,7 @@
 #include "request.h"
 
+#include "requestparameter.h"
+
 #include <RestLink/request.h>
 #include <RestLink/pathparameter.h>
 #include <RestLink/queryparameter.h>
@@ -93,50 +95,11 @@ void Request::run()
     });
 }
 
-RequestParameter::RequestParameter(QObject *parent)
-    : QObject(parent)
-    , m_type(Parameter::QueryParameterType)
-    , m_enabled(true)
-{
-}
 
-Parameter RequestParameter::parameter() const
-{
-    Parameter p;
 
-    switch (m_type) {
-    case Parameter::PathParameterType:
-        p = PathParameter(m_name, m_value);
-        break;
 
-    case Parameter::QueryParameterType:
-        p = QueryParameter(m_name, m_value);
-        break;
 
-    case Parameter::HeaderType:
-        p = Header(m_name, m_value);
-        break;
 
-    default:
-        break;
-    }
-
-    auto setFlag = [this, &p](const char *property, Parameter::Flag flag) {
-        if (this->property(property).toBool())
-            p.setFlag(flag, true);
-    };
-
-    setFlag("authentication", Parameter::Authentication);
-    setFlag("secret", Parameter::Secret);
-    setFlag("locale", Parameter::Locale);
-
-    return p;
-}
-
-bool RequestParameter::isEnabled() const
-{
-    return m_enabled;
-}
 
 } // namespace Qml
 } // namespace RestLink

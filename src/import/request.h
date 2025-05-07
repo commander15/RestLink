@@ -1,15 +1,12 @@
 #ifndef REQUEST_H
 #define REQUEST_H
 
-#include <RestLink/parameter.h>
 #include <RestLink/parameterlist.h>
 #include <RestLink/response.h>
 
 #include <QtCore/qobject.h>
 
 #include <QtQml/qqmlengine.h>
-
-#include "api.h"
 
 namespace RestLink {
 
@@ -20,7 +17,7 @@ namespace Qml {
 
 class Request : public QObject
 {
-    QML_NAMED_ELEMENT(RequestBase)
+    QML_ELEMENT
     QML_ADDED_IN_VERSION(1, 0)
 
     Q_OBJECT
@@ -32,6 +29,15 @@ class Request : public QObject
     Q_PROPERTY(RestLink::Qml::Api* api MEMBER m_api NOTIFY apiChanged)
 
 public:
+    enum Operation {
+        Get = Api::GetOperation,
+        Post = Api::PostOperation,
+        Put = Api::PutOperation,
+        Patch = Api::PatchOperation,
+        Delete = Api::DeleteOperation
+    };
+    Q_ENUM(Operation)
+
     explicit Request(QObject *parent = nullptr);
 
     bool isRunning() const;
@@ -49,7 +55,7 @@ signals:
     void bodyChanged();
     void apiChanged();
 
-    void finished(Response *response);
+    void finished(RestLink::Response *response);
 
 private:
     int m_operation;
@@ -58,36 +64,6 @@ private:
 
     Response *m_response;
     Api *m_api;
-};
-
-class RequestParameter : public QObject
-{
-    QML_NAMED_ELEMENT(RequestParameterBase)
-    QML_ADDED_IN_VERSION(1, 0)
-
-    Q_OBJECT
-    Q_PROPERTY(QString name MEMBER m_name NOTIFY nameChanged)
-    Q_PROPERTY(QVariant value MEMBER m_value NOTIFY valueChanged)
-    Q_PROPERTY(int type MEMBER m_type NOTIFY typeChanged)
-    Q_PROPERTY(bool enabled MEMBER m_enabled NOTIFY enabledChanged)
-
-public:
-    explicit RequestParameter(QObject *parent = nullptr);
-
-    Parameter parameter() const;
-    bool isEnabled() const;
-
-signals:
-    void nameChanged();
-    void valueChanged();
-    void typeChanged();
-    void enabledChanged();
-
-private:
-    QString m_name;
-    QVariant m_value;
-    int m_type;
-    bool m_enabled;
 };
 
 } // namespace Qml
