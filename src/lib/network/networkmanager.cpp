@@ -74,7 +74,7 @@ Response *NetworkManager::sendRequest(Api::Operation operation, const Request &r
 
     // If it's supported, send though QNetworkAccessManager base
     const QStringList networkSchemes = QNetworkAccessManager::supportedSchemes();
-    if (networkSchemes.contains(scheme)) {
+    if (networkSchemes.contains(scheme) || scheme.startsWith("http")) {
         QNetworkRequest netRequest = generateNetworkRequest(operation, request, body);
         QNetworkReply *netReply = generateNetworkReply(operation, netRequest, body);
 
@@ -118,6 +118,7 @@ QStringList NetworkManager::supportedSchemes() const
 
     // Removing duplicates and returning schemes
     schemes.removeDuplicates();
+    schemes.append("https");
     return schemes;
 }
 
