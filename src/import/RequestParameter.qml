@@ -3,5 +3,5 @@ import RestLink
 RequestParameterBase {
     property bool authentication: false
     property bool secret: authentication
-    property bool language: false
+    property bool locale: false
 }
