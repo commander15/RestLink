@@ -2,13 +2,27 @@
 #define RESTLINK_REQUESTHANDLER_H
 
 #include <RestLink/global.h>
-#include <RestLink/api.h>
 
 namespace RestLink {
+
+class Request;
+class Body;
+class Response;
 
 class RESTLINK_EXPORT RequestHandler
 {
 public:
+    enum Method {
+        HeadMethod,
+        GetMethod,
+        PostMethod,
+        PutMethod,
+        PatchMethod,
+        DeleteMethod,
+
+        UnknownMethod = -1
+    };
+
     enum HandlerType {
         NetworkManager,
         ServerHandler,
@@ -26,15 +40,15 @@ public:
     Response *put(const Request &request, const Body &body);
     Response *patch(const Request &request, const Body &body);
     Response *deleteResource(const Request &request);
-    Response *send(Api::Operation operation, const Request &request, const Body &body);
+    Response *send(Method method, const Request &request, const Body &body);
 
     virtual QStringList supportedSchemes() const = 0;
     virtual HandlerType handlerType() const = 0;
 
 protected:
     bool isRequestSupported(const Request &request) const;
-    void initResponse(Response *response, const Request &request, ApiBase::Operation operation);
-    virtual Response *sendRequest(Api::Operation operation, const Request &request, const Body &body) = 0;
+    void initResponse(Response *response, const Request &request, Method method);
+    virtual Response *sendRequest(Method method, const Request &request, const Body &body) = 0;
 };
 
 } // namespace RestLink

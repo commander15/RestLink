@@ -28,10 +28,10 @@ public:
     HandlerType handlerType() const override final;
 
 protected:
-    Response *sendRequest(ApiBase::Operation operation, const Request &request, const Body &body) override;
+    Response *sendRequest(Method method, const Request &request, const Body &body) override;
 
-    QNetworkRequest generateNetworkRequest(Api::Operation operation, const Request &request, const Body &body);
-    QNetworkReply *generateNetworkReply(Api::Operation operation, const QNetworkRequest &request, const Body &body);
+    QNetworkRequest generateNetworkRequest(Method method, const Request &request, const Body &body);
+    QNetworkReply *generateNetworkReply(Method method, const QNetworkRequest &request, const Body &body);
 
     friend class Api;
 };

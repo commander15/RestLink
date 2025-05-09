@@ -19,7 +19,7 @@ class RESTLINK_EXPORT ServerPrivate : public QThread
 
 public:
     struct PendingRequest {
-        Api::Operation operation;
+        RequestHandler::Method method;
         Request request;
         Body body;
         ServerResponse *response = nullptr;

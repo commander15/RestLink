@@ -1,24 +1,22 @@
 #include "httputils.h"
 #include "httputils_p.h"
 
-#include <QtCore/qmap.h>
-
 namespace RestLink {
 
-QString HttpUtils::verbString(ApiBase::Operation operation)
+QString HttpUtils::verbString(RequestHandler::Method method)
 {
-    switch (operation) {
-    case ApiBase::HeadOperation:
+    switch (method) {
+    case RequestHandler::HeadMethod:
         return QStringLiteral("HEAD");
-    case ApiBase::GetOperation:
+    case RequestHandler::GetMethod:
         return QStringLiteral("GET");
-    case ApiBase::PostOperation:
+    case RequestHandler::PostMethod:
         return QStringLiteral("POST");
-    case ApiBase::PutOperation:
+    case RequestHandler::PutMethod:
         return QStringLiteral("PUT");
-    case ApiBase::PatchOperation:
+    case RequestHandler::PatchMethod:
         return QStringLiteral("PATCH");
-    case ApiBase::DeleteOperation:
+    case RequestHandler::DeleteMethod:
         return QStringLiteral("DELETE");
     default:
         return QString();

@@ -51,12 +51,12 @@ protected:
     virtual void cleanup() = 0;
     virtual bool maintain() = 0;
 
-    ServerResponse *sendRequest(ApiBase::Operation operation, const Request &request, const Body &body) override final;
-    virtual void processInternalRequest(ApiBase::Operation operation, const ServerRequest &request, ServerResponse *response);
-    virtual void processRequest(ApiBase::Operation operation, const ServerRequest &request, ServerResponse *response);
+    ServerResponse *sendRequest(Method method, const Request &request, const Body &body) override final;
+    virtual void processInternalRequest(Method method, const ServerRequest &request, ServerResponse *response);
+    virtual void processRequest(Method method, const ServerRequest &request, ServerResponse *response);
 
     virtual AbstractController *findController(const ServerRequest &request) const;
-    virtual void prepareController(AbstractController *controller, Api::Operation operation, const ServerRequest &request, ServerResponse *response);
+    virtual void prepareController(AbstractController *controller, Method method, const ServerRequest &request, ServerResponse *response);
 
     void setError(int code, const QString &str);
 

@@ -17,6 +17,11 @@ AbstractController::~AbstractController()
 {
 }
 
+bool AbstractController::canProcessRequest(const ServerRequest &request) const
+{
+    return request.endpoint() == endpoint();
+}
+
 void *AbstractController::dataSource() const
 {
     return m_dataSource;
@@ -27,25 +32,21 @@ void AbstractController::setDataSource(void *source)
     m_dataSource = source;
 }
 
-bool AbstractController::canProcessRequest(const ServerRequest &request) const
-{
-    return request.endpoint() == endpoint();
-}
-
 bool AbstractResourceController::canProcessRequest(const ServerRequest &request) const
 {
-    QString endpoint = request.endpoint();
+    const QString routeEndpoint = this->endpoint();
+    QString requestEndpoint = request.endpoint();
 
-    if (endpoint == this->endpoint())
+    if (requestEndpoint == routeEndpoint)
         return true;
 
-    endpoint.remove(this->endpoint() + '/');
-    return endpoint.count('/') == 0;
+    requestEndpoint.remove(this->endpoint() + '/');
+    return requestEndpoint.count('/') == 0;
 }
 
-void AbstractResourceController::processRequest(ApiBase::Operation operation, const ServerRequest &request, ServerResponse *response)
+void AbstractResourceController::processRequest(RequestHandler::Method method, const ServerRequest &request, ServerResponse *response)
 {
-    if (operation == ApiBase::GetOperation) {
+    if (method == RequestHandler::GetMethod) {
         if (request.identifier().isEmpty())
             index(request, response);
         else
@@ -53,23 +54,23 @@ void AbstractResourceController::processRequest(ApiBase::Operation operation, co
         return;
     }
 
-    if (operation == ApiBase::PostOperation) {
+    if (method == RequestHandler::PostMethod) {
         store(request, response);
         return;
     }
 
-    if (operation == ApiBase::PutOperation) {
+    if (method == RequestHandler::PutMethod) {
         update(request, response);
         return;
     }
 
-    if (operation == ApiBase::DeleteOperation) {
+    if (method == RequestHandler::DeleteMethod) {
         destroy(request, response);
         return;
     }
 
     restlinkDebug() << "Resource controller for endpoint " << endpoint() << " can't handle request: "
-                    << HttpUtils::verbString(operation) << ' ' << request.endpoint();
+                    << HttpUtils::verbString(method) << ' ' << request.endpoint();
 }
 
 } // namespace RestLink

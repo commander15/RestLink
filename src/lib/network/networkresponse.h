@@ -14,7 +14,7 @@ class RESTLINK_EXPORT NetworkResponse : public Response
 public:
     explicit NetworkResponse(QObject *parent);
 
-    Api::Operation operation() const override;
+    RequestHandler::Method method() const override;
 
     QNetworkRequest networkRequest() const override;
 

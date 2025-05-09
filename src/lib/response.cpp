@@ -26,8 +26,8 @@ namespace RestLink {
  * \property QString endpoint
  * \brief The endpoint of the API request.
  *
- * \property RestLink::Api::Operation operation
- * \brief The HTTP operation (e.g., GET, POST) associated with this response.
+ * \property RestLink::Api::Method method
+ * \brief The HTTP method (e.g., GET, POST) associated with this response.
  *
  * \property QUrl url
  * \brief The URL of the API request.
@@ -115,9 +115,9 @@ Request Response::request() const
 }
 
 /*!
- * \fn Response::operation
- * \brief Retrieves the HTTP operation type for this response.
- * \return The HTTP operation as an Api::Operation.
+ * \fn Response::method
+ * \brief Retrieves the HTTP method type for this response.
+ * \return The HTTP mthod as an Api::Method.
  */
 
 /*!

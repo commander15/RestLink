@@ -310,14 +310,14 @@ bool Api::configure(const QJsonObject &config)
     return true;
 }
 
-Response *Api::send(Operation operation, const Request &request, const Body &body)
+Response *Api::send(RequestHandler::Method method, const Request &request, const Body &body)
 {
     RESTLINK_D(Api);
 
     if (d->hasRemoteRequest(request))
-        return ApiBase::send(operation, Request::merge(request, d->remoteRequest(request)), body);
+        return ApiBase::send(method, Request::merge(request, d->remoteRequest(request)), body);
     else
-        return ApiBase::send(operation, request, body);
+        return ApiBase::send(method, request, body);
 }
 
 ApiPrivate::ApiPrivate(Api *qq) :

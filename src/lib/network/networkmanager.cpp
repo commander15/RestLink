@@ -50,10 +50,10 @@ NetworkManager::NetworkManager(QObject *parent)
     }
 }
 
-Response *NetworkManager::sendRequest(Api::Operation operation, const Request &request, const Body &body)
+Response *NetworkManager::sendRequest(Method method, const Request &request, const Body &body)
 {
 #ifdef RESTLINK_DEBUG
-    restlinkInfo() << HttpUtils::verbString(operation) << ' ' << request.url(Request::PublicUrl).toString(QUrl::DecodeReserved);
+    restlinkInfo() << HttpUtils::verbString(method) << ' ' << request.url(Request::PublicUrl).toString(QUrl::DecodeReserved);
 #endif
 
     static auto registerForLogging = [](Response *response) {
@@ -75,11 +75,11 @@ Response *NetworkManager::sendRequest(Api::Operation operation, const Request &r
     // If it's supported, send though QNetworkAccessManager base
     const QStringList networkSchemes = QNetworkAccessManager::supportedSchemes();
     if (networkSchemes.contains(scheme) || scheme.startsWith("http")) {
-        QNetworkRequest netRequest = generateNetworkRequest(operation, request, body);
-        QNetworkReply *netReply = generateNetworkReply(operation, netRequest, body);
+        QNetworkRequest netRequest = generateNetworkRequest(method, request, body);
+        QNetworkReply *netReply = generateNetworkReply(method, netRequest, body);
 
         NetworkResponse *response = new NetworkResponse(this);
-        initResponse(response, request, operation);
+        initResponse(response, request, method);
         response->setReply(netReply);
         registerForLogging(response);
         return response;
@@ -95,7 +95,7 @@ Response *NetworkManager::sendRequest(Api::Operation operation, const Request &r
     if (it != handlers.end()) {
         RequestHandler *handler = *it;
 
-        Response *response = handler->send(operation, request, body);
+        Response *response = handler->send(method, request, body);
         if (!response)
             restlinkWarning() << handler->handlerName() << ": response object creation failed, probably plugin related error";
         else
@@ -127,7 +127,7 @@ RequestHandler::HandlerType NetworkManager::handlerType() const
     return RequestHandler::NetworkManager;
 }
 
-QNetworkRequest NetworkManager::generateNetworkRequest(ApiBase::Operation operation, const Request &request, const Body &body)
+QNetworkRequest NetworkManager::generateNetworkRequest(Method method, const Request &request, const Body &body)
 {
     const QUrl url = request.url();
     QHttpHeaders headers = request.httpHeaders();
@@ -183,21 +183,21 @@ QNetworkRequest NetworkManager::generateNetworkRequest(ApiBase::Operation operat
     return netRequest;
 }
 
-QNetworkReply *NetworkManager::generateNetworkReply(ApiBase::Operation operation, const QNetworkRequest &request, const Body &body)
+QNetworkReply *NetworkManager::generateNetworkReply(Method method, const QNetworkRequest &request, const Body &body)
 {
     QNetworkAccessManager *man = this;
     QNetworkReply *reply;
 
-    switch (operation) {
-    case Api::HeadOperation:
+    switch (method) {
+    case RequestHandler::HeadMethod:
         reply = man->head(request);
         break;
 
-    case Api::GetOperation:
+    case RequestHandler::GetMethod:
         reply = man->get(request);
         break;
 
-    case Api::PostOperation:
+    case RequestHandler::PostMethod:
         if (body.isMultiPart())
             reply =  man->post(request, body.multiPart());
         else if (body.isDevice())
@@ -208,7 +208,7 @@ QNetworkReply *NetworkManager::generateNetworkReply(ApiBase::Operation operation
             reply =  man->post(request, QByteArray());
         break;
 
-    case Api::PutOperation:
+    case RequestHandler::PutMethod:
         if (body.isMultiPart())
             reply =  man->put(request, body.multiPart());
         else if (body.isDevice())
@@ -219,7 +219,7 @@ QNetworkReply *NetworkManager::generateNetworkReply(ApiBase::Operation operation
             reply =  man->put(request, QByteArray());
         break;
 
-    case Api::PatchOperation:
+    case RequestHandler::PatchMethod:
         if (body.isMultiPart())
             reply =  man->sendCustomRequest(request, "PATCH", body.multiPart());
         else if (body.isDevice())
@@ -230,7 +230,7 @@ QNetworkReply *NetworkManager::generateNetworkReply(ApiBase::Operation operation
             reply =  man->sendCustomRequest(request, "PATCH", QByteArray());
         break;
 
-    case Api::DeleteOperation:
+    case RequestHandler::DeleteMethod:
         reply =  man->deleteResource(request);
         break;
 
