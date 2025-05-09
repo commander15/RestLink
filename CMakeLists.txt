@@ -6,10 +6,10 @@ project(RestLink
     LANGUAGES   CXX C
 )
 
-option(RESTLINK_BUILD_CLI          OFF "Build CLI tool")
-option(RESTLINK_BUILD_QML          OFF "Build QML Plugin")
+option(RESTLINK_BUILD_CLI          ON  "Build CLI tool")
+option(RESTLINK_BUILD_QML          ON  "Build QML Plugin")
 option(RESTLINK_BUILD_TESTS        OFF "Build RestLink tests")
-option(RESTLINK_BUILD_DOCS         OFF "Build RestLink documentation")
+option(RESTLINK_BUILD_DOCS         ON  "Build RestLink documentation")
 option(RESTLINK_BUILD_TRANSLATIONS OFF "Build RestLink translations")
 option(RESTLINK_BUILD_EXAMPLES     OFF "Build RestLink Examples")
 
