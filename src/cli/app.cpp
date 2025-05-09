@@ -277,28 +277,28 @@ Body App::makeBody()
 void App::monitorResponse(Response *response)
 {
     if (m_parser.isSet(VERBOSE_OPTION)) {
-        switch (response->operation()) {
-        case Api::HeadOperation:
+        switch (response->method()) {
+        case RequestHandler::HeadMethod:
             m_out << "HEAD ";
             break;
 
-        case Api::GetOperation:
+        case RequestHandler::GetMethod:
             m_out << "GET ";
             break;
 
-        case Api::PostOperation:
+        case RequestHandler::PostMethod:
             m_out << "POST ";
             break;
 
-        case Api::PutOperation:
+        case RequestHandler::PutMethod:
             m_out << "PUT ";
             break;
 
-        case Api::PatchOperation:
+        case RequestHandler::PatchMethod:
             m_out << "PATCH ";
             break;
 
-        case Api::DeleteOperation:
+        case RequestHandler::DeleteMethod:
             m_out << "DELETE ";
             break;
 
