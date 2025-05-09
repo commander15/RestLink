@@ -14,11 +14,6 @@ RequestParameter::RequestParameter(QObject *parent)
 {
 }
 
-bool RequestParameter::isEnabled() const
-{
-    return m_enabled;
-}
-
 Parameter RequestParameter::parameter() const
 {
     Parameter p;
@@ -41,7 +36,8 @@ Parameter RequestParameter::parameter() const
     }
 
     auto setFlag = [this, &p](const char *property, Parameter::Flag flag) {
-        if (this->property(property).toBool())
+        bool on = this->property(property).toBool();
+        if (on)
             p.setFlag(flag, true);
     };
 
@@ -50,6 +46,11 @@ Parameter RequestParameter::parameter() const
     setFlag("locale", Parameter::Locale);
 
     return p;
+}
+
+bool RequestParameter::isEnabled() const
+{
+    return m_enabled;
 }
 
 } // namespace Qml

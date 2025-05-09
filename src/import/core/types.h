@@ -3,11 +3,11 @@
 
 #include <QtQml/qqmlengine.h>
 
-#include <RestLink/api.h>
-#include <RestLink/response.h>
-#include <RestLink/cache.h>
-#include <RestLink/cookiejar.h>
-#include <RestLink/networkmanager.h>
+#include <lib/api.h>
+#include <lib/response.h>
+#include <lib/network/cache.h>
+#include <lib/network/cookiejar.h>
+#include <lib/network/networkmanager.h>
 
 struct ForeignApi
 {
@@ -20,8 +20,9 @@ struct ForeignApi
 struct ForeignResponse
 {
     Q_GADGET
-    QML_ANONYMOUS
+    QML_NAMED_ELEMENT(Response)
     QML_FOREIGN(RestLink::Response)
+    QML_UNCREATABLE("Response is a pure abstract class")
     QML_ADDED_IN_VERSION(1, 0)
 };
 

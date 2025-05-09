@@ -21,16 +21,16 @@ class RequestParameter : public QObject
     
 public:
     enum ParameterType {
-        Path = Parameter::PathParameterType,
-        Query = Parameter::QueryParameterType,
+        UrlPath = Parameter::PathParameterType,
+        UrlQuery = Parameter::QueryParameterType,
         Header = Parameter::HeaderType
     };
     Q_ENUM(ParameterType)
 
     explicit RequestParameter(QObject *parent = nullptr);
 
-    bool isEnabled() const;
     Parameter parameter() const;
+    bool isEnabled() const;
     
 signals:
     void nameChanged();

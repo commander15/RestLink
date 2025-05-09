@@ -11,11 +11,13 @@
 namespace RestLink {
 namespace Qml {
 
-class Api : public RestLink::Api
+class Api : public RestLink::Api, public QQmlParserStatus
 {
     QML_ELEMENT
     QML_EXTENDED(ForeignApi)
     QML_ADDED_IN_VERSION(1, 0)
+
+    Q_INTERFACES(QQmlParserStatus)
 
     Q_OBJECT
     Q_PROPERTY(bool ready READ isReady NOTIFY ready FINAL)
@@ -34,14 +36,12 @@ public:
     Q_SLOT void setConfigurationUrl(const QUrl &url);
     Q_SIGNAL void configurationUrlChanged();
 
-public slots:
-    void init();
+    void classBegin() override;
+    void componentComplete() override;
 
 private:
-    void registerParameters();
-
     QUrl m_configUrl;
-    bool m_initialized;
+    bool m_ready;
 
     QList<RequestParameter *> m_parameters;
     QQmlListProperty<RequestParameter> m_parametersProperty;

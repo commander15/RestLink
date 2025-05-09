@@ -1,24 +1,20 @@
 #include "api.h"
 
-#include "request.h"
+#include "utils.h"
 
 namespace RestLink {
 namespace Qml {
 
 Api::Api(QObject *parent)
     : RestLink::Api(parent)
-    , m_initialized(false)
+    , m_ready(false)
     , m_parametersProperty(this, &m_parameters)
 {
-    connect(this, &Api::configurationCompleted, this, [this] {
-        m_initialized = true;
-        emit ready();
-    });
 }
 
 bool Api::isReady() const
 {
-    return m_initialized && url().isValid();
+    return m_ready;
 }
 
 QUrl Api::configurationUrl() const
@@ -33,21 +29,18 @@ void Api::setConfigurationUrl(const QUrl &url)
 
     m_configUrl = url;
     emit configurationUrlChanged();
-
-    //configure(url);
 }
 
-void Api::init()
+void Api::classBegin()
 {
-    // Register parameters
-    Request::fillParameters(this, this);
+}
+
+void Api::componentComplete()
+{
+    Utils::fillParameters(this, m_parameters);
 
     if (m_configUrl.isValid())
         configure(m_configUrl);
-    else {
-        m_initialized = true;
-        emit ready();
-    }
 }
 
 } // namespace Qml
