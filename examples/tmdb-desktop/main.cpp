@@ -78,7 +78,7 @@ void run(Api *api)
 class Interceptor : public RequestInterceptor
 {
 public:
-    Request intercept(const Request &request, const Body &body, ApiBase::Operation operation) override
+    Request intercept(const Request &request, const Body &body, RequestHandler::Method operation) override
     {
         return request;
     }

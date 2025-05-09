@@ -10,6 +10,7 @@ qt_add_qml_module(tmdb
         Main.qml
         MediaDelegate.qml
         Tmdb.qml
+        QML_FILES TmdbSearchRequest.qml
 )
 
 set_target_properties(tmdb PROPERTIES
