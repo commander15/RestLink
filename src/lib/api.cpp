@@ -260,7 +260,7 @@ void Api::configure(const QUrl &url)
  */
 bool Api::configure(const QJsonObject &config)
 {
-    if (!config.contains("name") || !config.contains("version") || !config.contains("url"))
+    if (!config.contains("url"))
         return false;
 
     RESTLINK_D(Api);
@@ -284,8 +284,7 @@ bool Api::configure(const QJsonObject &config)
         }
     }
 
-    if (config.contains("url"))
-        setUrl(config.value("url").toString());
+    setUrl(config.value("url").toString());
 
     const Request request = Request::fromJsonbject(config);
     const RequestPrivate *data = request.d_ptr.get();
