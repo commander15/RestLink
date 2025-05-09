@@ -109,15 +109,18 @@ QVariantList Parameter::specialValues(Api *api) const
 {
     QVariantList values;
 
-    std::transform(d_ptr->values.begin(), d_ptr->values.end(), std::back_inserter(values), [this, api](const QVariant &value) {
-        // ToDo: wrap in a private method for reusability
-        if (!d_ptr->values.isEmpty())
-            return d_ptr->values.first();
-
+    const QVariant mainValue = this->value();
+    std::transform(d_ptr->values.begin(), d_ptr->values.end(), std::back_inserter(values), [this, api, &mainValue](const QVariant &value) {
         if (hasFlag(Locale)) {
-            const QString full = api->locale().name();
-            //const QString slim = full.section('_', 0, 0);
-            return QVariant(full);
+            const QLocale locale = api->locale();
+            const QString format = mainValue.toString();
+
+            if (format == ".")
+                return QVariant(locale.name().section("_", 0, 0));
+            else if (format == "-")
+                return QVariant(locale.name(QLocale::TagSeparator::Dash));
+            else
+                return QVariant(locale.name(QLocale::TagSeparator::Underscore));
         }
 
         return value;

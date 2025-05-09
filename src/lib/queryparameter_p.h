@@ -12,6 +12,10 @@ class QueryParameterData : public ParameterData
 public:
     Parameter::Type type() const override
     { return Parameter::QueryParameterType; }
+
+    // Query must have at least one value
+    QVariant validateValue(const QVariant &value) const override
+    { return value.isNull() ? QString() : value; }
 };
 
 }

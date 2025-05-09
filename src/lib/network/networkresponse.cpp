@@ -13,28 +13,28 @@ NetworkResponse::NetworkResponse(QObject *parent)
 {
 }
 
-ApiBase::Operation NetworkResponse::operation() const
+RequestHandler::Method NetworkResponse::method() const
 {
     RESTLINK_D(NetworkResponse);
 
     switch (d->netReply->operation()) {
     case QNetworkAccessManager::GetOperation:
-        return Api::GetOperation;
+        return RequestHandler::GetMethod;
 
     case QNetworkAccessManager::PostOperation:
-        return Api::PostOperation;
+        return RequestHandler::PostMethod;
 
     case QNetworkAccessManager::PutOperation:
-        return Api::PutOperation;
+        return RequestHandler::PutMethod;
 
     case QNetworkAccessManager::DeleteOperation:
-        return Api::DeleteOperation;
+        return RequestHandler::DeleteMethod;
 
     case QNetworkAccessManager::CustomOperation:
-        return Api::PatchOperation;
+        return RequestHandler::PatchMethod;
 
     default:
-        return Api::UnknownOperation;
+        return RequestHandler::UnknownMethod;
     }
 }
 

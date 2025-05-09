@@ -19,8 +19,6 @@ public:
     NetworkManager *networkManager() const;
     void setNetworkManager(NetworkManager *manager);
 
-    static QByteArray httpVerbFromOperation(int op);
-
     ApiBase *q_ptr;
 
     RequestPrivate *internalRequestData;

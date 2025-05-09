@@ -2,12 +2,12 @@
 #define RESTLINK_RESOURCEHANDLER_H
 
 #include <RestLink/global.h>
-#include <RestLink/serverresponse.h>
+#include <RestLink/requesthandler.h>
 
 namespace RestLink {
 
 class ServerRequest;
-class Server;
+class ServerResponse;
 
 class RESTLINK_EXPORT AbstractController
 {
@@ -17,11 +17,11 @@ public:
 
     virtual QString endpoint() const = 0;
 
+    virtual bool canProcessRequest(const ServerRequest &request) const;
+    virtual void processRequest(RequestHandler::Method method, const ServerRequest &request, ServerResponse *response) = 0;
+
     void *dataSource() const;
     void setDataSource(void *source);
-
-    virtual bool canProcessRequest(const ServerRequest &request) const;
-    virtual void processRequest(ApiBase::Operation operation, const ServerRequest &request, ServerResponse *response) = 0;
 
 private:
     void *m_dataSource;
@@ -39,7 +39,7 @@ public:
     virtual void destroy(const ServerRequest &request, ServerResponse *response) = 0;
 
     bool canProcessRequest(const ServerRequest &request) const override;
-    void processRequest(ApiBase::Operation operation, const ServerRequest &request, ServerResponse *response) override;
+    void processRequest(RequestHandler::Method method, const ServerRequest &request, ServerResponse *response) override;
 };
 
 } // namespace RestLink

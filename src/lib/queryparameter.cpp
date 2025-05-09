@@ -10,6 +10,7 @@ namespace RestLink {
 QueryParameter::QueryParameter()
     : Parameter(new QueryParameterData())
 {
+    setValue("");
 }
 
 QueryParameter::QueryParameter(const QString &name, const QVariant &value)

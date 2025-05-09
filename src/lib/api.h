@@ -54,7 +54,7 @@ public:
     Q_SIGNAL void configurationCompleted();
     Q_SIGNAL void configurationFailed();
 
-    Response *send(Operation operation, const Request &request, const Body &body) override;
+    Response *send(RequestHandler::Method method, const Request &request, const Body &body) override;
 
 private:
     inline QString versionString() const

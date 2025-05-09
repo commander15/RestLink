@@ -89,22 +89,22 @@ RequestHandler::HandlerType Server::handlerType() const
     return ServerHandler;
 }
 
-ServerResponse *Server::sendRequest(ApiBase::Operation operation, const Request &request, const Body &body)
+ServerResponse *Server::sendRequest(Method method, const Request &request, const Body &body)
 {
     const ServerRequest serverRequest(request, body);
 
     ServerResponse *serverResponse = new ServerResponse(this);
-    initResponse(serverResponse, request, operation);
-    serverResponse->setOperation(operation);
+    initResponse(serverResponse, request, method);
+    serverResponse->setMethod(method);
     serverResponse->setNetworkRequest(QNetworkRequest(request.url()));
 
     if (request.endpoint().startsWith("/restlink")) {
-        processInternalRequest(operation, serverRequest, serverResponse);
+        processInternalRequest(method, serverRequest, serverResponse);
         return serverResponse;
     }
 
     ServerPrivate::PendingRequest pending;
-    pending.operation = operation;
+    pending.method = method;
     pending.request = request;
     pending.body = body;
     pending.response = serverResponse;
@@ -119,26 +119,26 @@ ServerResponse *Server::sendRequest(ApiBase::Operation operation, const Request 
     return serverResponse;
 }
 
-void Server::processInternalRequest(ApiBase::Operation operation, const ServerRequest &request, ServerResponse *response)
+void Server::processInternalRequest(Method method, const ServerRequest &request, ServerResponse *response)
 {
     const QString function = request.endpoint().section('/', 1, -1, QString::SectionFlag::SectionSkipEmpty);
 
     if (function == "configuration") {
-        switch (operation) {
-        case ApiBase::GetOperation:
+        switch (method) {
+        case RequestHandler::GetMethod:
             response->setBody(d_ptr->configuration);
             response->setHttpStatusCode(200);
             break;
 
-        case ApiBase::PostOperation:
-        case ApiBase::PutOperation:
-        case ApiBase::PatchOperation:
+        case RequestHandler::PostMethod:
+        case RequestHandler::PutMethod:
+        case RequestHandler::PatchMethod:
             d_ptr->configuration = QJsonDocument::fromJson(request.body().data()).object();
             response->setBody(request.body());
             response->setHttpStatusCode(200);
             break;
 
-        case Api::DeleteOperation:
+        case RequestHandler::DeleteMethod:
             d_ptr->configuration = QJsonObject();
             response->setBody(QJsonObject({ {"message", "configuration reseted successfully !"} }));
             response->setHttpStatusCode(200);
@@ -165,13 +165,13 @@ void Server::processInternalRequest(ApiBase::Operation operation, const ServerRe
     }
 }
 
-void Server::processRequest(ApiBase::Operation operation, const ServerRequest &request, ServerResponse *response)
+void Server::processRequest(RequestHandler::Method method, const ServerRequest &request, ServerResponse *response)
 {
     class AbstractController *controller = findController(request);
 
     if (controller) {
-        prepareController(controller, operation, request, response);
-        controller->processRequest(operation, request, response);
+        prepareController(controller, method, request, response);
+        controller->processRequest(method, request, response);
     }
 }
 
@@ -198,10 +198,10 @@ AbstractController *Server::findController(const ServerRequest &request) const
     return nullptr;
 }
 
-void Server::prepareController(AbstractController *controller, Api::Operation operation, const ServerRequest &request, ServerResponse *response)
+void Server::prepareController(AbstractController *controller, RequestHandler::Method method, const ServerRequest &request, ServerResponse *response)
 {
     Q_UNUSED(controller);
-    Q_UNUSED(operation);
+    Q_UNUSED(method);
     Q_UNUSED(request);
     Q_UNUSED(response);
 }
@@ -235,7 +235,7 @@ bool ServerPrivate::processNext()
     mutex.unlock();
 
     if (pending.response) {
-        q_ptr->processRequest(pending.operation, ServerRequest(pending.request, pending.body), pending.response);
+        q_ptr->processRequest(pending.method, ServerRequest(pending.request, pending.body), pending.response);
         return true;
     } else {
         return false;

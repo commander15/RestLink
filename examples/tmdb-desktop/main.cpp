@@ -11,6 +11,8 @@ using namespace RestLink;
 
 void runRequest(const Request &request, Api *api)
 {
+    // We will save all responses on your Desktop folder, TMDB sub folder
+
     static QDir folder(QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) + '/' + api->name());
     if (!folder.exists())
         folder.mkpath(".");
@@ -21,7 +23,11 @@ void runRequest(const Request &request, Api *api)
 
     QFile *file = new QFile(folder.path() + url + ".json", api);
 
+    // Pretty assync handling alert !
     api->get(request, [file, api](Response *reply) {
+        // Here application output will tell you all what is happening
+        // (errors included)
+
         QTextStream out(stdout);
         out << reply->endpoint() << " => ";
 
@@ -35,13 +41,21 @@ void runRequest(const Request &request, Api *api)
                 file->deleteLater();
             }
 
+            // Download completed !
             out << data.size() << " byte(s) downloaded" << Qt::endl;
-        } else if (reply->hasNetworkError()) {
-            out << "Network error " << reply->networkError() << ": " << reply->networkErrorString() << Qt::endl;
-        } else if (!reply->isHttpStatusSuccess()) {
+        } else if (!reply->hasHttpStatusCode()) {
+            // Logging this HTTP error
             out << "HTTP " << reply->httpStatusCode() << ' ' << reply->httpReasonPhrase() << Qt::endl;
+        } else if (reply->hasNetworkError()) {
+            // Logging this network error
+            out << "Network error " << reply->networkError() << ": " << reply->networkErrorString() << Qt::endl;
+        } else {
+            // Logging this ... wait, we don't known what happened < 1% of time ;)
+            out << "Oops ! - something weired happened" << Qt::endl;
         }
 
+        // Let's count before quit !
+        // 3, 2, 1, ... bye bye !
         int count = api->property("count").toInt() - 1;
         if (count == 0)
             qApp->quit();
@@ -52,23 +66,32 @@ void runRequest(const Request &request, Api *api)
 
 void run(Api *api)
 {
+    // We prepare some requests in a list
+
     QList<Request> requests;
-    requests.append("/configuration");
-    requests.append("/discover/movie");
-    requests.append("/discover/tv");
+    requests.append("/configuration"); // geeky things
+    requests.append("/discover/movie"); // movie discovery
+    requests.append("/discover/tv"); // tv discovery
 
     {
         Request request("/search/company");
+
+        // We are seaching Marvel Studios, let's go from Marvel to have more results
         request.addQueryParameter("query", "Marvel");
+
         requests.append(request);
     }
 
     {
         Request request("/movie/{movie_id}");
+
+        // Do you like Marvel Venom movie ?
         request.setPathParameter("movie_id", 335983);
+
         requests.append(request);
     }
 
+    // We run them all
     for (const Request &request : std::as_const(requests))
         runRequest(request, api);
 
@@ -78,8 +101,9 @@ void run(Api *api)
 class Interceptor : public RequestInterceptor
 {
 public:
-    Request intercept(const Request &request, const Body &body, ApiBase::Operation operation) override
+    Request intercept(RequestHandler::Method method, const Request &request, const Body &body) override
     {
+        // Just a showcase
         return request;
     }
 };
@@ -91,14 +115,16 @@ int main(int argc, char *argv[])
     QLoggingCategory::setFilterRules("restlink.info=true");
 
     Api api;
-    api.setName("TMDB");
-    api.setVersion(QVersionNumber(3));
-    api.setUrl(QUrl("http://api.themoviedb.org/3"));
-    api.setBearerToken(TMDB_BEARER_TOKEN);
+    api.setName("TMDB"); // Optional
+    api.setVersion(QVersionNumber(3)); // Optional
+    api.setUrl(QUrl("http://api.themoviedb.org/3")); // Mandatory
+    api.setBearerToken(TMDB_BEARER_TOKEN); // Mandatory if you want to Avoid HTTP - Forbidden :)
 
+    // Just to showcase the thing
     Interceptor interceptor;
     api.addRequestInterceptor(&interceptor);
 
+    // Let's go !
     run(&api);
 
     return app.exec();

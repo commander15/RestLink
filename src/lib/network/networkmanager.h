@@ -12,6 +12,7 @@ namespace RestLink {
 class RESTLINK_EXPORT NetworkManager : public QNetworkAccessManager, public RequestHandler
 {
     Q_OBJECT
+    Q_PROPERTY(QStringList supportedSchemes READ supportedSchemes CONSTANT FINAL)
 
 public:
     explicit NetworkManager(QObject *parent = nullptr);
@@ -27,10 +28,10 @@ public:
     HandlerType handlerType() const override final;
 
 protected:
-    Response *sendRequest(ApiBase::Operation operation, const Request &request, const Body &body) override;
+    Response *sendRequest(Method method, const Request &request, const Body &body) override;
 
-    QNetworkRequest generateNetworkRequest(Api::Operation operation, const Request &request, const Body &body);
-    QNetworkReply *generateNetworkReply(Api::Operation operation, const QNetworkRequest &request, const Body &body);
+    QNetworkRequest generateNetworkRequest(Method method, const Request &request, const Body &body);
+    QNetworkReply *generateNetworkReply(Method method, const QNetworkRequest &request, const Body &body);
 
     friend class Api;
 };

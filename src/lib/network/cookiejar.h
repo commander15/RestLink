@@ -9,6 +9,8 @@ namespace RestLink {
 
 class RESTLINK_EXPORT CookieJar : public QNetworkCookieJar
 {
+    Q_OBJECT
+
 public:
     explicit CookieJar(QObject *parent = nullptr);
     ~CookieJar();

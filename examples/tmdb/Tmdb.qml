@@ -1,9 +1,10 @@
-import RestLink
+import RestLink 2.0
+
+// This file just showcase a clean way to create a QML component on top of a RestLink one
 
 Api {
     id: api
 
-    property string key
     property bool adult: false
     property bool secure: false
 
@@ -12,15 +13,9 @@ Api {
     url: "http" + (secure ? 's' : '') + "://api.themoviedb.org/" + version
 
     ApiParameter {
-        name: "api_key"
-        value: api.key
-        authentication: true
-        enabled: api.key.length > 0
-    }
-
-    ApiParameter {
         name: "language"
-        locale: true
+        value: "." // format: en
+        locale: true // Automatically pick system locale
     }
 
     ApiParameter {

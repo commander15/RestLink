@@ -3,6 +3,7 @@
 
 #include <RestLink/global.h>
 #include <RestLink/requestinterface.h>
+#include <RestLink/requesthandler.h>
 
 #include <QtCore/qobject.h>
 
@@ -24,18 +25,6 @@ class RESTLINK_EXPORT ApiBase : public QObject, public RequestInterface
     Q_OBJECT
 
 public:
-    enum Operation {
-        HeadOperation,
-        GetOperation,
-        PostOperation,
-        PutOperation,
-        PatchOperation,
-        DeleteOperation,
-
-        UnknownOperation = -1
-    };
-    Q_ENUM(Operation)
-
     virtual ~ApiBase();
 
     virtual QUrl url() const = 0;
@@ -60,7 +49,7 @@ public:
     void deleteResource(const Request &request, const ApiRunCallback &callback);
     Response *deleteResource(const Request &request);
 
-    virtual Response *send(Operation operation, const Request &request, const Body &body);
+    virtual Response *send(RequestHandler::Method method, const Request &request, const Body &body);
 
     virtual QString userAgent() const;
 

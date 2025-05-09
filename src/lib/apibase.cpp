@@ -15,7 +15,7 @@ namespace RestLink {
  * @class ApiBase
  * @brief The ApiBase class provides methods for making HTTP requests (HEAD, GET, POST, PUT, PATCH, DELETE) and handling responses.
  *
- * This class encapsulates the functionality for interacting with an API by providing methods for various HTTP operations.
+ * This class encapsulates the functionality for interacting with an API by providing methods for various HTTP methods.
  * It manages request interceptors, constructs network requests, and handles the creation of network replies and responses.
  * The class supports asynchronous communication, allowing the user to pass callbacks for handling responses.
  *
@@ -71,7 +71,7 @@ void ApiBase::head(const Request &request, const ApiRunCallback &callback)
  */
 Response *ApiBase::head(const Request &request)
 {
-    return send(Api::HeadOperation, request, Body());
+    return send(RequestHandler::HeadMethod, request, Body());
 }
 
 /**
@@ -95,7 +95,7 @@ void ApiBase::get(const Request &request, const ApiRunCallback &callback)
  */
 Response *ApiBase::get(const Request &request)
 {
-    return send(GetOperation, request, Body());
+    return send(RequestHandler::GetMethod, request, Body());
 }
 
 /**
@@ -121,7 +121,7 @@ void ApiBase::post(const Request &request, const Body &body, const ApiRunCallbac
  */
 Response *ApiBase::post(const Request &request, const Body &body)
 {
-    return send(PostOperation, request, body);
+    return send(RequestHandler::PostMethod, request, body);
 }
 
 /**
@@ -147,7 +147,7 @@ void ApiBase::put(const Request &request, const Body &body, const ApiRunCallback
  */
 Response *ApiBase::put(const Request &request, const Body &body)
 {
-    return send(PutOperation, request, body);
+    return send(RequestHandler::PutMethod, request, body);
 }
 
 /**
@@ -173,7 +173,7 @@ void ApiBase::patch(const Request &request, const Body &body, const ApiRunCallba
  */
 Response *ApiBase::patch(const Request &request, const Body &body)
 {
-    return send(PatchOperation, request, body);
+    return send(RequestHandler::PatchMethod, request, body);
 }
 
 /**
@@ -197,10 +197,10 @@ void ApiBase::deleteResource(const Request &request, const ApiRunCallback &callb
  */
 Response *ApiBase::deleteResource(const Request &request)
 {
-    return send(DeleteOperation, request, Body());
+    return send(RequestHandler::DeleteMethod, request, Body());
 }
 
-Response *ApiBase::send(Operation operation, const Request &request, const Body &body)
+Response *ApiBase::send(RequestHandler::Method method, const Request &request, const Body &body)
 {
     // Preprocessing request by adding api url parameters and headers
     Request finalRequest = request;
@@ -208,10 +208,10 @@ Response *ApiBase::send(Operation operation, const Request &request, const Body 
 
     // Preprocessing request by passing it to interceptors
     for (RequestInterceptor *interceptor : std::as_const(d_ptr->requestInterceptors))
-        finalRequest = interceptor->intercept(finalRequest, body, operation);
+        finalRequest = interceptor->intercept(method, finalRequest, body);
 
     // Sending request and return response
-    return d_ptr->networkManager()->send(operation, finalRequest, body);
+    return d_ptr->networkManager()->send(method, finalRequest, body);
 }
 
 /**
@@ -333,29 +333,6 @@ NetworkManager *ApiBasePrivate::networkManager() const
 void ApiBasePrivate::setNetworkManager(NetworkManager *manager)
 {
     m_networkManager = manager;
-}
-
-QByteArray ApiBasePrivate::httpVerbFromOperation(int op)
-{
-    switch (op) {
-    case ApiBase::GetOperation:
-        return QByteArrayLiteral("GET");
-
-    case ApiBase::PostOperation:
-        return QByteArrayLiteral("POST");
-
-    case ApiBase::PutOperation:
-        return QByteArrayLiteral("PUT");
-
-    case ApiBase::PatchOperation:
-        return QByteArrayLiteral("PATCH");
-
-    case ApiBase::DeleteOperation:
-        return QByteArrayLiteral("DELETE");
-
-    default:
-        return QByteArray();
-    }
 }
 
 }

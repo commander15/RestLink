@@ -11,7 +11,7 @@ class RESTLINK_EXPORT RequestInterceptor
 public:
     virtual ~RequestInterceptor() = default;
 
-    virtual Request intercept(const Request &request, const Body &body, Api::Operation operation) = 0;
+    virtual Request intercept(RequestHandler::Method method, const Request &request, const Body &body) = 0;
 };
 
 }

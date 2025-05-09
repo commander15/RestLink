@@ -2,14 +2,14 @@
 #define RESTLINK_HTTPUTILS_H
 
 #include <RestLink/global.h>
-#include <RestLink/api.h>
+#include <RestLink/requesthandler.h>
 
 namespace RestLink {
 
 class RESTLINK_EXPORT HttpUtils
 {
 public:
-    static QString verbString(Api::Operation operation);
+    static QString verbString(RequestHandler::Method method);
     static QString reasonPhrase(int code);
 };
 

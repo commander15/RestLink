@@ -14,7 +14,7 @@ target_compile_definitions(RestLink
         RESTLINK_BUILD
 )
 
-target_link_libraries(RestLink PUBLIC Qt::Network)
+target_link_libraries(RestLink PUBLIC Qt::Core Qt::Network)
 
 if (ZLIB_FOUND)
     target_compile_definitions(RestLink PUBLIC ZLIB_LIB)

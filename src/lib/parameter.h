@@ -25,7 +25,7 @@ public:
         Authentication = 0x1,
         Secret = 0x2,
 
-        Locale = 0x16
+        Locale = 0x64
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 

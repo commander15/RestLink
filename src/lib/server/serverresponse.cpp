@@ -17,18 +17,18 @@ ServerResponse::ServerResponse(Server *server)
     d->server = server;
 }
 
-ApiBase::Operation ServerResponse::operation() const
+RequestHandler::Method ServerResponse::method() const
 {
     RESTLINK_D(const ServerResponse);
     QMutexLocker locker(&d->mutex);
-    return d->operation;
+    return d->method;
 }
 
-void ServerResponse::setOperation(ApiBase::Operation operation)
+void ServerResponse::setMethod(RequestHandler::Method method)
 {
     RESTLINK_D(ServerResponse);
     QMutexLocker locker(&d->mutex);
-    d->operation = operation;
+    d->method = method;
 }
 
 bool ServerResponse::isFinished() const
@@ -175,7 +175,7 @@ void ServerResponse::abort()
 
 ServerResponsePrivate::ServerResponsePrivate(ServerResponse *q)
     : ResponsePrivate(q)
-    , operation(Api::UnknownOperation)
+    , method(RequestHandler::UnknownMethod)
     , httpStatusCode(0)
     , finished(false)
     , server(nullptr)

@@ -12,9 +12,7 @@ add_compile_definitions(TMDB_BEARER_TOKEN="${TMDB_BEARER_TOKEN}")
 
 message("QML: ${QT_QML_ROOT_PATH}")
 
-if (TMDB_BEARER_TOKEN)
-    add_subdirectory(tmdb-desktop)
-endif()
+add_subdirectory(tmdb-desktop)
 
 if (RESTLINK_BUILD_SQL)
     add_subdirectory(custom)
@@ -35,9 +33,7 @@ if (RESTLINK_BUILD_QML)
 
     #add_subdirectory(client)
 
-    if (TMDB_BEARER_TOKEN)
-        add_subdirectory(tmdb)
-    endif()
+    add_subdirectory(tmdb)
 
     #add_subdirectory(blagues)
 endif()

@@ -260,7 +260,7 @@ void Api::configure(const QUrl &url)
  */
 bool Api::configure(const QJsonObject &config)
 {
-    if (!config.contains("name") || !config.contains("version") || !config.contains("url"))
+    if (!config.contains("url"))
         return false;
 
     RESTLINK_D(Api);
@@ -284,8 +284,7 @@ bool Api::configure(const QJsonObject &config)
         }
     }
 
-    if (config.contains("url"))
-        setUrl(config.value("url").toString());
+    setUrl(config.value("url").toString());
 
     const Request request = Request::fromJsonbject(config);
     const RequestPrivate *data = request.d_ptr.get();
@@ -310,14 +309,14 @@ bool Api::configure(const QJsonObject &config)
     return true;
 }
 
-Response *Api::send(Operation operation, const Request &request, const Body &body)
+Response *Api::send(RequestHandler::Method method, const Request &request, const Body &body)
 {
     RESTLINK_D(Api);
 
     if (d->hasRemoteRequest(request))
-        return ApiBase::send(operation, Request::merge(request, d->remoteRequest(request)), body);
+        return ApiBase::send(method, Request::merge(request, d->remoteRequest(request)), body);
     else
-        return ApiBase::send(operation, request, body);
+        return ApiBase::send(method, request, body);
 }
 
 ApiPrivate::ApiPrivate(Api *qq) :

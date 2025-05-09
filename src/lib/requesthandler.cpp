@@ -28,42 +28,42 @@ QString RequestHandler::handlerName() const
 
 Response *RequestHandler::head(const Request &request)
 {
-    return send(Api::HeadOperation, request, Body());
+    return send(HeadMethod, request, Body());
 }
 
 Response *RequestHandler::get(const Request &request)
 {
-    return send(Api::GetOperation, request, Body());
+    return send(GetMethod, request, Body());
 }
 
 Response *RequestHandler::post(const Request &request, const Body &body)
 {
-    return send(Api::PostOperation, request, body);
+    return send(PostMethod, request, body);
 }
 
 Response *RequestHandler::put(const Request &request, const Body &body)
 {
-    return send(Api::PutOperation, request, body);
+    return send(PutMethod, request, body);
 }
 
 Response *RequestHandler::patch(const Request &request, const Body &body)
 {
-    return send(Api::PatchOperation, request, body);
+    return send(PatchMethod, request, body);
 }
 
 Response *RequestHandler::deleteResource(const Request &request)
 {
-    return send(Api::DeleteOperation, request, Body());
+    return send(DeleteMethod, request, Body());
 }
 
-Response *RequestHandler::send(ApiBase::Operation operation, const Request &request, const Body &body)
+Response *RequestHandler::send(Method method, const Request &request, const Body &body)
 {
     if (!isRequestSupported(request)) {
         restlinkWarning() << handlerName() << ": trying to send an unsupported request !";
         return nullptr;
     }
 
-    return sendRequest(operation, request, body);
+    return sendRequest(method, request, body);
 }
 
 bool RequestHandler::isRequestSupported(const Request &request) const
@@ -71,9 +71,9 @@ bool RequestHandler::isRequestSupported(const Request &request) const
     return supportedSchemes().contains(request.baseUrl().scheme());
 }
 
-void RequestHandler::initResponse(Response *response, const Request &request, ApiBase::Operation operation)
+void RequestHandler::initResponse(Response *response, const Request &request, Method method)
 {
-    Q_UNUSED(operation);
+    Q_UNUSED(method);
     response->setRequest(request);
 }
 

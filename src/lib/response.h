@@ -22,20 +22,20 @@ class NetworkResponsePrivate;
 class RESTLINK_EXPORT Response : public ResponseBase
 {
     Q_OBJECT
-    Q_PROPERTY(QString endpoint READ endpoint CONSTANT)
-    Q_PROPERTY(RestLink::Api::Operation operation READ operation CONSTANT)
-    Q_PROPERTY(QUrl url READ url CONSTANT)
-    Q_PROPERTY(bool running READ isRunning NOTIFY finished)
-    Q_PROPERTY(bool finished READ isFinished NOTIFY finished)
-    Q_PROPERTY(bool success READ isSuccess NOTIFY finished)
-    Q_PROPERTY(bool hasHttpStatusCode READ hasHttpStatusCode NOTIFY finished)
-    Q_PROPERTY(int httpStatusCode READ httpStatusCode NOTIFY finished)
-    Q_PROPERTY(QString httpReasonPhrase READ httpReasonPhrase NOTIFY finished)
-    Q_PROPERTY(QByteArrayList headerList READ headerList NOTIFY finished)
-    Q_PROPERTY(bool hasNetworkError READ hasNetworkError NOTIFY finished)
-    Q_PROPERTY(int networkError READ networkError NOTIFY networkErrorOccured)
-    Q_PROPERTY(QString networkErrorString READ networkErrorString NOTIFY networkErrorOccured)
-    Q_PROPERTY(QByteArray body READ body NOTIFY finished)
+    Q_PROPERTY(QString endpoint READ endpoint CONSTANT FINAL)
+    Q_PROPERTY(int method READ method CONSTANT FINAL)
+    Q_PROPERTY(QUrl url READ url CONSTANT FINAL)
+    Q_PROPERTY(bool running READ isRunning NOTIFY finished FINAL)
+    Q_PROPERTY(bool finished READ isFinished NOTIFY finished FINAL)
+    Q_PROPERTY(bool success READ isSuccess NOTIFY finished FINAL)
+    Q_PROPERTY(bool hasHttpStatusCode READ hasHttpStatusCode NOTIFY finished FINAL)
+    Q_PROPERTY(int httpStatusCode READ httpStatusCode NOTIFY finished FINAL)
+    Q_PROPERTY(QString httpReasonPhrase READ httpReasonPhrase NOTIFY finished FINAL)
+    Q_PROPERTY(QByteArrayList headerList READ headerList NOTIFY finished FINAL)
+    Q_PROPERTY(bool hasNetworkError READ hasNetworkError NOTIFY finished FINAL)
+    Q_PROPERTY(int networkError READ networkError NOTIFY networkErrorOccured FINAL)
+    Q_PROPERTY(QString networkErrorString READ networkErrorString NOTIFY networkErrorOccured FINAL)
+    Q_PROPERTY(QByteArray body READ body NOTIFY finished FINAL)
 
 public:
     virtual ~Response();
@@ -43,7 +43,7 @@ public:
     QString endpoint() const;
     Request request() const;
 
-    virtual Api::Operation operation() const = 0;
+    virtual RequestHandler::Method method() const = 0;
     Api *api() const;
 
     QUrl url() const;
