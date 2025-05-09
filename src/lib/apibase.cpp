@@ -208,7 +208,7 @@ Response *ApiBase::send(RequestHandler::Method method, const Request &request, c
 
     // Preprocessing request by passing it to interceptors
     for (RequestInterceptor *interceptor : std::as_const(d_ptr->requestInterceptors))
-        finalRequest = interceptor->intercept(finalRequest, body, method);
+        finalRequest = interceptor->intercept(method, finalRequest, body);
 
     // Sending request and return response
     return d_ptr->networkManager()->send(method, finalRequest, body);

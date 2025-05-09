@@ -15,14 +15,14 @@ namespace RestLink {
  */
 
 /**
- * @fn RestLink::RequestInterceptor::intercept(const Request &request, const Body &body, RequestHandler::Method method)
+ * @fn RestLink::RequestInterceptor::intercept(RequestHandler::Method method, const Request &request, const Body &body)
  * @brief Intercepts and modifies a request before it is sent.
  *
- * This method is called before the HTTP request is sent. It allows for modifications to the request such as altering the URL, adding headers, or changing the request body.
+ * This method is called before the HTTP request is sent. It allows for modifications to the request such as altering the URL or adding headers.
  *
+ * @param method The HTTP method being performed (e.g., GET, POST, PUT, ...).
  * @param request The request to be modified.
  * @param body The body of the request.
- * @param method The HTTP method being performed (e.g., GET, POST, PUT).
  *
  * @return The modified request object that will be sent.
  */
