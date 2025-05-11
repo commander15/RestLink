@@ -100,7 +100,7 @@ ApplicationWindow {
                 console.log("Unknown error occured");
             }
         }
-    }
+    } // Request
 
     Api {
         id: tmdb
@@ -147,7 +147,7 @@ ApplicationWindow {
             // We don't need it so we disable without removing, nice euh ?
             enabled: false // finally we don't need this since Api already manages it
         }
-    }
+    } // Api
 }
 
 // Written with ♥️ by Amadou Wanie Benjamain !
