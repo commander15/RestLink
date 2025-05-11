@@ -7,6 +7,10 @@
 
 #include <QtCore/qjsonarray.h>
 
+#define PARAM_WITH_RELATIONS "with_relations"
+#define PARAM_PAGE           "page"
+#define PARAM_LIMIT          "limit"
+
 namespace RestLink {
 namespace Sql {
 
@@ -27,43 +31,42 @@ void ModelController::setManager(ModelManager *manager)
 
 void ModelController::index(const ServerRequest &request, ServerResponse *response)
 {
-    QJsonObject json;
-
     QueryOptions options;
 
-    if (request.hasQueryParameter("limit"))
-        options.limit = request.queryParameterValues("limit").constFirst().toInt();
+    if (request.hasQueryParameter(PARAM_WITH_RELATIONS))
+        options.withRelations = request.queryParameterValues(PARAM_WITH_RELATIONS).constFirst().toBool();
+
+    if (request.hasQueryParameter(PARAM_LIMIT))
+        options.limit = request.queryParameterValues(PARAM_LIMIT).constFirst().toInt();
     else
         options.limit = RESTLINK_PAGINATION_LIMIT;
 
+    int page = 1;
     if (options.limit > 0) {
-        int page;
-
-        if (request.hasQueryParameter("page"))
-            page = request.queryParameterValues("page").constFirst().toInt();
-        else
-            page = 1;
+        if (request.hasQueryParameter(PARAM_PAGE))
+            page = request.queryParameterValues(PARAM_PAGE).constFirst().toInt();
 
         if (page < 1)
             page = 1;
 
         options.offset = (page - 1) * options.limit;
-
-        double total = Model::count(m_table, options, m_manager);
-        json.insert("total", total);
-        json.insert("current_page", page);
-        json.insert("per_page", options.limit);
-        json.insert("last_page", qCeil<double>(total / options.limit));
     }
 
     QJsonArray result;
     const QList<Model> models = Model::getMulti(m_table, options, m_manager);
     for (const Model &model : models)
         result.append(model.jsonObject());
-    json.insert("data", result);
 
+    double count = Model::count(m_table, options, m_manager);
+
+    QJsonObject json;
+    json.insert("data", result);
     json.insert("from", options.offset + 1);
     json.insert("to", options.offset + models.count());
+    json.insert("total", count);
+    json.insert("current_page", page);
+    json.insert("per_page", options.limit);
+    json.insert("last_page", qCeil<double>(count / options.limit));
 
     response->setBody(json);
     response->setHttpStatusCode(200);
@@ -74,13 +77,17 @@ void ModelController::show(const ServerRequest &request, ServerResponse *respons
 {
     Model model(request.resource(), m_manager);
 
-    if (model.get(request.identifier().toInt())) {
-        response->setBody(model.jsonObject());
-        response->setHttpStatusCode(200);
-    } else {
-        response->setHttpStatusCode(404);
-    }
+    if (!model.get(request.identifier().toInt()))
+        goto error;
 
+    if (request.hasQueryParameter(PARAM_WITH_RELATIONS) && request.queryParameterValues(PARAM_WITH_RELATIONS).constFirst().toBool())
+        model.loadAll();
+
+    response->setBody(model.jsonObject());
+    response->setHttpStatusCode(200);
+
+error:
+    response->setHttpStatusCode(404);
     response->complete();
 }
 
