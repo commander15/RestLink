@@ -1,14 +1,26 @@
 qt_add_plugin(RestLinkSql
-    CLASS_NAME RestLink::SqlPlugin
-    sqlplugin.h sqlplugin.cpp
-    sqlserver.h sqlserver_p.h sqlserver.cpp
+    CLASS_NAME RestLink::Sql::Plugin
+    # sqlplugin.h sqlplugin.cpp
+    # sqlserver.h sqlserver_p.h sqlserver.cpp
     sqlutils.h sqlutils.cpp
 )
 
 target_sources(RestLinkSql
   PRIVATE
-    sqldatabase.h sqldatabase.cpp
-    sqldatabasemanager.h sqldatabasemanager.cpp
+  modelmanager.h modelmanager.cpp
+  crudinterface.h crudinterface.cpp
+  model.h model.cpp
+  querybuilder.h querybuilder.cpp
+  jsonutils.h jsonutils.cpp
+  debug.h debug.cpp
+  api.h api.cpp
+  plugin.h plugin.cpp
+  relation.h relation.cpp
+  relation_base_impl.h relation_base_impl.cpp
+  relation_api_impl.h relation_api_impl.cpp
+  modelcontroller.h modelcontroller.cpp
+    # sqldatabase.h sqldatabase.cpp
+    # sqldatabasemanager.h sqldatabasemanager.cpp
 )
 
 set(OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/restlink)
