@@ -17,7 +17,7 @@ public:
     static QJsonObject objectFromRawData(const QByteArray &rawData, const QJsonObject &definition);
 
     static QSqlRecord recordFromObject(const QJsonObject &object, const QJsonObject &definition);
-    static QJsonObject objectFromRecord(const QSqlRecord &record, const QJsonObject &definition);
+    static QJsonObject objectFromRecord(const QSqlRecord &record, const QJsonObject &definition = QJsonObject());
 };
 
 } // namespace Sql
