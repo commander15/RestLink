@@ -110,6 +110,7 @@ QByteArray ServerResponse::readBody()
     RESTLINK_D(ServerResponse);
     QMutexLocker locker(&d->mutex);
     return d->body.data();
+    return d->body.toByteArray();
 }
 
 void ServerResponse::setBody(const Body &body)

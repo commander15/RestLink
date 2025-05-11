@@ -133,7 +133,7 @@ void Server::processInternalRequest(const ServerRequest &request, ServerResponse
         case RequestHandler::PostMethod:
         case RequestHandler::PutMethod:
         case RequestHandler::PatchMethod:
-            d_ptr->configuration = QJsonDocument::fromJson(request.body().data()).object();
+            d_ptr->configuration = QJsonDocument::fromJson(request.body().toByteArray()).object();
             response->setBody(request.body());
             response->setHttpStatusCode(200);
             break;

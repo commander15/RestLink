@@ -101,6 +101,7 @@ void Api::processConfigurationRequest(const ServerRequest &request, ServerRespon
     switch (request.method()) {
     case PostMethod:
         manager->configure(JsonUtils::objectFromRawData(request.body().data(), QJsonObject()));
+        manager->configure(JsonUtils::objectFromRawData(request.body().toByteArray(), QJsonObject()));
 
     case GetMethod:
         response->setBody(manager->configuration());
@@ -159,7 +160,14 @@ void Api::processQueryRequest(const ServerRequest &request, ServerResponse *resp
     };
 
     QByteArrayList statements;
-    QByteArrayList input = request.body().data().trimmed().split('\n');
+    QByteArrayList input;
+    {
+        const Body body = request.body();
+        if (body.hasPlainText())
+            input = request.body().toByteArray().trimmed().split('\n');
+        else if (body.isDevice())
+            input = body.device()->readAll().trimmed().split('\n');
+    }
 
     {
         QByteArray statement;

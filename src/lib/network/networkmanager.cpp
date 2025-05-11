@@ -202,8 +202,8 @@ QNetworkReply *NetworkManager::generateNetworkReply(Method method, const QNetwor
             reply =  man->post(request, body.multiPart());
         else if (body.isDevice())
             reply =  man->post(request, body.device());
-        else if (body.isData())
-            reply =  man->post(request, body.data());
+        else if (body.hasPlainText())
+            reply =  man->post(request, body.toByteArray());
         else
             reply =  man->post(request, QByteArray());
         break;
@@ -213,8 +213,8 @@ QNetworkReply *NetworkManager::generateNetworkReply(Method method, const QNetwor
             reply =  man->put(request, body.multiPart());
         else if (body.isDevice())
             reply =  man->put(request, body.device());
-        else if (body.isData())
-            reply =  man->put(request, body.data());
+        else if (body.hasPlainText())
+            reply =  man->put(request, body.toByteArray());
         else
             reply =  man->put(request, QByteArray());
         break;
@@ -224,8 +224,8 @@ QNetworkReply *NetworkManager::generateNetworkReply(Method method, const QNetwor
             reply =  man->sendCustomRequest(request, "PATCH", body.multiPart());
         else if (body.isDevice())
             reply =  man->sendCustomRequest(request, "PATCH", body.device());
-        else if (body.isData())
-            reply =  man->sendCustomRequest(request, "PATCH", body.data());
+        else if (body.hasPlainText())
+            reply =  man->sendCustomRequest(request, "PATCH", body.toByteArray());
         else
             reply =  man->sendCustomRequest(request, "PATCH", QByteArray());
         break;
