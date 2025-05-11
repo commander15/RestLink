@@ -216,7 +216,8 @@ QList<Model> Model::getMulti(const QString &table, const QueryOptions &options, 
     while (query.next()) {
         Model model(table, manager);
         model.fill(query.record());
-        model.loadAll();
+        if (options.withRelations)
+            model.loadAll();
         models.append(model);
     }
     return models;

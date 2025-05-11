@@ -72,6 +72,8 @@ public:
 
     int limit = 0;
     int offset = 0;
+
+    bool withRelations = false;
 };
 
 } // namespace Sql
