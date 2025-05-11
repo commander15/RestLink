@@ -31,10 +31,10 @@ public:
     bool waitForReadyRead(int msecs) override;
     bool waitForBytesWritten(int msecs) override;
 
-    QJsonObject readJsonObject(QJsonParseError *error = nullptr);
-    QJsonArray readJsonArray(QJsonParseError *error = nullptr);
-    QJsonValue readJson(QJsonParseError *error = nullptr);
-    QString readString();
+    virtual QJsonObject readJsonObject(QJsonParseError *error = nullptr);
+    virtual QJsonArray readJsonArray(QJsonParseError *error = nullptr);
+    virtual QJsonValue readJson(QJsonParseError *error = nullptr);
+    virtual QString readString();
     virtual QByteArray readBody();
 
     QIODevice *responseDevice() const;

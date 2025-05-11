@@ -28,6 +28,10 @@ public:
     QByteArrayList headerList() const override;
     void setHeaders(const QList<Header> &headers);
 
+    QJsonObject readJsonObject(QJsonParseError *error) override;
+    QJsonArray readJsonArray(QJsonParseError *error) override;
+    QJsonValue readJson(QJsonParseError *error) override;
+    QString readString() override;
     QByteArray readBody() override;
     void setBody(const Body &body);
 

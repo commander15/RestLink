@@ -105,6 +105,41 @@ void ServerResponse::setHeaders(const QList<Header> &headers)
     d->headers = headers.toVector();
 }
 
+QJsonObject ServerResponse::readJsonObject(QJsonParseError *error)
+{
+    RESTLINK_D(ServerResponse);
+    QMutexLocker locker(&d->mutex);
+    return (d->body.hasJsonObject() ? d->body.jsonObject() : QJsonObject());
+}
+
+QJsonArray ServerResponse::readJsonArray(QJsonParseError *error)
+{
+    RESTLINK_D(ServerResponse);
+    QMutexLocker locker(&d->mutex);
+    return (d->body.hasJsonArray() ? d->body.jsonArray() : QJsonArray());
+}
+
+QJsonValue ServerResponse::readJson(QJsonParseError *error)
+{
+    RESTLINK_D(ServerResponse);
+    QMutexLocker locker(&d->mutex);
+
+    if (d->body.hasJsonObject())
+        return d->body.jsonObject();
+
+    if (d->body.hasJsonArray())
+        return d->body.jsonArray();
+
+    return QJsonValue();
+}
+
+QString ServerResponse::readString()
+{
+    RESTLINK_D(ServerResponse);
+    QMutexLocker locker(&d->mutex);
+    return d->body.toString();
+}
+
 QByteArray ServerResponse::readBody()
 {
     RESTLINK_D(ServerResponse);
