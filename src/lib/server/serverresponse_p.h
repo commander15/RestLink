@@ -23,7 +23,7 @@ public:
 
     int httpStatusCode;
     Body body;
-    QVector<Header> headers;
+    HeaderList headers;
 
     bool finished;
 

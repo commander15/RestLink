@@ -117,6 +117,11 @@ void ServerResponse::setBody(const Body &body)
     RESTLINK_D(ServerResponse);
     QMutexLocker locker(&d->mutex);
     d->body = body;
+
+    const QList<Header> headers = body.headers();
+    for (const Header &header : headers)
+        if (!d->headers.contains(header.name()))
+            d->headers.append(header);
 }
 
 QNetworkRequest ServerResponse::networkRequest() const
