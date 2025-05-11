@@ -34,7 +34,7 @@ void ModelController::index(const ServerRequest &request, ServerResponse *respon
     if (request.hasQueryParameter("limit"))
         options.limit = request.queryParameterValues("limit").constFirst().toInt();
     else
-        options.limit = 50;
+        options.limit = RESTLINK_PAGINATION_LIMIT;
 
     if (options.limit > 0) {
         int page;
