@@ -31,6 +31,7 @@
 // Body
 #define DATA_OPTION "data"
 #define JSON_OPTION "json"
+#define FILE_OPTION "file"
 
 using namespace RestLink;
 
@@ -148,6 +149,13 @@ void App::initParser()
     {
         QCommandLineOption option(JSON_OPTION, "Set the request json data");
         option.setValueName("data");
+        m_parser.addOption(option);
+    }
+
+    // File Data Option
+    {
+        QCommandLineOption option(FILE_OPTION, "Set the request file data");
+        option.setValueName("file name");
         m_parser.addOption(option);
     }
 }
@@ -278,6 +286,9 @@ Body App::makeBody()
         return Body(m_parser.value(JSON_OPTION), QByteArrayLiteral("application/json"));
     }
 
+    if (m_parser.isSet(FILE_OPTION))
+        return Body(File(m_parser.value(FILE_OPTION)));
+
     return Body();
 }
 
@@ -339,8 +350,9 @@ void App::monitorResponse(Response *response)
             m_out << Qt::endl;
         }
 
-        if (response->isSuccess()) {
-            if (response->header("Content-Type").startsWith("application/json")) {
+        if (response->hasHttpStatusCode()) {
+            const QString type = response->header("Content-Type");
+            if (type.startsWith("application/json")) {
                 const QJsonValue value = response->readJson();
                 QJsonDocument doc;
                 if (value.isObject())
