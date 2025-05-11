@@ -54,6 +54,12 @@ ServerRequest &ServerRequest::operator=(ServerRequest &&rhs)
     return *this;
 }
 
+RequestHandler::Method ServerRequest::method() const
+{
+    RESTLINK_D(const ServerRequest);
+    return d->method;
+}
+
 QString ServerRequest::resource() const
 {
     QStringList endpoint = d_ptr->endpoint.split('/', Qt::SkipEmptyParts);
