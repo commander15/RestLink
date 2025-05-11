@@ -100,7 +100,6 @@ void Api::processConfigurationRequest(const ServerRequest &request, ServerRespon
 {
     switch (request.method()) {
     case PostMethod:
-        manager->configure(JsonUtils::objectFromRawData(request.body().data(), QJsonObject()));
         manager->configure(JsonUtils::objectFromRawData(request.body().toByteArray(), QJsonObject()));
 
     case GetMethod:
@@ -129,10 +128,6 @@ void Api::processTablesRequest(const ServerRequest &request, ServerResponse *res
 
 void Api::processQueryRequest(const ServerRequest &request, ServerResponse *response, ModelManager *manager)
 {
-    response->setBody(request.body());
-    response->complete();
-    return;
-
     QSqlQuery query(manager->database());
     query.setForwardOnly(true);
 
@@ -151,6 +146,7 @@ void Api::processQueryRequest(const ServerRequest &request, ServerResponse *resp
         QJsonArray data;
         while (query.next())
             data.append(JsonUtils::objectFromRecord(query.record()));
+        query.finish();
 
         body.insert("last_insert_id", QJsonValue::fromVariant(query.lastInsertId()));
         body.insert("num_rows_affected", query.numRowsAffected());
@@ -186,6 +182,10 @@ void Api::processQueryRequest(const ServerRequest &request, ServerResponse *resp
                 statement.clear();
             }
         }
+
+        // If there is only one statement without delimiter
+        if (statements.isEmpty() && !statement.isEmpty())
+            statements.append(statement);
     }
 
     if (statements.size() == 1) {

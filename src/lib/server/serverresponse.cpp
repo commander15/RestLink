@@ -68,32 +68,28 @@ bool ServerResponse::hasHeader(const QByteArray &name) const
 
 QByteArray ServerResponse::header(const QByteArray &name) const
 {
-    if (name.compare(QByteArrayLiteral("Content-Type"), Qt::CaseInsensitive) == 0)
-        return QByteArrayLiteral("application/json");
-
     RESTLINK_D(const ServerResponse);
 
     auto it = std::find_if(d->headers.begin(), d->headers.end(), [name](const Header &header) {
         return header.name() == name;
     });
 
-    return (it != d->headers.end() ? it->value().toByteArray() : QByteArray());
+    if (it != d->headers.end())
+        return it->value().toByteArray();
+
+    Header header = d->body.headers().parameter(name);
+    return header.isValid() ? header.value().toByteArray() : d->body.contentType().toLatin1();
 }
 
 QByteArrayList ServerResponse::headerList() const
 {
     RESTLINK_D(const ServerResponse);
 
-#if QT_VERSION_MAJOR >= 6
-    QByteArrayList names(d->headers.size());
-    std::transform(d->headers.begin(), d->headers.end(), names.begin(), [](const Header &header) {
+    const HeaderList headers = d->headers + d->body.headers();
+    QByteArrayList names(headers.size());
+    std::transform(headers.begin(), headers.end(), names.begin(), [](const Header &header) {
         return header.name().toUtf8();
     });
-#else
-    QByteArrayList names;
-    for (const Header &header : d->headers)
-        names.append(header.name().toUtf8());
-#endif
 
     return names;
 }
@@ -144,7 +140,6 @@ QByteArray ServerResponse::readBody()
 {
     RESTLINK_D(ServerResponse);
     QMutexLocker locker(&d->mutex);
-    return d->body.data();
     return d->body.toByteArray();
 }
 
@@ -153,11 +148,6 @@ void ServerResponse::setBody(const Body &body)
     RESTLINK_D(ServerResponse);
     QMutexLocker locker(&d->mutex);
     d->body = body;
-
-    const QList<Header> headers = body.headers();
-    for (const Header &header : headers)
-        if (!d->headers.contains(header.name()))
-            d->headers.append(header);
 }
 
 QNetworkRequest ServerResponse::networkRequest() const

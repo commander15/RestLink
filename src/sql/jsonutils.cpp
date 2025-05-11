@@ -49,14 +49,9 @@ QSqlRecord JsonUtils::recordFromObject(const QJsonObject &object, const QJsonObj
 QJsonObject JsonUtils::objectFromRecord(const QSqlRecord &record, const QJsonObject &definition)
 {
     QJsonObject object;
-    const QJsonArray fields = definition.value("fields").toArray();
 
-    for (const QJsonValue &val : fields) {
-        QJsonObject field = val.toObject();
-        QString name = field.value("name").toString();
-        if (record.contains(name))
-            object.insert(name, QJsonValue::fromVariant(record.value(name)));
-    }
+    for (int i(0); i < record.count(); ++i)
+        object.insert(record.fieldName(i), QJsonValue::fromVariant(record.value(i)));
 
     return object;
 }
