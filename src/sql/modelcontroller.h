@@ -26,7 +26,7 @@ public:
     void destroy(const ServerRequest &request, ServerResponse *response) override;
 
     bool canProcessRequest(const ServerRequest &request) const override;
-    void processRequest(RequestHandler::Method method, const ServerRequest &request, ServerResponse *response) override;
+    void processRequest(const ServerRequest &request, ServerResponse *response) override;
 
 private:
     QString m_endpoint;

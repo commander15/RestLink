@@ -44,8 +44,10 @@ bool AbstractResourceController::canProcessRequest(const ServerRequest &request)
     return requestEndpoint.count('/') == 0;
 }
 
-void AbstractResourceController::processRequest(RequestHandler::Method method, const ServerRequest &request, ServerResponse *response)
+void AbstractResourceController::processRequest(const ServerRequest &request, ServerResponse *response)
 {
+    RequestHandler::Method method = request.method();
+
     if (method == RequestHandler::GetMethod) {
         if (request.identifier().isEmpty())
             index(request, response);

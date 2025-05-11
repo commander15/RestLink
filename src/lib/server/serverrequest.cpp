@@ -11,9 +11,10 @@ class ServerRequestPrivate : public RequestPrivate
 public:
     ServerRequestPrivate() = default;
     ServerRequestPrivate(const ServerRequestPrivate &other) = default;
-    ServerRequestPrivate(const RequestPrivate *request, const Body &body)
-        : RequestPrivate(*request), body(body) {}
+    ServerRequestPrivate(RequestHandler::Method method, const RequestPrivate *request, const Body &body)
+        : RequestPrivate(*request), method(method), body(body) {}
 
+    RequestHandler::Method method = RequestHandler::GetMethod;
     Body body;
 };
 
@@ -22,8 +23,8 @@ ServerRequest::ServerRequest()
 {
 }
 
-ServerRequest::ServerRequest(const Request &request, const Body &body)
-    : Request(new ServerRequestPrivate(request.d_ptr.data(), body))
+ServerRequest::ServerRequest(RequestHandler::Method method, const Request &request, const Body &body)
+    : Request(new ServerRequestPrivate(method, request.d_ptr.data(), body))
 {
 }
 

@@ -8,7 +8,7 @@
 namespace RestLink {
 namespace Sql {
 
-class Api : public RestLink::Server
+class Api final : public RestLink::Server
 {
     Q_OBJECT
 
@@ -23,7 +23,7 @@ protected:
     bool init() override;
     void cleanup() override;
     bool maintain() override;
-    void processRequest(Method method, const ServerRequest &request, ServerResponse *response) override;
+    void processRequest(const ServerRequest &request, ServerResponse *response) override;
 
 private:
     ModelController m_defaultController;

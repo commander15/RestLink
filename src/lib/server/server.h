@@ -52,11 +52,11 @@ protected:
     virtual bool maintain() = 0;
 
     ServerResponse *sendRequest(Method method, const Request &request, const Body &body) override final;
-    virtual void processInternalRequest(Method method, const ServerRequest &request, ServerResponse *response);
-    virtual void processRequest(Method method, const ServerRequest &request, ServerResponse *response);
+    virtual void processInternalRequest(const ServerRequest &request, ServerResponse *response);
+    virtual void processRequest(const ServerRequest &request, ServerResponse *response);
 
     virtual AbstractController *findController(const ServerRequest &request) const;
-    virtual void prepareController(AbstractController *controller, Method method, const ServerRequest &request, ServerResponse *response);
+    virtual void prepareController(AbstractController *controller, const ServerRequest &request, ServerResponse *response);
 
     void setError(int code, const QString &str);
 

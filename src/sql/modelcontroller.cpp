@@ -118,11 +118,11 @@ bool ModelController::canProcessRequest(const ServerRequest &request) const
     return m_manager && !request.resource().isEmpty();
 }
 
-void ModelController::processRequest(RequestHandler::Method method, const ServerRequest &request, ServerResponse *response)
+void ModelController::processRequest(const ServerRequest &request, ServerResponse *response)
 {
     m_endpoint = request.endpoint();
     m_table = request.resource();
-    AbstractResourceController::processRequest(method, request, response);
+    AbstractResourceController::processRequest(request, response);
 }
 
 } // namespace Sql
