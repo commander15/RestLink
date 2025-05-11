@@ -181,7 +181,7 @@ void ServerResponse::abort()
 ServerResponsePrivate::ServerResponsePrivate(ServerResponse *q)
     : ResponsePrivate(q)
     , method(RequestHandler::UnknownMethod)
-    , httpStatusCode(0)
+    , httpStatusCode(200)
     , finished(false)
     , server(nullptr)
 {
