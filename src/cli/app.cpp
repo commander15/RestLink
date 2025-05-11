@@ -13,6 +13,7 @@
 #define CONFIG_OPTION   "config"
 #define VERBOSE_OPTION  "verbose"
 #define BODYONLY_OPTION "body-only"
+#define TIMING_OPTION   "timing"
 
 // HTTP Methods
 #define HEAD_OPTION   "head"
@@ -64,6 +65,12 @@ void App::initParser()
     // Body only option
     {
         QCommandLineOption option(BODYONLY_OPTION, "Only the response body must be shown");
+        m_parser.addOption(option);
+    }
+
+    // Timing option
+    {
+        QCommandLineOption option(TIMING_OPTION, "compute execution time");
         m_parser.addOption(option);
     }
 
@@ -310,7 +317,19 @@ void App::monitorResponse(Response *response)
         m_out << '\n' << Qt::endl;
     }
 
-    connect(response, &Response::finished, this, [this, response] {
+    QElapsedTimer *timer = nullptr;
+    if (m_parser.isSet(TIMING_OPTION)) {
+        timer = new QElapsedTimer();
+        timer->start();
+    }
+
+    connect(response, &Response::finished, this, [this, response, timer] {
+        qint64 timing = 0;
+        if (timer) {
+            timing = timer->elapsed();
+            delete timer;
+        }
+
         if (!m_parser.isSet(BODYONLY_OPTION) && response->hasHttpStatusCode()) {
             m_out << "HTTP " << response->httpStatusCode() << ' ' << response->httpReasonPhrase() << Qt::endl;
             const QByteArrayList headers = response->headerList();
@@ -339,6 +358,9 @@ void App::monitorResponse(Response *response)
         }
 
         response->deleteLater();
+
+        if (timing > 0)
+            m_out << "\nrequest ran in " << timing << " ms." << Qt::endl;
     });
 
     connect(response, &QObject::destroyed, this, [this] {
