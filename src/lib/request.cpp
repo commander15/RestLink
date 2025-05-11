@@ -541,3 +541,9 @@ bool RequestPrivate::canUseUrlParameter(const Parameter &parameter, Request::Url
 }
 
 }
+
+template<>
+RestLink::RequestPrivate *QSharedDataPointer<RestLink::RequestPrivate>::clone()
+{
+    return d->clone();
+}

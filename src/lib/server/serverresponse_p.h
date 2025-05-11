@@ -14,7 +14,7 @@
 
 namespace RestLink {
 
-class ServerResponsePrivate : public ResponsePrivate
+class ServerResponsePrivate final : public ResponsePrivate
 {
 public:
     ServerResponsePrivate(ServerResponse *q);

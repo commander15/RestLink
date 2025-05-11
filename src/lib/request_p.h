@@ -19,6 +19,9 @@ public:
     RequestPrivate(const RequestPrivate &other) = default;
     virtual ~RequestPrivate() = default;
 
+    virtual RequestPrivate *clone() const
+    { return new RequestPrivate(*this); }
+
     static QString validateEndpoint(const QString &input);
 
     static bool canUseUrlParameter(const Parameter &parameter, Request::UrlType type);

@@ -6,13 +6,16 @@
 
 namespace RestLink {
 
-class ServerRequestPrivate : public RequestPrivate
+class ServerRequestPrivate final : public RequestPrivate
 {
 public:
     ServerRequestPrivate() = default;
     ServerRequestPrivate(const ServerRequestPrivate &other) = default;
     ServerRequestPrivate(RequestHandler::Method method, const RequestPrivate *request, const Body &body)
         : RequestPrivate(*request), method(method), body(body) {}
+
+    RequestPrivate *clone() const override
+    { return new ServerRequestPrivate(*this); }
 
     RequestHandler::Method method = RequestHandler::GetMethod;
     Body body;
