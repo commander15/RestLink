@@ -15,6 +15,8 @@ function(target_headers target)
         list(TRANSFORM ARG_PRIVATE PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/)
         set_property(TARGET ${target} APPEND PROPERTY PRIVATE_HEADER ${ARG_PRIVATE})
     endif()
+
+    target_sources(${target} PRIVATE ${ARG_PUBLIC} ${ARG_PRIVATE})
 endfunction()
 
 function(generate_target_headers target)
