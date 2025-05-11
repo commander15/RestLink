@@ -26,6 +26,10 @@ protected:
     void processRequest(const ServerRequest &request, ServerResponse *response) override;
 
 private:
+    void processConfigurationRequest(const ServerRequest &request, ServerResponse *response, ModelManager *manager);
+    void processTablesRequest(const ServerRequest &request, ServerResponse *response, ModelManager *manager);
+    void processQueryRequest(const ServerRequest &request, ServerResponse *response, ModelManager *manager);
+
     ModelController m_defaultController;
 };
 
