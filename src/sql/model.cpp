@@ -58,13 +58,20 @@ void Model::setField(const QString &name, const QVariant &value)
 void Model::fill(const QJsonObject &data)
 {
     d_ptr->data = data.toVariantHash();
+
+    for (Relation &relation : d_ptr->relations)
+        relation.fill(data);
 }
 
 void Model::fill(const QSqlRecord &record)
 {
     d_ptr->data.clear();
+
     for (int i(0); i < record.count(); ++i)
         d_ptr->data.insert(record.fieldName(i), record.value(i));
+
+    for (Relation &relation : d_ptr->relations)
+        relation.fill(record);
 }
 
 QJsonObject Model::jsonObject() const
@@ -146,6 +153,11 @@ bool Model::insert()
         return false;
 
     setPrimary(id);
+
+    for (Relation &relation : d_ptr->relations)
+        if (!relation.insert())
+            return false;
+
     return true;
 }
 
@@ -158,7 +170,14 @@ bool Model::update()
     options.filters.andWhere(primaryField(), primary());
 
     QSqlQuery query = exec(QueryBuilder::updateStatement(definition(), d_ptr->data, options, d_ptr->manager));
-    return query.lastError().type() == QSqlError::NoError;
+    if (query.lastError().type() != QSqlError::NoError)
+        return false;
+
+    for (Relation &relation : d_ptr->relations)
+        if (!relation.update())
+            return false;
+
+    return true;
 }
 
 bool Model::deleteData()
@@ -170,7 +189,14 @@ bool Model::deleteData()
     options.filters.andWhere(primaryField(), primary());
 
     QSqlQuery query = exec(QueryBuilder::deleteStatement(definition(), options, d_ptr->manager));
-    return query.lastError().type() == QSqlError::NoError;
+    if (query.lastError().type() != QSqlError::NoError)
+        return false;
+
+    for (Relation &relation : d_ptr->relations)
+        if (!relation.deleteData())
+            return false;
+
+    return true;
 }
 
 QString Model::tableName() const

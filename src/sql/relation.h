@@ -8,6 +8,8 @@
 #include <QtCore/qlist.h>
 #include <QtCore/qjsonvalue.h>
 
+class QSqlRecord;
+
 namespace RestLink {
 namespace Sql {
 
@@ -45,6 +47,9 @@ public:
     QString modelName() const;
     bool isOwnedModel() const;
     QJsonObject modelDefinition() const;
+
+    void fill(const QJsonObject &object);
+    void fill(const QSqlRecord &record);
 
     Model *root() const;
 
@@ -88,6 +93,9 @@ public:
     QJsonObject relatedModelDefinition() const;
     QJsonObject relationDefinition() const;
 
+    virtual void fillFromRootObject(const QJsonObject &object) {}
+    virtual void fillFromRootRecord(const QSqlRecord &record) {};
+
     virtual QList<Model> relatedModels() const = 0;
     virtual void setRelatedModels(const QList<Model> &models) = 0;
 
@@ -123,6 +131,9 @@ public:
 
     QVariant field(const QString &name) const override { error(); return QVariant(); }
     void setField(const QString &name, const QVariant &value) override { error(); }
+
+    void fillFromRootObject(const QJsonObject &object) override { error(); }
+    void fillFromRootRecord(const QSqlRecord &record) override { error(); }
 
     QList<Model> relatedModels() const override { error(); return {}; }
     void setRelatedModels(const QList<Model> &models) override { error(); }

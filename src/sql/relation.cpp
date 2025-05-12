@@ -76,6 +76,16 @@ QJsonObject Relation::modelDefinition() const
     return m_model->manager()->modelDefinition(modelName());
 }
 
+void Relation::fill(const QJsonObject &object)
+{
+    m_impl->fillFromRootObject(object);
+}
+
+void Relation::fill(const QSqlRecord &record)
+{
+    m_impl->fillFromRootRecord(record);
+}
+
 Model *Relation::root() const
 {
     return m_model;
