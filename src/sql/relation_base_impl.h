@@ -55,7 +55,7 @@ public:
     bool update() override;
     bool deleteData() override;
 
-private:
+protected:
     QList<Model> m_relatedModels;
 };
 
