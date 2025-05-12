@@ -191,13 +191,19 @@ QJsonObject RelationImpl::relationDefinition() const
 
 QString RelationImpl::rootPrimaryField() const
 {
-    // ToDo: extract from relation definition
+    const QJsonObject definition = relation->relationDefinition();
+    if (definition.contains("primary"))
+        return definition.value("primary").toString();
+
     return "id";
 }
 
 QString RelationImpl::rootForeignField() const
 {
-    // ToDo: extract from relation definition
+    const QJsonObject definition = relation->relationDefinition();
+    if (definition.contains("foreign"))
+        return definition.value("foreign").toString();
+
     return relation->root()->tableName().toLower() + "_id";
 }
 
