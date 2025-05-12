@@ -10,6 +10,13 @@ class HasOneImpl : public RestLink::Sql::SingleRelationImpl
 {
 public:
     HasOneImpl(Relation *relation) : SingleRelationImpl(relation) {}
+
+    bool get() override;
+    bool save() override;
+    bool insert() override;
+    bool update() override;
+    bool deleteData() override;
+
     Relation::Type relationType() const override { return Relation::Type::HasOne; }
     RelationImpl *clone() const override { return new HasOneImpl(relation); }
 };
@@ -22,6 +29,8 @@ public:
     bool get() override;
     bool save() override;
     bool insert() override;
+    bool update() override;
+    bool deleteData() override;
 
     Relation::OperationMode operationMode() const override { return Relation::OperationMode::PostProcessing; }
     Relation::Type relationType() const override { return Relation::Type::BelongsTo; }
@@ -32,6 +41,13 @@ class HasManyImpl : public RestLink::Sql::MultipleRelationImpl
 {
 public:
     HasManyImpl(Relation *relation) : MultipleRelationImpl(relation) {}
+
+    bool get() override;
+    bool save() override;
+    bool insert() override;
+    bool update() override;
+    bool deleteData() override;
+
     Relation::Type relationType() const override { return Relation::Type::HasMany; }
     RelationImpl *clone() const override { return new HasManyImpl(relation); }
 };
@@ -40,6 +56,13 @@ class BelongsToManyImpl : public RestLink::Sql::MultipleRelationImpl
 {
 public:
     BelongsToManyImpl(Relation *relation) : MultipleRelationImpl(relation) {}
+
+    bool get() override;
+    bool save() override;
+    bool insert() override;
+    bool update() override;
+    bool deleteData() override;
+
     Relation::Type relationType() const override { return Relation::Type::BelongsToMany; }
     RelationImpl *clone() const override { return new BelongsToManyImpl(relation); }
 };
