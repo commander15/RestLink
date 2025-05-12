@@ -135,8 +135,6 @@ QString QueryBuilder::whereClause(const QueryOptions &options, ModelManager *man
     if (!manager)
         return QString();
 
-    QSqlDriver *driver = manager->database().driver();
-
     QStringList filters;
 
     for (const QueryFilters::Filter &filter : options.filters.m_filters) {
@@ -144,10 +142,8 @@ QString QueryBuilder::whereClause(const QueryOptions &options, ModelManager *man
         if (!filter.expression.isEmpty())
             expression = filter.expression;
         else {
-            QSqlField field(filter.name, filter.value.metaType());
-            field.setValue(filter.value);
             expression = QStringLiteral("%1 %3 %2")
-                .arg(filter.name, driver->formatValue(field), filter.op);
+                .arg(filter.name, formatValue(filter.value, filter.value.metaType(), manager), filter.op);
         }
 
         if (expression.isEmpty())
@@ -163,6 +159,18 @@ QString QueryBuilder::whereClause(const QueryOptions &options, ModelManager *man
         return QString();
 
     return QStringLiteral("WHERE ") + filters.join(' ');
+}
+
+QString QueryBuilder::formatValue(const QVariant &value, ModelManager *manager)
+{
+    return formatValue(value, value.metaType(), manager);
+}
+
+QString QueryBuilder::formatValue(const QVariant &value, const QMetaType &type, ModelManager *manager)
+{
+    QSqlField field(QStringLiteral("x"), type);
+    field.setValue(value);
+    return manager->database().driver()->formatValue(field);
 }
 
 } // namespace Sql

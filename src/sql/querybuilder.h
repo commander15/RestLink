@@ -23,6 +23,9 @@ public:
 
     static void extract(const QJsonObject &definition, const QVariantHash &data, QStringList *columns, QStringList *values, ModelManager *manager);
     static QString whereClause(const QueryOptions &options, ModelManager *manager);
+
+    static QString formatValue(const QVariant &value, ModelManager *manager);
+    static QString formatValue(const QVariant &value, const QMetaType &type, ModelManager *manager);
 };
 
 class Expression : public QString
