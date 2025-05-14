@@ -56,6 +56,12 @@ namespace RestLink {
  * Indicates an unknown or custom handler type not explicitly defined by the framework.
  */
 
+
+RequestHandler::RequestHandler()
+    : d_ptr(new RequestHandlerPrivate())
+{
+}
+
 /*!
  * \brief Destructor for RequestHandler.
  */

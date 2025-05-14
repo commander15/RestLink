@@ -54,6 +54,8 @@ public:
     virtual HandlerType handlerType() const = 0;
 
 protected:
+    RequestHandler();
+
     bool isRequestSupported(const Request &request) const;
     void initResponse(Response *response, const Request &request, Method method);
     virtual Response *sendRequest(Method method, const Request &request, const Body &body) = 0;
