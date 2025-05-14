@@ -1,11 +1,17 @@
 #include "modelcontroller.h"
 
+#include "jsonutils.h"
 #include "model.h"
+#include "api.h"
 
 #include <RestLink/serverrequest.h>
 #include <RestLink/serverresponse.h>
 
 #include <QtCore/qjsonarray.h>
+
+#include <QtSql/qsqldatabase.h>
+#include <qsqlerror.h>
+#include <qsqlquery.h>
 
 #define PARAM_WITH_RELATIONS "with_relations"
 #define PARAM_PAGE           "page"
@@ -15,7 +21,7 @@ namespace RestLink {
 namespace Sql {
 
 ModelController::ModelController()
-    : m_manager(nullptr)
+    : m_api(nullptr)
 {
 }
 
@@ -24,9 +30,9 @@ QString ModelController::endpoint() const
     return m_endpoint;
 }
 
-void ModelController::setManager(ModelManager *manager)
+void ModelController::setApi(Api *api)
 {
-    m_manager = manager;
+    m_api = api;
 }
 
 void ModelController::index(const ServerRequest &request, ServerResponse *response)
@@ -52,59 +58,125 @@ void ModelController::index(const ServerRequest &request, ServerResponse *respon
         options.offset = (page - 1) * options.limit;
     }
 
+    QJsonObject json;
     QJsonArray result;
-    const QList<Model> models = Model::getMulti(m_table, options, m_manager);
+    int count;
+
+    QSqlQuery query;
+    const QList<Model> models = Model::getMulti(m_resource, options, m_api, &query);
+
+    QSqlError::ErrorType sqlErrorType = query.lastError().type();
+    if (sqlErrorType == QSqlError::NoError)
+        goto success;
+    else
+        goto error;
+
+success:
     for (const Model &model : models)
         result.append(model.jsonObject());
+    count = Model::count(m_resource, options, m_api);
 
-    double count = Model::count(m_table, options, m_manager);
-
-    QJsonObject json;
     json.insert("data", result);
     json.insert("from", options.offset + 1);
     json.insert("to", options.offset + models.count());
     json.insert("total", count);
     json.insert("current_page", page);
     json.insert("per_page", options.limit);
-    json.insert("last_page", qCeil<double>(count / options.limit));
+    json.insert("last_page", options.limit > 0 ? qCeil<double>(count / double(options.limit)) : 1);
 
-    response->setBody(json);
     response->setHttpStatusCode(200);
+    response->setBody(json);
     response->complete();
+    return;
+
+error:
+    json = JsonUtils::objectFromQuery(query);
+    response->setHttpStatusCode(httpStatusCodeFromSqlError(sqlErrorType));
+    response->setBody(json);
+    response->complete();
+    return;
 }
 
 void ModelController::show(const ServerRequest &request, ServerResponse *response)
 {
-    Model model(request.resource(), m_manager);
-
-    if (!model.get(request.identifier().toInt()))
+    Model model = currentModel(request);
+    if (!model.get())
         goto error;
 
     if (request.hasQueryParameter(PARAM_WITH_RELATIONS) && request.queryParameterValues(PARAM_WITH_RELATIONS).constFirst().toBool())
         model.loadAll();
 
-    response->setBody(model.jsonObject());
+    goto success;
+
+success:
     response->setHttpStatusCode(200);
+    response->setBody(model.jsonObject());
+    response->complete();
+    return;
 
 error:
-    response->setHttpStatusCode(404);
+    response->setHttpStatusCode(httpStatusCodeFromSqlError(model.lastQuery().lastError().type()));
+    response->setBody(JsonUtils::objectFromQuery(model.lastQuery()));
     response->complete();
+    return;
 }
 
 void ModelController::update(const ServerRequest &request, ServerResponse *response)
 {
+    Model model = currentModel(request);
+    model.fill(request.body().jsonObject());
+    if (model.update())
+        goto success;
+    else
+        goto error;
+
+success:
+    response->setBody(model.jsonObject());
+    response->setHttpStatusCode(200);
+    response->complete();
+    return;
+
+error:
+    response->setHttpStatusCode(httpStatusCodeFromSqlError(model.lastQuery().lastError().type()));
+    response->setBody(JsonUtils::objectFromQuery(model.lastQuery()));
+    response->complete();
+    return;
 }
 
 void ModelController::store(const ServerRequest &request, ServerResponse *response)
 {
+    Model model = currentModel(request);
+    model.fill(request.body().jsonObject());
+    if (model.insert())
+        goto success;
+    else
+        goto error;
+
+success:
+    response->setHttpStatusCode(200);
+    response->complete();
+    return;
+
+error:
+    response->setBody(JsonUtils::objectFromQuery(model.lastQuery()));
+    response->setHttpStatusCode(404);
+    response->complete();
+    return;
 }
 
 void ModelController::destroy(const ServerRequest &request, ServerResponse *response)
 {
-    Model model(request.resource(), m_manager);
+    Model model = currentModel(request);
 
     if (!model.get(request.identifier().toInt())) {
         response->setHttpStatusCode(404);
+        response->complete();
+        return;
+    }
+
+    if (!model.deleteData()) {
+        response->setHttpStatusCode(httpStatusCodeFromSqlError(model.lastQuery().lastError().type()));
+        response->setBody(JsonUtils::objectFromQuery(model.lastQuery()));
         response->complete();
         return;
     }
@@ -115,14 +187,66 @@ void ModelController::destroy(const ServerRequest &request, ServerResponse *resp
 
 bool ModelController::canProcessRequest(const ServerRequest &request) const
 {
-    return m_manager && !request.resource().isEmpty();
+    if (!m_api)
+        return false;
+
+    switch (request.method()) {
+    case RequestHandler::GetMethod:
+    case RequestHandler::PostMethod:
+    case RequestHandler::PutMethod:
+    case RequestHandler::DeleteMethod:
+        break;
+
+    default:
+        return false;
+    }
+
+    const ResourceInfo info = m_api->resourceInfo(request.resource());
+    return info.isValid();
 }
 
 void ModelController::processRequest(const ServerRequest &request, ServerResponse *response)
 {
     m_endpoint = request.endpoint();
-    m_table = request.resource();
+    m_resource = request.resource();
+
+    QSqlDatabase db = m_api->database();
+    db.transaction();
+
     AbstractResourceController::processRequest(request, response);
+
+    if (response->isSuccess())
+        db.commit();
+    else
+        db.rollback();
+}
+
+Model ModelController::currentModel(const ServerRequest &request) const
+{
+    Model model(request.resource(), m_api);
+
+    QVariant id = request.identifier();
+    if (id.canConvert<qint64>())
+        id.convert(QMetaType::fromType<qint64>());
+
+    model.setPrimary(id);
+    return model;
+}
+
+int ModelController::httpStatusCodeFromSqlError(int type)
+{
+
+    switch (type) {
+    case QSqlError::ConnectionError:
+        return 503;
+
+    case QSqlError::StatementError:
+    case QSqlError::TransactionError:
+        return 404;
+
+    default:
+        return 500;
+    }
 }
 
 } // namespace Sql

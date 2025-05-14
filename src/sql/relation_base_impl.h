@@ -23,11 +23,6 @@ public:
     void setJsonValue(const QJsonValue &value) override;
 
     bool exists() const override;
-    bool get() override;
-    bool save() override;
-    bool insert() override;
-    bool update() override;
-    bool deleteData() override;
 
 protected:
     Model m_relatedModel;
@@ -49,11 +44,6 @@ public:
     void setJsonValue(const QJsonValue &value) override;
 
     bool exists() const override;
-    bool get() override;
-    bool save() override;
-    bool insert() override;
-    bool update() override;
-    bool deleteData() override;
 
 protected:
     QList<Model> m_relatedModels;

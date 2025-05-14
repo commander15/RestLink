@@ -1,7 +1,9 @@
 #include "model.h"
 
 #include "debug.h"
-#include "modelmanager.h"
+#include "resourceinfo.h"
+#include "relationinfo.h"
+#include "api.h"
 #include "querybuilder.h"
 #include "jsonutils.h"
 
@@ -12,34 +14,62 @@
 namespace RestLink {
 namespace Sql {
 
+class ModelData final : public QSharedData
+{
+public:
+    ModelData() = default;
+
+    ModelData(const ModelData &other)
+        : QSharedData(other),
+        data(other.data),
+        relations(other.relations),
+        resource(other.resource),
+        api(other.api)
+    {}
+
+    ModelData(ModelData &&other) = default;
+
+    QVariantHash data;
+    QList<Relation> relations;
+
+    QSqlQuery lastQuery;
+
+    ResourceInfo resource;
+    Api *api = nullptr;
+};
+
 Model::Model()
     : d_ptr(new ModelData)
 {
 }
 
-Model::Model(const QString &table, ModelManager *manager)
+Model::Model(const QString &resource, Api *manager)
     : d_ptr(new ModelData)
 {
-    d_ptr->table = table;
-    d_ptr->manager = manager;
+    d_ptr->resource = manager->resourceInfo(resource);
+    d_ptr->api = manager;
 
     manager->refModel(this);
 }
 
+Model::Model(const Model &other) = default;
+
 Model::~Model()
 {
-    if (d_ptr->manager)
-        d_ptr->manager->unrefModel(this);
+    if (d_ptr->api)
+        d_ptr->api->unrefModel(this);
 }
+
+Model &Model::operator=(const Model &other) = default;
 
 QVariant Model::primary() const
 {
-    return field(primaryField());
+    return field(d_ptr->resource.primaryKey());
 }
 
 void Model::setPrimary(const QVariant &value)
 {
-    setField(primaryField(), value);
+    setField(d_ptr->resource.primaryKey(), value);
 }
 
 QVariant Model::field(const QString &name) const
@@ -79,10 +109,11 @@ QJsonObject Model::jsonObject() const
     QJsonObject object = QJsonObject::fromVariantHash(d_ptr->data);
 
     // First, we remove fields marked as hidden
-    const QJsonArray hiddenFields = definition().value("hidden").toArray();
-    for (const QJsonValue &value : hiddenFields)
-        object.remove(value.toString());
+    const QStringList hiddenFields = d_ptr->resource.hiddenFields();
+    for (const QString &field : hiddenFields)
+        object.remove(field);
 
+    // Next, we add relations
     for (const Relation &relation : d_ptr->relations)
         object.insert(relation.relationName(), relation.jsonValue());
 
@@ -102,7 +133,7 @@ bool Model::get()
 bool Model::get(const QVariant &id)
 {
     QueryFilters filters;
-    filters.andWhere(primaryField(), id);
+    filters.andWhere(d_ptr->resource.primaryKey(), id);
     return getByFilters(filters);
 }
 
@@ -112,12 +143,17 @@ bool Model::getByFilters(const QueryFilters &filters)
     options.filters = filters;
     options.limit = 1;
 
-    QSqlQuery query = exec(QueryBuilder::selectStatement(definition(), options, d_ptr->manager));
+    QSqlQuery query = exec(QueryBuilder::selectStatement(d_ptr->resource, options, d_ptr->api));
     if (!query.next())
         return false;
 
-    d_ptr->data = JsonUtils::objectFromRecord(query.record(), definition()).toVariantHash();
+    d_ptr->data = JsonUtils::objectFromRecord(query.record(), d_ptr->resource).toVariantHash();
     return true;
+}
+
+bool Model::loadAll()
+{
+    return load(d_ptr->resource.relationNames());
 }
 
 bool Model::load(const QStringList &relations)
@@ -133,20 +169,12 @@ bool Model::load(const QStringList &relations)
     return true;
 }
 
-bool Model::loadAll()
-{
-    const QJsonObject definition = this->definition();
-    const QJsonObject relationObject = definition.value("relations").toObject();
-    const QStringList names = relationObject.keys();
-    return load(names);
-}
-
 bool Model::insert()
 {
     QVariantHash data = d_ptr->data;
-    data.remove(primaryField());
+    data.remove(d_ptr->resource.primaryKey());
 
-    QSqlQuery query = exec(QueryBuilder::insertStatement(definition(), data, d_ptr->manager));
+    QSqlQuery query = exec(QueryBuilder::insertStatement(d_ptr->resource, data, d_ptr->api));
 
     const QVariant id = query.lastInsertId();
     if (!id.isValid())
@@ -167,9 +195,9 @@ bool Model::update()
         return false;
 
     QueryOptions options;
-    options.filters.andWhere(primaryField(), primary());
+    options.filters.andWhere(d_ptr->resource.primaryKey(), primary());
 
-    QSqlQuery query = exec(QueryBuilder::updateStatement(definition(), d_ptr->data, options, d_ptr->manager));
+    QSqlQuery query = exec(QueryBuilder::updateStatement(d_ptr->resource, d_ptr->data, options, d_ptr->api));
     if (query.lastError().type() != QSqlError::NoError)
         return false;
 
@@ -186,9 +214,9 @@ bool Model::deleteData()
         return false;
 
     QueryOptions options;
-    options.filters.andWhere(primaryField(), primary());
+    options.filters.andWhere(d_ptr->resource.primaryKey(), primary());
 
-    QSqlQuery query = exec(QueryBuilder::deleteStatement(definition(), options, d_ptr->manager));
+    QSqlQuery query = exec(QueryBuilder::deleteStatement(d_ptr->resource, options, d_ptr->api));
     if (query.lastError().type() != QSqlError::NoError)
         return false;
 
@@ -199,49 +227,45 @@ bool Model::deleteData()
     return true;
 }
 
-QString Model::tableName() const
+const QSqlQuery &Model::lastQuery() const
 {
-    return definition().value("table").toString();
+    return d_ptr->lastQuery;
 }
 
-QString Model::primaryField() const
+RelationInfo Model::relationInfo(const QString &name) const
 {
-    return definition().value("primary").toString();
+    return d_ptr->resource.relation(name);
 }
 
-QJsonObject Model::definition() const
+ResourceInfo Model::resourceInfo() const
 {
-    return d_ptr->manager->modelDefinition(d_ptr->table);
+    return d_ptr->api->resourceInfo(d_ptr->resource.table());
 }
 
-QJsonObject Model::relationDefinition(const QString &name) const
+Api *Model::api() const
 {
-    return definition().value("relations").toObject().value(name).toObject();
+    return d_ptr->api;
 }
 
-ModelManager *Model::manager() const
+QList<Model> Model::getMulti(const QString &resource, const QueryOptions &options, Api *api, QSqlQuery *query)
 {
-    return d_ptr->manager;
-}
+    const ResourceInfo info = api->resourceInfo(resource);
+    const QString statement = QueryBuilder::selectStatement(info, options, api);
 
-QList<Model> Model::getMulti(const QString &table, const QueryOptions &options, ModelManager *manager)
-{
-    const QJsonObject definition = manager->modelDefinition(table);
-    const QString statement = QueryBuilder::selectStatement(definition, options, manager);
+    QSqlQuery sqlQuery(api->database());
+    sqlQuery.setForwardOnly(true);
 
-    QSqlQuery query(manager->database());
-    query.setForwardOnly(true);
-
-    if (!query.exec(statement)) {
+    if (!sqlQuery.exec(statement)) {
         sqlWarning() << statement;
-        sqlWarning() << query.lastError().databaseText();
+        sqlWarning() << sqlQuery.lastError().databaseText();
+        if (query) query->swap(sqlQuery);
         return {};
     }
 
     QList<Model> models;
-    while (query.next()) {
-        Model model(table, manager);
-        model.fill(query.record());
+    while (sqlQuery.next()) {
+        Model model(resource, api);
+        model.fill(sqlQuery.record());
         if (options.withRelations)
             model.loadAll();
         models.append(model);
@@ -249,18 +273,17 @@ QList<Model> Model::getMulti(const QString &table, const QueryOptions &options, 
     return models;
 }
 
-int Model::count(const QString &table, const QueryOptions &options, ModelManager *manager)
+int Model::count(const QString &resource, const QueryOptions &options, Api *api)
 {
-    const QJsonObject definition = manager->modelDefinition(table);
+    const ResourceInfo info = api->resourceInfo(resource);
+    QString statement = QStringLiteral("SELECT COUNT(*) FROM ") + info.table();
 
-    QString statement = QStringLiteral("SELECT COUNT(*) FROM ") + definition.value("table").toString();
-
-    const QString whereClause = QueryBuilder::whereClause(options, manager);
+    const QString whereClause = QueryBuilder::whereClause(options, api);
     if (!whereClause.isEmpty()) {
         statement.append(' ' + whereClause);
     }
 
-    QSqlQuery query(manager->database());
+    QSqlQuery query(api->database());
     query.setForwardOnly(true);
 
     if (!query.exec(statement)) {
@@ -277,13 +300,14 @@ int Model::count(const QString &table, const QueryOptions &options, ModelManager
 
 QSqlQuery Model::exec(const QString &statement)
 {
-    if (!d_ptr->manager)
+    if (!d_ptr->api)
         return QSqlQuery();
 
-    QSqlQuery query(d_ptr->manager->database());
+    QSqlQuery query(d_ptr->api->database());
     query.setForwardOnly(true);
 
 #ifdef QT_DEBUG
+    sqlInfo() << statement;
     if (!query.exec(statement)) {
         sqlWarning() << statement;
         sqlWarning() << query.lastError().databaseText();

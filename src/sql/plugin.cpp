@@ -1,6 +1,6 @@
 #include "plugin.h"
 
-#include "api.h"
+#include "router.h"
 
 namespace RestLink {
 namespace Sql {
@@ -12,7 +12,7 @@ Plugin::Plugin(QObject *parent)
 
 RequestHandler *Plugin::createHandler()
 {
-    return new Api;
+    return new Router;
 }
 
 } // namespace Sql

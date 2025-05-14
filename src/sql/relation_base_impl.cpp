@@ -9,7 +9,6 @@ namespace Sql {
 
 SingleRelationImpl::SingleRelationImpl(Relation *relation)
     : RelationImpl(relation)
-    , m_relatedModel(relation->modelName(), relation->root()->manager())
 {
 }
 
@@ -46,31 +45,6 @@ void SingleRelationImpl::setJsonValue(const QJsonValue &value)
 bool SingleRelationImpl::exists() const
 {
     return m_relatedModel.exists();
-}
-
-bool SingleRelationImpl::get()
-{
-    return m_relatedModel.get();
-}
-
-bool SingleRelationImpl::save()
-{
-    return m_relatedModel.save();
-}
-
-bool SingleRelationImpl::insert()
-{
-    return m_relatedModel.insert();
-}
-
-bool SingleRelationImpl::update()
-{
-    return m_relatedModel.update();
-}
-
-bool SingleRelationImpl::deleteData()
-{
-    return m_relatedModel.deleteData();
 }
 
 MultipleRelationImpl::MultipleRelationImpl(Relation *relation)
@@ -116,7 +90,7 @@ void MultipleRelationImpl::setJsonValue(const QJsonValue &value)
 
     const QJsonArray array = value.toArray();
     for (const QJsonValue &item : array) {
-        Model model(relation->modelName(), rootModel()->manager());
+        Model model = createModel();
         model.fill(item.toObject());
         m_relatedModels.append(model);
     }
@@ -125,46 +99,6 @@ void MultipleRelationImpl::setJsonValue(const QJsonValue &value)
 bool MultipleRelationImpl::exists() const
 {
     return false;
-}
-
-bool MultipleRelationImpl::get()
-{
-    m_relatedModels.clear();
-
-    QueryOptions options;
-    QString statement;
-}
-
-bool MultipleRelationImpl::save()
-{
-    for (Model &model : m_relatedModels)
-        if (!model.save())
-            return false;
-    return true;
-}
-
-bool MultipleRelationImpl::insert()
-{
-    for (Model &model : m_relatedModels)
-        if (!model.insert())
-            return false;
-    return true;
-}
-
-bool MultipleRelationImpl::update()
-{
-    for (Model &model : m_relatedModels)
-        if (!model.update())
-            return false;
-    return true;
-}
-
-bool MultipleRelationImpl::deleteData()
-{
-    for (Model &model : m_relatedModels)
-        if (!model.deleteData())
-            return false;
-    return true;
 }
 
 } // namespace Sql

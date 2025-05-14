@@ -1,8 +1,9 @@
 #include "relation_api_impl.h"
-#include "debug.h"
-#include "modelmanager.h"
-#include <qsqlerror.h>
-#include <qsqlquery.h>
+
+#include "api.h"
+
+#include <QtSql/qsqlerror.h>
+#include <QtSql/qsqlquery.h>
 
 namespace RestLink {
 namespace Sql {
@@ -10,73 +11,100 @@ namespace Sql {
 bool HasOneImpl::get()
 {
     QueryFilters filters;
-    filters.andWhere(rootForeignField(), rootPrimaryValue());
-    return m_relatedModel.getByFilters(filters);
-}
+    filters.andWhere(rootResource.foreignKey(), root->primary());
 
-bool HasOneImpl::save()
-{
-    return false;
+    m_relatedModel = createModel();
+    return m_relatedModel.getByFilters(filters);
 }
 
 bool HasOneImpl::insert()
 {
-    return false;
+    // If root doesn't own the resource, it can't create it
+    if (!info.owned())
+        return true;
+
+    m_relatedModel.setField(rootResource.foreignKey(), root->primary());
+    return m_relatedModel.insert();
 }
 
 bool HasOneImpl::update()
 {
-    return false;
+    // If root doesn't own the resource, it can't modiffy it
+    if (!info.owned())
+        return true;
+
+    m_relatedModel.setField(rootResource.foreignKey(), root->primary());
+    return m_relatedModel.update();
 }
 
 bool HasOneImpl::deleteData()
 {
-    return false;
+    // If root doesn't own the resource, it can't delete it
+    if (!info.owned())
+        return true;
+
+    return m_relatedModel.deleteData();
 }
 
 bool BelongsToImpl::get()
 {
+    const QString foreignKey = foreignResource.foreignKey();
+
     QueryFilters filters;
-    filters.andWhere(relatedPrimaryField(), rootValue(relatedForeignField()));
+    filters.andWhere(foreignResource.primaryKey(), root->field(foreignKey));
+
+    m_relatedModel = createModel();
     return m_relatedModel.getByFilters(filters);
-}
-
-bool BelongsToImpl::save()
-{
-    if (!m_relatedModel.save())
-        return false;
-
-    setRootValue(relatedForeignField(), m_relatedModel.primary());
-    return true;
 }
 
 bool BelongsToImpl::insert()
 {
+    // If root doesn't own the resource, it can't create it
+    if (!info.owned())
+        return true;
+
     if (!m_relatedModel.insert())
         return false;
 
-    setRootValue(relatedForeignField(), m_relatedModel.primary());
+    // We update foreign key on root
+    root->setField(foreignResource.foreignKey(), m_relatedModel.primary());
     return true;
 }
 
 bool BelongsToImpl::update()
 {
-    return false;
+    // If root doesn't own the resource, it can't modiffy it
+    if (!info.owned())
+        return true;
+
+    if (!m_relatedModel.update())
+        return false;
+
+    // We update foreign key on root
+    root->setField(foreignResource.foreignKey(), m_relatedModel.primary());
+    return true;
 }
 
 bool BelongsToImpl::deleteData()
 {
-    return false;
+    // If root doesn't own the resource, it can't delete it
+    if (!info.owned())
+        return true;
+
+    if (!m_relatedModel.deleteData())
+        return false;
+
+    return true;
 }
 
 bool HasManyImpl::get()
 {
     QueryOptions options;
-    options.filters.andWhere(rootForeignField(), rootPrimaryValue());
+    options.filters.andWhere(rootResource.foreignKey(), root->primary());
 
-    // ToDo: must handle error in case no related found
-    m_relatedModels = Model::getMulti(relation->modelName(), options, rootModel()->manager());
-    return !m_relatedModels.isEmpty();
+    QSqlQuery query;
+    m_relatedModels = Model::getMulti(relation->modelName(), options, root->api(), &query);
+    return query.lastError().type() == QSqlError::NoError;
 }
 
 bool HasManyImpl::save()
@@ -101,30 +129,24 @@ bool HasManyImpl::deleteData()
 
 bool BelongsToManyImpl::get()
 {
-    ModelManager *manager = rootModel()->manager();
-    const QString pivot = relation->relationDefinition().value("pivot").toString();
+    Api *api = root->api();
+    const QString pivot = info.pivot();
 
-    QString statement = "SELECT " + relatedForeignField() + " FROM " + pivot;
-    statement.append(" WHERE " + rootPrimaryField() + " = " + QueryBuilder::formatValue(rootPrimaryValue(), manager));
+    QString statement = "SELECT " + foreignResource.foreignKey() + " FROM " + pivot;
+    statement.append(" WHERE " + rootResource.primaryKey() + " = " + QueryBuilder::formatValue(root->primary(), api));
 
-    QSqlQuery query(relation->root()->manager()->database());
-    query.setForwardOnly(true);
-    if (!query.exec(statement)) {
-        sqlDebug() << query.lastError().databaseText();
-        return false;
-    }
+    QSqlQuery query = exec(statement);
 
     QStringList ids;
     while (query.next())
-        ids.append(QueryBuilder::formatValue(query.value(0), manager));
+        ids.append(QueryBuilder::formatValue(query.value(0), api));
 
     QueryOptions options;
     options.filters.andWhere(Expression("id IN(" + ids.join(", ") + ')'));
     // options.withRelations = true;
 
-    // ToDo: must handle error in case no related found
-    m_relatedModels = Model::getMulti(relation->modelName(), options, manager);
-    return !m_relatedModels.isEmpty();
+    m_relatedModels = Model::getMulti(relation->modelName(), options, api, &query);
+    return query.lastError().type() == QSqlError::NoError;
 }
 
 bool BelongsToManyImpl::save()

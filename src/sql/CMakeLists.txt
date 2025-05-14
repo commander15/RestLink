@@ -7,18 +7,22 @@ qt_add_plugin(RestLinkSql
 
 target_sources(RestLinkSql
   PRIVATE
-  modelmanager.h modelmanager.cpp
+  api.h api.cpp
   crudinterface.h crudinterface.cpp
   model.h model.cpp
   querybuilder.h querybuilder.cpp
   jsonutils.h jsonutils.cpp
   debug.h debug.cpp
-  api.h api.cpp
+  router.h router.cpp
   plugin.h plugin.cpp
   relation.h relation.cpp
   relation_base_impl.h relation_base_impl.cpp
   relation_api_impl.h relation_api_impl.cpp
   modelcontroller.h modelcontroller.cpp
+  relationinfo.h relationinfo.cpp
+  resourceinfo.h resourceinfo.cpp
+  parseddata.h parseddata.cpp
+  queryrunner.h queryrunner.cpp
     # sqldatabase.h sqldatabase.cpp
     # sqldatabasemanager.h sqldatabasemanager.cpp
 )

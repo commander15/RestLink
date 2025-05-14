@@ -1,220 +1,169 @@
 #include "api.h"
 
-#include "jsonutils.h"
-#include "modelmanager.h"
+#include "resourceinfo.h"
 
-#include <QtCore/qfile.h>
-#include <qjsonarray.h>
-#include <qsqlerror.h>
-#include <qsqlquery.h>
+#include <RestLink/debug.h>
+
+#include <QtCore/qjsonarray.h>
+#include <QtCore/qjsonvalue.h>
+
+#include <QtSql/qsqlindex.h>
+#include <QtSql/qsqlrecord.h>
+#include <QtSql/qsqlfield.h>
 
 namespace RestLink {
 namespace Sql {
 
-Api::Api(QObject *parent)
-    : RestLink::Server(Synchronous, parent)
+Api::Api(const QUrl &url)
+    : m_url(url)
 {
+    static unsigned int connectionId = 0;
+
+    const QString driverName = 'Q' + url.scheme().toUpper();
+    m_dbConnectionName = QStringLiteral("RestLink_%1").arg(connectionId++);
+
+    QSqlDatabase db = QSqlDatabase::addDatabase(driverName, m_dbConnectionName);
+    db.setHostName(url.host());
+    db.setPort(url.port());
+    db.setUserName(url.userName());
+    db.setPassword(url.password());
+    db.setDatabaseName(url.path());
+
+    reset();
+
+    s_apis.insert(url, this);
 }
 
 Api::~Api()
 {
-    ModelManager::cleanupManagers();
+    if (m_activeModels == 0)
+        QSqlDatabase::removeDatabase(m_dbConnectionName);
+    else
+        restlinkWarning() << "(Internal Error) - Can't close connection to " << m_url.toString();
+
+    s_apis.remove(m_url);
 }
 
-QString Api::handlerName() const
+QUrl Api::url() const
 {
-    return QStringLiteral("SQL-API");
+    return m_url;
 }
 
-QStringList Api::supportedSchemes() const
+ResourceInfo Api::resourceInfo(const QString &name) const
 {
-    static QStringList schemes;
-    if (schemes.isEmpty()) {
-        schemes = QSqlDatabase::drivers();
-        std::transform(schemes.begin(), schemes.end(), schemes.begin(), [](const QString &driver) {
-            return driver.mid(1).toLower();
-        });
-    }
-    return schemes;
+    return m_resourceInfos.value(name);
 }
 
-bool Api::init()
+ResourceInfo Api::resourceInfoByTable(const QString &table) const
 {
-    return true;
+    auto it = std::find_if(m_resourceInfos.begin(), m_resourceInfos.end(), [&table](const ResourceInfo &info) {
+        return info.table() == table;
+    });
+
+    return (it != m_resourceInfos.end() ? *it : ResourceInfo());
 }
 
-void Api::cleanup()
+QStringList Api::resourceNames() const
 {
-    // No-op
+    return m_resourceInfos.keys();
 }
 
-bool Api::maintain()
+bool Api::isConfigured() const
 {
-    return true;
+    return !m_resourceInfos.isEmpty();
 }
 
-void Api::processRequest(const ServerRequest &request, ServerResponse *response)
+QJsonObject Api::configuration() const
 {
-    ModelManager *manager = ModelManager::manager(request.baseUrl());
-    if (!manager) {
-        response->setHttpStatusCode(404);
-        response->complete();
-        return;
-    }
+    QJsonObject configuration;
 
-    if (request.hasQueryParameter("configuration-file")) {
-        QFile file(request.queryParameterValues("configuration-file").constFirst().toString());
-        if (file.open(QIODevice::ReadOnly)) {
-            QJsonObject config = JsonUtils::objectFromRawData(file.readAll(), QJsonObject());
-            if (!config.isEmpty())
-                manager->configure(config);
-        }
+    QJsonObject resources;
+    for (const ResourceInfo &info : m_resourceInfos) {
+        QJsonObject resource;
+        info.save(&resource);
+        resources.insert(info.name(), resource);
     }
+    configuration.insert("resources", resources);
 
-    if (request.endpoint() == "/configuration") {
-        processConfigurationRequest(request, response, manager);
-        return;
-    }
-
-    if (request.endpoint() == "/tables") {
-        processTablesRequest(request, response, manager);
-        return;
-    }
-
-    if (request.endpoint() == "/query") {
-        processQueryRequest(request, response, manager);
-        return;
-    }
-
-    m_defaultController.setManager(manager);
-    if (m_defaultController.canProcessRequest(request)) {
-        m_defaultController.processRequest(request, response);
-        return;
-    }
-
-    response->setHttpStatusCode(404);
-    response->complete();
+    return configuration;
 }
 
-void Api::processConfigurationRequest(const ServerRequest &request, ServerResponse *response, ModelManager *manager)
+void Api::configure(const QJsonObject &configuration)
 {
-    switch (request.method()) {
-    case PostMethod:
-        manager->configure(JsonUtils::objectFromRawData(request.body().toByteArray(), QJsonObject()));
+    m_resourceInfos.clear();
 
-    case GetMethod:
-        response->setBody(manager->configuration());
-        response->setHttpStatusCode(200);
-        break;
+    const QJsonObject resources = configuration.value("resources").toObject();
+    const QStringList &resourceNames = resources.keys();
+    for (const QString &resourceName : resourceNames) {
+        const QJsonObject resourceObject = resources.value(resourceName).toObject();
 
-    default:
-        response->setHttpStatusCode(404);
-        break;
+        ResourceInfo resource;
+        resource.load(resourceName, resourceObject, this);
+
+        if (true)
+            m_resourceInfos.insert(resourceName, resource);
     }
-
-    response->complete();
 }
 
-void Api::processTablesRequest(const ServerRequest &request, ServerResponse *response, ModelManager *manager)
+void Api::reset()
 {
-    bool includeMetaData = true;
-    if (request.hasQueryParameter("meta"))
-        includeMetaData = request.queryParameterValues("meta").constFirst().toBool();
+    m_resourceInfos.clear();
 
-    response->setHttpStatusCode(200);
-    response->setBody(manager->modelDefinitions(includeMetaData));
-    response->complete();
+    QSqlDatabase db = database();
+
+    const QStringList tables = db.tables();
+    for (const QString &tableName : tables) {
+        QJsonObject object;
+        object.insert("table", tableName);
+
+        ResourceInfo resource;
+        resource.load(tableName.toLower(), object, this);
+
+        if (true)
+            m_resourceInfos.insert(resource.name(), resource);
+    }
 }
 
-void Api::processQueryRequest(const ServerRequest &request, ServerResponse *response, ModelManager *manager)
+QSqlDatabase Api::database() const
 {
-    QSqlQuery query(manager->database());
-    query.setForwardOnly(true);
-
-    auto process = [&query](const QByteArray &statement, bool *success) -> QJsonObject {
-        QJsonObject body;
-
-        if (!query.exec(statement)) {
-            QSqlError error = query.lastError();
-            body.insert("query", QString::fromUtf8(statement));
-            body.insert("message", error.text());
-            body.insert("error_code", error.nativeErrorCode());
-            *success = false;
-            return body;
-        }
-
-        QJsonArray data;
-        while (query.next())
-            data.append(JsonUtils::objectFromRecord(query.record()));
-        query.finish();
-
-        body.insert("last_insert_id", QJsonValue::fromVariant(query.lastInsertId()));
-        body.insert("num_rows_affected", query.numRowsAffected());
-        body.insert("data", data);
-        *success = true;
-        return body;
-    };
-
-    QByteArrayList statements;
-    QByteArrayList input;
-    {
-        const Body body = request.body();
-        if (body.hasPlainText())
-            input = request.body().toByteArray().trimmed().split('\n');
-        else if (body.isDevice())
-            input = body.device()->readAll().trimmed().split('\n');
-    }
-
-    {
-        QByteArray statement;
-        QByteArray delimiter = ";";
-        for (QByteArray &line : input) {
-            line = line.trimmed();
-
-            // We skip empty lines
-            if (line.isEmpty())
-                continue;
-
-            statement.append(line);
-
-            if (line.endsWith(delimiter)) {
-                statements.append(statement);
-                statement.clear();
-            }
-        }
-
-        // If there is only one statement without delimiter
-        if (statements.isEmpty() && !statement.isEmpty())
-            statements.append(statement);
-    }
-
-    if (statements.size() == 1) {
-        bool success;
-        response->setBody(process(statements.constFirst(), &success));
-        response->setHttpStatusCode(success ? 200 : 401);
-        response->complete();
-        return;
-    }
-
-    if (statements.size() > 1) {
-        int successes = 0;
-        bool success;
-
-        QJsonArray results;
-        for (const QByteArray &statement : statements) {
-            results.append(process(statement, &success));
-            successes += (success ? 1 : 0);
-        }
-
-        response->setBody(results);
-        response->setHttpStatusCode(successes > 0 ? 200 : 401);
-        response->complete();
-        return;
-    }
-
-    response->setHttpStatusCode(200);
-    response->complete();
+    return QSqlDatabase::database(m_dbConnectionName, true);
 }
+
+Api *Api::api(const QUrl &url)
+{
+    if (!url.isValid())
+        return nullptr;
+
+    auto it = std::find_if(s_apis.begin(), s_apis.end(), [&url](const Api *manager) {
+        return manager->m_url == url;
+    });
+
+    if (it != s_apis.end())
+        return *it;
+
+    return new Api(url);
+}
+
+void Api::cleanupManagers()
+{
+    const QList<QUrl> urls = s_apis.keys();
+    for (const QUrl &url : urls)
+        delete s_apis.take(url);
+}
+
+void Api::refModel(const Model *model)
+{
+    Q_UNUSED(model);
+    m_activeModels.ref();
+}
+
+void Api::unrefModel(const Model *model)
+{
+    Q_UNUSED(model);
+    m_activeModels.deref();
+}
+
+QHash<QUrl, Api *> Api::s_apis;
 
 } // namespace Sql
 } // namespace RestLink

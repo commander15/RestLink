@@ -10,11 +10,12 @@
 
 class QSqlQuery;
 class QSqlRecord;
+class QSqlError;
 
 namespace RestLink {
 namespace Sql {
 
-class ModelManager;
+class Api;
 class Relation;
 
 class ModelData;
@@ -22,11 +23,11 @@ class Model final: public CRUDInterface
 {
 public:
     Model();
-    Model(const QString &table, ModelManager *manager);
-    Model(const Model &other) = default;
+    Model(const QString &resource, Api *manager);
+    Model(const Model &other);
     ~Model();
 
-    Model &operator=(const Model &other) = default;
+    Model &operator=(const Model &other);
 
     QVariant primary() const;
     void setPrimary(const QVariant &value);
@@ -45,22 +46,22 @@ public:
     bool get(const QVariant &id);
     bool getByFilters(const QueryFilters &filters);
 
-    bool load(const QStringList &relations);
     bool loadAll();
+    bool load(const QStringList &relations);
 
     bool insert() override;
     bool update() override;
     bool deleteData() override;
 
-    QString tableName() const;
-    QString primaryField() const;
-    QJsonObject definition() const;
-    QJsonObject relationDefinition(const QString &name) const;
+    const QSqlQuery &lastQuery() const;
 
-    ModelManager *manager() const;
+    RelationInfo relationInfo(const QString &name) const;
+    ResourceInfo resourceInfo() const;
 
-    static QList<Model> getMulti(const QString &table, const QueryOptions &options, ModelManager *manager);
-    static int count(const QString &table, const QueryOptions &options, ModelManager *manager);
+    Api *api() const;
+
+    static QList<Model> getMulti(const QString &resource, const QueryOptions &options, Api *api, QSqlQuery *query);
+    static int count(const QString &resource, const QueryOptions &options, Api *api);
 
 private:
     QSqlQuery exec(const QString &statement);
@@ -69,15 +70,7 @@ private:
     QSharedDataPointer<ModelData> d_ptr;
 
     friend class Relation;
-};
-
-class ModelData final: public QSharedData
-{
-public:
-    QString table;
-    QVariantHash data;
-    QList<Relation> relations;
-    ModelManager *manager = nullptr;
+    friend class RelationImpl;
 };
 
 } // namespace Sql

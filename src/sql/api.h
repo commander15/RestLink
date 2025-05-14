@@ -1,36 +1,56 @@
 #ifndef API_H
 #define API_H
 
-#include "modelcontroller.h"
+#include <QtCore/qurl.h>
+#include <QtCore/qjsonobject.h>
+#include <QtCore/qatomic.h>
 
-#include <RestLink/server.h>
+#include <QtSql/qsqldatabase.h>
 
 namespace RestLink {
 namespace Sql {
 
-class Api final : public RestLink::Server
-{
-    Q_OBJECT
+class ResourceInfo;
+class Model;
 
+class Api final
+{
 public:
-    explicit Api(QObject *parent = nullptr);
     ~Api();
 
-    QString handlerName() const override;
-    QStringList supportedSchemes() const override;
+    QUrl url() const;
+
+    bool isConfigured() const;
+    QJsonObject configuration() const;
+    void configure(const QJsonObject &configuration);
+    void reset();
+
+    ResourceInfo resourceInfo(const QString &name) const;
+    ResourceInfo resourceInfoByTable(const QString &table) const;
+    QStringList resourceNames() const;
+
+    QSqlDatabase database() const;
+
+    static Api *api(const QUrl &url);
+    static void cleanupManagers();
 
 protected:
-    bool init() override;
-    void cleanup() override;
-    bool maintain() override;
-    void processRequest(const ServerRequest &request, ServerResponse *response) override;
+    void refModel(const Model *model);
+    void unrefModel(const Model *model);
 
 private:
-    void processConfigurationRequest(const ServerRequest &request, ServerResponse *response, ModelManager *manager);
-    void processTablesRequest(const ServerRequest &request, ServerResponse *response, ModelManager *manager);
-    void processQueryRequest(const ServerRequest &request, ServerResponse *response, ModelManager *manager);
+    Api(const QUrl &url);
 
-    ModelController m_defaultController;
+    const QUrl m_url;
+    QHash<QString, ResourceInfo> m_resourceInfos;
+    QJsonObject m_modelDefinitions;
+    QString m_dbConnectionName;
+
+    QAtomicInt m_activeModels;
+
+    static QHash<QUrl, Api *> s_apis;
+
+    friend class Model;
 };
 
 } // namespace Sql

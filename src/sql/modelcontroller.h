@@ -8,7 +8,9 @@
 namespace RestLink {
 namespace Sql {
 
-class ModelManager;
+class Model;
+
+class Api;
 
 class ModelController : public RestLink::AbstractResourceController
 {
@@ -17,7 +19,7 @@ public:
 
     QString endpoint() const override;
 
-    void setManager(ModelManager *manager);
+    void setApi(Api *api);
 
     void index(const ServerRequest &request, ServerResponse *response) override;
     void show(const ServerRequest &request, ServerResponse *response) override;
@@ -28,10 +30,14 @@ public:
     bool canProcessRequest(const ServerRequest &request) const override;
     void processRequest(const ServerRequest &request, ServerResponse *response) override;
 
+    Model currentModel(const ServerRequest &request) const;
+
+    static int httpStatusCodeFromSqlError(int type);
+
 private:
     QString m_endpoint;
-    QString m_table;
-    ModelManager *m_manager;
+    QString m_resource;
+    Api *m_api;
 };
 
 } // namespace Sql

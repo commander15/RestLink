@@ -10,22 +10,27 @@
 namespace RestLink {
 namespace Sql {
 
-class ModelManager;
+class ResourceInfo;
+class Api;
 class QueryOptions;
 
 class QueryBuilder
 {
 public:
-    static QString selectStatement(const QJsonObject &definition, const QueryOptions &options, ModelManager *manager);
-    static QString insertStatement(const QJsonObject &definition, const QVariantHash &data, ModelManager *manager);
-    static QString updateStatement(const QJsonObject &definition, const QVariantHash &data, const QueryOptions &options, ModelManager *manager);
-    static QString deleteStatement(const QJsonObject &definition, const QueryOptions &options, ModelManager *manager);
+    static bool canGenerate(const ResourceInfo &resource, const QueryOptions &options, Api *api);
+    static QString selectStatement(const ResourceInfo &resource, const QueryOptions &options, Api *api);
+    static QString insertStatement(const ResourceInfo &resource, const QVariantHash &data, Api *api);
+    static QString updateStatement(const ResourceInfo &resource, const QVariantHash &data, const QueryOptions &options, Api *api);
+    static QString deleteStatement(const ResourceInfo &resource, const QueryOptions &options, Api *api);
 
-    static void extract(const QJsonObject &definition, const QVariantHash &data, QStringList *columns, QStringList *values, ModelManager *manager);
-    static QString whereClause(const QueryOptions &options, ModelManager *manager);
+    static void extract(const ResourceInfo &resource, const QVariantHash &data, QStringList *columns, QStringList *values, Api *api);
+    static QString whereClause(const QueryOptions &options, Api *api);
 
-    static QString formatValue(const QVariant &value, ModelManager *manager);
-    static QString formatValue(const QVariant &value, const QMetaType &type, ModelManager *manager);
+    static QString formatFieldName(const QString &name, Api *api);
+    static QString formatTableName(const QString &name, Api *api);
+
+    static QString formatValue(const QVariant &value, Api *api);
+    static QString formatValue(const QVariant &value, const QMetaType &type, Api *api);
 };
 
 class Expression : public QString

@@ -1,6 +1,7 @@
 #include "querybuilder.h"
 
-#include "modelmanager.h"
+#include "resourceinfo.h"
+#include "api.h"
 
 #include <QtCore/qjsonobject.h>
 #include <QtCore/qjsonarray.h>
@@ -13,20 +14,21 @@
 namespace RestLink {
 namespace Sql {
 
-QString QueryBuilder::selectStatement(const QJsonObject &definition, const QueryOptions &options, ModelManager *manager)
+bool QueryBuilder::canGenerate(const ResourceInfo &resource, const QueryOptions &options, Api *api)
 {
-    if (!manager)
+    return resource.isValid() && api;
+}
+
+QString QueryBuilder::selectStatement(const ResourceInfo &resource, const QueryOptions &options, Api *api)
+{
+    if (!canGenerate(resource, options, api))
         return QString();
 
-    const QString table = definition.value("table").toString();
-    if (table.isEmpty())
-        return QString();
+    QString statement = QStringLiteral("SELECT * FROM %1").arg(formatTableName(resource.table(), api));
 
-    QString statement = QStringLiteral("SELECT * FROM %1").arg(table);
-
-    const QString whereClause = QueryBuilder::whereClause(options, manager);
+    const QString whereClause = QueryBuilder::whereClause(options, api);
     if (!whereClause.isEmpty())
-        statement += ' ' + whereClause;
+        statement.append(' ' + whereClause);
 
     if (!options.sortField.isEmpty()) {
         statement += QStringLiteral(" ORDER BY %1 %2")
@@ -35,23 +37,26 @@ QString QueryBuilder::selectStatement(const QJsonObject &definition, const Query
     }
 
     if (options.limit > 0)
-        statement += QStringLiteral(" LIMIT %1 OFFSET %2").arg(options.limit).arg(options.offset);
+        statement.append(QStringLiteral(" LIMIT %1").arg(options.limit));
+
+    if (options.offset > 0)
+        statement.append(QStringLiteral("OFFSET %1").arg(options.offset));
 
     return statement;
 }
 
-QString QueryBuilder::insertStatement(const QJsonObject &definition, const QVariantHash &data, ModelManager *manager)
+QString QueryBuilder::insertStatement(const ResourceInfo &resource, const QVariantHash &data, Api *api)
 {
-    if (!manager)
+    if (!canGenerate(resource, QueryOptions(), api))
         return QString();
 
-    const QString table = definition.value("table").toString();
+    const QString table = resource.table();
     if (table.isEmpty())
         return QString();
 
     QStringList columns;
     QStringList values;
-    extract(definition, data, &columns, &values, manager);
+    extract(resource, data, &columns, &values, api);
 
     if (columns.isEmpty())
         return QString();
@@ -60,18 +65,18 @@ QString QueryBuilder::insertStatement(const QJsonObject &definition, const QVari
         .arg(table, columns.join(", "), values.join(", "));
 }
 
-QString QueryBuilder::updateStatement(const QJsonObject &definition, const QVariantHash &data, const QueryOptions &options, ModelManager *manager)
+QString QueryBuilder::updateStatement(const ResourceInfo &resource, const QVariantHash &data, const QueryOptions &options, Api *api)
 {
-    if (!manager)
+    if (!canGenerate(resource, options, api))
         return QString();
 
-    const QString table = definition.value("table").toString();
+    const QString table = resource.table();
     if (table.isEmpty())
         return QString();
 
     QStringList columns;
     QStringList values;
-    extract(definition, data, &columns, &values, manager);
+    extract(resource, data, &columns, &values, api);
 
     if (columns.isEmpty())
         return QString();
@@ -81,58 +86,49 @@ QString QueryBuilder::updateStatement(const QJsonObject &definition, const QVari
         setClauses.append(QString("%1 = %2").arg(columns.at(i), values.at(i)));
     QString setClause = setClauses.join(", ");
 
-    QString whereClause = QueryBuilder::whereClause(options, manager);
+    QString whereClause = QueryBuilder::whereClause(options, api);
 
     return QStringLiteral("UPDATE %1 SET %2%3")
         .arg(table, setClause, !whereClause.isEmpty() ? ' ' + whereClause : QString());
 }
 
-QString QueryBuilder::deleteStatement(const QJsonObject &definition, const QueryOptions &options, ModelManager *manager)
+QString QueryBuilder::deleteStatement(const ResourceInfo &resource, const QueryOptions &options, Api *api)
 {
-    if (!manager)
+    if (!canGenerate(resource, options, api))
         return QString();
 
-    const QString table = definition.value("table").toString();
+    const QString table = resource.table();
     if (table.isEmpty())
         return QString();
 
     // Build the WHERE clause using the filters
-    QString whereClause = QueryBuilder::whereClause(options, manager);
+    QString whereClause = QueryBuilder::whereClause(options, api);
 
     return QStringLiteral("DELETE FROM %1%2")
         .arg(table, !whereClause.isEmpty() ? ' ' + whereClause : QString());
 }
 
-void QueryBuilder::extract(const QJsonObject &definition, const QVariantHash &data, QStringList *columns, QStringList *values, ModelManager *manager)
+void QueryBuilder::extract(const ResourceInfo &resource, const QVariantHash &data, QStringList *columns, QStringList *values, Api *api)
 {
-    if (!manager)
+    if (!canGenerate(resource, QueryOptions(), api))
         return;
 
-    // Retrieve fields from the definition
-    QJsonArray fields = definition.value("fields").toArray();
+    const QStringList fieldNames = resource.fillableFields();
+    for (const QString &fieldName : fieldNames) {
+        if (!data.contains(fieldName))
+            continue;
 
-    for (int i = 0; i < fields.size(); ++i) {
-        QJsonObject field = fields.at(i).toObject();
-        QString columnName = field.value("name").toString();
+        if (columns)
+            columns->append(formatFieldName(fieldName, api));
 
-        // Only include the field if it's present in the data
-        if (data.contains(columnName)) {
-            if (columns) columns->append(columnName);
-
-            // Get the QSqlField type from the definition
-            QMetaType fieldType = QMetaType::fromName(field.value("type").toString().toUtf8());
-
-            // Format value based on the field type
-            QSqlField sqlField(columnName, fieldType);
-            sqlField.setValue(data.value(columnName));
-            values->append(manager->database().driver()->formatValue(sqlField));
-        }
+        if (values)
+            values->append(formatValue(data.value(fieldName), resource.fieldType(fieldName), api));
     }
 }
 
-QString QueryBuilder::whereClause(const QueryOptions &options, ModelManager *manager)
+QString QueryBuilder::whereClause(const QueryOptions &options, Api *api)
 {
-    if (!manager)
+    if (!api)
         return QString();
 
     QStringList filters;
@@ -143,7 +139,7 @@ QString QueryBuilder::whereClause(const QueryOptions &options, ModelManager *man
             expression = filter.expression;
         else {
             expression = QStringLiteral("%1 %3 %2")
-                .arg(filter.name, formatValue(filter.value, filter.value.metaType(), manager), filter.op);
+                .arg(formatFieldName(filter.name, api), formatValue(filter.value, filter.value.metaType(), api), filter.op);
         }
 
         if (expression.isEmpty())
@@ -161,16 +157,34 @@ QString QueryBuilder::whereClause(const QueryOptions &options, ModelManager *man
     return QStringLiteral("WHERE ") + filters.join(' ');
 }
 
-QString QueryBuilder::formatValue(const QVariant &value, ModelManager *manager)
+QString QueryBuilder::formatFieldName(const QString &name, Api *api)
 {
-    return formatValue(value, value.metaType(), manager);
+    if (name.contains('.')) {
+        const QStringList parts = name.split('.', Qt::SkipEmptyParts);
+        if (parts.size() == 2)
+            return formatTableName(parts.first(), api) + '.' + formatFieldName(parts.last(), api);
+        else
+            return name;
+    }
+
+    return api->database().driver()->escapeIdentifier(name, QSqlDriver::FieldName);
 }
 
-QString QueryBuilder::formatValue(const QVariant &value, const QMetaType &type, ModelManager *manager)
+QString QueryBuilder::formatTableName(const QString &name, Api *api)
+{
+    return api->database().driver()->escapeIdentifier(name, QSqlDriver::TableName);
+}
+
+QString QueryBuilder::formatValue(const QVariant &value, Api *api)
+{
+    return formatValue(value, value.metaType(), api);
+}
+
+QString QueryBuilder::formatValue(const QVariant &value, const QMetaType &type, Api *api)
 {
     QSqlField field(QStringLiteral("x"), type);
     field.setValue(value);
-    return manager->database().driver()->formatValue(field);
+    return api->database().driver()->formatValue(field);
 }
 
 } // namespace Sql

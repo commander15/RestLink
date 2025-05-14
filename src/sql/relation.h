@@ -2,12 +2,15 @@
 #define RELATION_H
 
 #include "crudinterface.h"
+#include "relationinfo.h"
+#include "resourceinfo.h"
 
 #include <QtCore/qscopedpointer.h>
 #include <QtCore/qstring.h>
 #include <QtCore/qlist.h>
 #include <QtCore/qjsonvalue.h>
 
+class QSqlQuery;
 class QSqlRecord;
 
 namespace RestLink {
@@ -20,16 +23,16 @@ class RelationImpl;
 class Relation : public CRUDInterface
 {
 public:
-    enum class OperationMode {
+    enum OperationMode {
         PreProcessing,
         PostProcessing
     };
 
-    enum class Type {
-        HasOne,
-        BelongsTo,
-        HasMany,
-        BelongsToMany,
+    enum Type {
+        HasOne = 0,
+        BelongsTo = 1,
+        HasMany = 2,
+        BelongsToMany = 3,
 
         Null = -1
     };
@@ -42,11 +45,9 @@ public:
     Relation &operator=(const Relation &other);
 
     QString relationName() const;
-    QJsonObject relationDefinition() const;
 
     QString modelName() const;
     bool isOwnedModel() const;
-    QJsonObject modelDefinition() const;
 
     void fill(const QJsonObject &object);
     void fill(const QSqlRecord &record);
@@ -72,7 +73,7 @@ public:
     void prepareOperations(OperationMode mode);
 
 private:
-    QString m_name;
+    RelationInfo m_info;
     Model *m_model;
     QScopedPointer<RelationImpl> m_impl;
     OperationMode m_operationMode;
@@ -86,12 +87,6 @@ public:
 
     virtual QVariant field(const QString &name) const = 0;
     virtual void setField(const QString &name, const QVariant &value) = 0;
-
-    Model *rootModel() const { return relation->root(); }
-
-    QJsonObject rootModelDefinition() const;
-    QJsonObject relatedModelDefinition() const;
-    QJsonObject relationDefinition() const;
 
     virtual void fillFromRootObject(const QJsonObject &object) {}
     virtual void fillFromRootRecord(const QSqlRecord &record) {};
@@ -109,17 +104,21 @@ public:
     virtual RelationImpl *clone() const = 0;
 
 protected:
-    QString rootPrimaryField() const;
-    QString rootForeignField() const;
     QVariant rootPrimaryValue() const;
     QVariant rootValue(const QString &name) const;
     void setRootValue(const QString &name, const QVariant &value);
     void removeRootValue(const QString &name);
 
-    QString relatedPrimaryField() const;
-    QString relatedForeignField() const;
+    Model createModel() const;
+
+    QSqlQuery exec(const QString &statement);
+
+    Model *root;
+    ResourceInfo rootResource;
+    ResourceInfo foreignResource;
 
     Relation *relation;
+    RelationInfo info;
 
     friend class Relation;
 };

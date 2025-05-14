@@ -12,7 +12,6 @@ public:
     HasOneImpl(Relation *relation) : SingleRelationImpl(relation) {}
 
     bool get() override;
-    bool save() override;
     bool insert() override;
     bool update() override;
     bool deleteData() override;
@@ -27,7 +26,6 @@ public:
     BelongsToImpl(Relation *relation) : SingleRelationImpl(relation) {}
 
     bool get() override;
-    bool save() override;
     bool insert() override;
     bool update() override;
     bool deleteData() override;

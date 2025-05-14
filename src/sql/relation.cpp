@@ -1,8 +1,11 @@
 #include "relation.h"
 
 #include "model.h"
-#include "modelmanager.h"
+#include "relationinfo.h"
+#include "api.h"
 #include "relation_api_impl.h"
+
+#include <QtSql/qsqlquery.h>
 
 namespace RestLink {
 namespace Sql {
@@ -14,25 +17,38 @@ Relation::Relation()
 }
 
 Relation::Relation(const QString &name, Model *model)
-    : m_name(name)
+    : m_info(model->relationInfo(name))
     , m_model(model)
 {
-    const QJsonObject definition = model->relationDefinition(name);
-
-    const QString type = definition.value("type").toString();
-    if (type == "HasOne") {
+    switch (static_cast<Type>(m_info.type())) {
+    case Type::HasOne:
         m_impl.reset(new HasOneImpl(this));
-    } else if (type == "BelongsTo") {
+        break;
+
+    case Type::BelongsTo:
         m_impl.reset(new BelongsToImpl(this));
-    } else if (type == "HasMany") {
+        break;
+
+    case Type::HasMany:
         m_impl.reset(new HasManyImpl(this));
-    } else if (type == "BelongsToMany") {
+        break;
+
+    case Type::BelongsToMany:
         m_impl.reset(new BelongsToManyImpl(this));
-    } else {
+        break;
+
+    default:
         m_impl.reset(new NullRelationImpl(this));
+        break;
     }
 
     m_impl->relation = this;
+    m_impl->root = model;
+    m_impl->rootResource = model->resourceInfo();
+    m_impl->info = m_info;
+    m_impl->foreignResource = model->api()->resourceInfoByTable(m_info.table());
+
+    const ResourceInfo res = model->resourceInfo();
 }
 
 Relation::Relation(const Relation &other)
@@ -43,7 +59,7 @@ Relation::Relation(const Relation &other)
 
 Relation &Relation::operator=(const Relation &other)
 {
-    m_name = other.m_name;
+    m_info = other.m_info;
     m_model = other.m_model;
     m_impl.reset(other.m_impl->clone());
     return *this;
@@ -51,29 +67,17 @@ Relation &Relation::operator=(const Relation &other)
 
 QString Relation::relationName() const
 {
-    return m_name;
-}
-
-QJsonObject Relation::relationDefinition() const
-{
-    return m_model->relationDefinition(m_name);
+    return m_info.name();
 }
 
 QString Relation::modelName() const
 {
-    const QJsonObject definition = m_model->relationDefinition(relationName());
-    return definition.value("table").toString();
+    return m_info.table();
 }
 
 bool Relation::isOwnedModel() const
 {
-    const QJsonObject definition = m_model->relationDefinition(relationName());
-    return definition.value("owned").toBool(false);
-}
-
-QJsonObject Relation::modelDefinition() const
-{
-    return m_model->manager()->modelDefinition(modelName());
+    return m_info.owned();
 }
 
 void Relation::fill(const QJsonObject &object)
@@ -174,39 +178,6 @@ RelationImpl::RelationImpl(Relation *relation)
 {
 }
 
-QJsonObject RelationImpl::rootModelDefinition() const
-{
-    return relation->root()->definition();
-}
-
-QJsonObject RelationImpl::relatedModelDefinition() const
-{
-    return relation->modelDefinition();
-}
-
-QJsonObject RelationImpl::relationDefinition() const
-{
-    return relation->relationDefinition();
-}
-
-QString RelationImpl::rootPrimaryField() const
-{
-    const QJsonObject definition = relation->relationDefinition();
-    if (definition.contains("primary"))
-        return definition.value("primary").toString();
-
-    return "id";
-}
-
-QString RelationImpl::rootForeignField() const
-{
-    const QJsonObject definition = relation->relationDefinition();
-    if (definition.contains("foreign"))
-        return definition.value("foreign").toString();
-
-    return relation->root()->tableName().toLower() + "_id";
-}
-
 QVariant RelationImpl::rootPrimaryValue() const
 {
     return relation->root()->primary();
@@ -227,19 +198,14 @@ void RelationImpl::removeRootValue(const QString &name)
     relation->root()->setField(name, QVariant());
 }
 
-QString RelationImpl::relatedPrimaryField() const
+Model RelationImpl::createModel() const
 {
-    // ToDo: extract from relation definition
-    return "id";
+    return Model(foreignResource.name(), root->api());
 }
 
-QString RelationImpl::relatedForeignField() const
+QSqlQuery RelationImpl::exec(const QString &statement)
 {
-    const QJsonObject definition = relation->relationDefinition();
-    if (definition.contains("foreign"))
-        return definition.value("foreign").toString();
-
-    return relation->modelName().toLower() + "_id";
+    return root->exec(statement);
 }
 
 } // namespace Sql
