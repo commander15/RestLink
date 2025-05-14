@@ -14,7 +14,10 @@ public:
 
     QVariant object;
     Body::Type objectType = Body::Type::Unknown;
+
     QByteArray contentType;
+    qint64 contentLength = 0;
+
     HeaderList headers;
 };
 

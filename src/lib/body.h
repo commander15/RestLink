@@ -10,6 +10,10 @@
 #include <QtCore/qshareddata.h>
 #include <QtCore/qmimedatabase.h>
 
+#define RESTLINK_MIME_PLAIN_TEXT   "text/plain"
+#define RESTLINK_MIME_OCTET_STREAM "application/octet-stream"
+#define RESTLINK_MIME_JSON         "application/json"
+
 class QHttpMultiPart;
 class QIODevice;
 class QFile;
@@ -25,27 +29,24 @@ public:
     enum class Type {
         PlainText,
         JsonData,
+        RawData,
         IODevice,
         HttpMultiPart,
 
         Unknown = -1,
     };
 
-
     Body();
-    Body(const char *data, int size = -1, const QByteArray &contentType = QByteArrayLiteral("text/plain"));
-    Body(const QByteArray &data);
-    Body(const QByteArray &data, const QByteArray &contentType);
-    Body(const QString &text);
-    Body(const QString &text, const QByteArray &contentType);
-    Body(const QJsonValue &value);
+    Body(const char *data, int size = -1, const QByteArray &contentType = QByteArray());
+    Body(const QByteArray &data, const QByteArray &contentType = QByteArray());
+    Body(const QString &text, const QByteArray &contentType = QByteArray());
     Body(const QJsonObject &object);
     Body(const QJsonArray &array);
     Body(const QJsonDocument &doc);
-    Body(const QVariant &value, const QByteArray &contentType = QByteArray());
     Body(const File &file);
     Body(QFile *file);
-    Body(QIODevice *device, qint64 size = -1, const QByteArray &contentType = QByteArrayLiteral("text/plain"));
+    Body(QIODevice *device, const QByteArray &contentType = QByteArray());
+    Body(QIODevice *device, qint64 size, const QByteArray &contentType = QByteArray());
     Body(QHttpMultiPart *multiPart);
     Body(const Body &other);
     Body(Body &&other);
@@ -74,11 +75,13 @@ public:
     Type objectType() const;
 
     QString contentType() const;
-    //qint64 contentLength() const;
+    qint64 contentLength() const;
 
     HeaderList headers() const;
 
 private:
+    Body(const QVariant &object, Type type, const QByteArray &contentType, qint64 contentLength);
+
     QExplicitlySharedDataPointer<BodyData> d_ptr;
 
     static QMimeDatabase s_mimeDatabase;
