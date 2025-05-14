@@ -23,6 +23,32 @@ namespace RestLink {
  */
 
 /*!
+ * \enum Request::Attribute
+ * \brief Defines configurable attributes that influence request behavior.
+ *
+ * These attributes control how the request interacts with caching and compression mechanisms.
+ *
+ * \var Request::Attribute Request::CacheLoadControlAttribute
+ * Controls whether loading from cache is allowed when executing the request.
+ * \var Request::Attribute Request::CacheSaveControlAttribute
+ * Controls whether the response of the request should be stored in cache.
+ * \var Request::Attribute Request::CompressionAllowedAttribute
+ * Indicates whether the request supports receiving compressed responses.
+ */
+
+/*!
+ * \enum Request::UrlType
+ * \brief Defines the type of URL associated with the request.
+ *
+ * These types help differentiate between publicly accessible URLs and those containing sensitive data.
+ *
+ * \var Request::UrlType Request::PublicUrl
+ * A URL intended for general or non-sensitive access.
+ * \var Request::UrlType Request::SecretUrl
+ * A URL that may contain confidential or authentication-related information.
+ */
+
+/*!
  * \brief Default constructor for Request.
  *
  * Initializes an empty Request object. This constructor sets up the

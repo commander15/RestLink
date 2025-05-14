@@ -312,7 +312,6 @@ bool Api::configure(const QJsonObject &config)
 Response *Api::send(RequestHandler::Method method, const Request &request, const Body &body)
 {
     RESTLINK_D(Api);
-
     if (d->hasRemoteRequest(request))
         return ApiBase::send(method, Request::merge(request, d->remoteRequest(request)), body);
     else

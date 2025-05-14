@@ -77,8 +77,15 @@ QByteArray ServerResponse::header(const QByteArray &name) const
     if (it != d->headers.end())
         return it->value().toByteArray();
 
-    Header header = d->body.headers().parameter(name);
-    return header.isValid() ? header.value().toByteArray() : d->body.contentType().toLatin1();
+    const HeaderList headers = d->body.headers();
+    it = std::find_if(headers.begin(), headers.end(), [name](const Header &header) {
+        return header.name() == name;
+    });
+
+    if (it != d->headers.end())
+        return it->value().toByteArray();
+
+    return QByteArray();
 }
 
 QByteArrayList ServerResponse::headerList() const

@@ -42,54 +42,36 @@ NetworkManager::NetworkManager(QObject *parent)
     : QNetworkAccessManager{parent}
 {
     setRedirectPolicy(QNetworkRequest::SameOriginRedirectPolicy);
-
-    static bool firstLoad = true;
-    if (firstLoad) {
-        restlinkInfo() << "supported network schemes: " << QNetworkAccessManager::supportedSchemes().join(", ");
-        firstLoad = false;
-    }
 }
 
 Response *NetworkManager::sendRequest(Method method, const Request &request, const Body &body)
 {
-#ifdef RESTLINK_DEBUG
-    restlinkInfo() << HttpUtils::verbString(method) << ' ' << request.url(Request::PublicUrl).toString(QUrl::DecodeReserved);
+    const QString requestScheme = request.baseUrl().scheme();
+#ifdef Q_OS_WASM
+    // Workaround for a Qt bug on WebAssembly, http and https didn't appears in supported schemes
+    const QStringList httpSchemes = { "http", "https" }; // force HTTP/HTTPS support on WASM
+#else
+    // Here we don't enforce https cause it depends on SSL support and works well on non WASM platform
+    const QStringList httpSchemes = { "http" }; // force HTTP support on all platforms
 #endif
-
-    static auto registerForLogging = [](Response *response) {
-        QObject::connect(response, &Response::finished, response, [response] {
-            if (response->isSuccess())
-                return;
-
-            if (response->hasHttpStatusCode())
-                restlinkWarning() << "HTTP " << response->httpStatusCode() << ' ' << response->httpReasonPhrase();
-            else if (response->hasNetworkError())
-                restlinkWarning() << "Network error: " << response->networkErrorString();
-            else
-                restlinkWarning() << "Unkown error occured";
-        });
-    };
-
-    const QString scheme = request.baseUrl().scheme();
 
     // If it's supported, send though QNetworkAccessManager base
     const QStringList networkSchemes = QNetworkAccessManager::supportedSchemes();
-    if (networkSchemes.contains(scheme) || scheme.startsWith("http")) {
+    if (httpSchemes.contains(requestScheme) || networkSchemes.contains(requestScheme)) {
         QNetworkRequest netRequest = generateNetworkRequest(method, request, body);
         QNetworkReply *netReply = generateNetworkReply(method, netRequest, body);
 
         NetworkResponse *response = new NetworkResponse(this);
         initResponse(response, request, method);
         response->setReply(netReply);
-        registerForLogging(response);
         return response;
     }
 
     // Otherwise, try using plugin handlers
     QList<RequestHandler *> handlers = PluginManager::handlers();
 
-    auto it = std::find_if(handlers.begin(), handlers.end(), [&scheme](const RequestHandler *handler) {
-        return handler->supportedSchemes().contains(scheme);
+    auto it = std::find_if(handlers.begin(), handlers.end(), [&requestScheme](const RequestHandler *handler) {
+        return handler->supportedSchemes().contains(requestScheme);
     });
 
     if (it != handlers.end()) {
@@ -98,8 +80,6 @@ Response *NetworkManager::sendRequest(Method method, const Request &request, con
         Response *response = handler->send(method, request, body);
         if (!response)
             restlinkWarning() << handler->handlerName() << ": response object creation failed, probably plugin related error";
-        else
-            registerForLogging(response);
         return response;
     }
 
@@ -116,9 +96,13 @@ QStringList NetworkManager::supportedSchemes() const
     for (RequestHandler *handler : handlers)
         schemes.append(handler->supportedSchemes());
 
+#ifdef Q_OS_WASM
+    // Force HTTP/HTTPS on WASM
+    schemes.append({ "https", "http" });
+#endif
+
     // Removing duplicates and returning schemes
     schemes.removeDuplicates();
-    schemes.append("https");
     return schemes;
 }
 
@@ -202,10 +186,8 @@ QNetworkReply *NetworkManager::generateNetworkReply(Method method, const QNetwor
             reply =  man->post(request, body.multiPart());
         else if (body.isDevice())
             reply =  man->post(request, body.device());
-        else if (body.hasPlainText())
-            reply =  man->post(request, body.toByteArray());
         else
-            reply =  man->post(request, QByteArray());
+            reply =  man->post(request, body.toByteArray());
         break;
 
     case RequestHandler::PutMethod:
@@ -213,10 +195,8 @@ QNetworkReply *NetworkManager::generateNetworkReply(Method method, const QNetwor
             reply =  man->put(request, body.multiPart());
         else if (body.isDevice())
             reply =  man->put(request, body.device());
-        else if (body.hasPlainText())
-            reply =  man->put(request, body.toByteArray());
         else
-            reply =  man->put(request, QByteArray());
+            reply =  man->put(request, body.toByteArray());
         break;
 
     case RequestHandler::PatchMethod:
@@ -224,10 +204,8 @@ QNetworkReply *NetworkManager::generateNetworkReply(Method method, const QNetwor
             reply =  man->sendCustomRequest(request, "PATCH", body.multiPart());
         else if (body.isDevice())
             reply =  man->sendCustomRequest(request, "PATCH", body.device());
-        else if (body.hasPlainText())
-            reply =  man->sendCustomRequest(request, "PATCH", body.toByteArray());
         else
-            reply =  man->sendCustomRequest(request, "PATCH", QByteArray());
+            reply =  man->sendCustomRequest(request, "PATCH", body.toByteArray());
         break;
 
     case RequestHandler::DeleteMethod:
@@ -238,17 +216,16 @@ QNetworkReply *NetworkManager::generateNetworkReply(Method method, const QNetwor
         reply =  nullptr;
     }
 
-    if (body.isMultiPart()) {
-        QHttpMultiPart *multiPart = body.multiPart();
-        if (!multiPart->parent())
-            multiPart->setParent(reply ? static_cast<QObject *>(reply) : static_cast<QObject *>(this));
-    }
+    QObject *child;
+    if (body.isMultiPart())
+        child = body.multiPart();
+    else if (body.isDevice())
+        child = body.device();
+    else
+        child = nullptr;
 
-    if (body.isDevice()) {
-        QIODevice *device = body.device();
-        if (!device->parent())
-            device->setParent(reply ? static_cast<QObject *>(reply) : static_cast<QObject *>(this));
-    }
+    if (child)
+        child->setParent(reply ? static_cast<QObject *>(reply) : static_cast<QObject *>(this));
 
     return reply;
 }

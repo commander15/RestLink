@@ -20,4 +20,14 @@
 
 #include <RestLink/pluginmanager.h>
 
+/*!
+ * \file restlink.h
+ * \brief Central include header for the RestLink library.
+ *
+ * This header includes all core components of the RestLink framework,
+ * providing access to requests, responses, utilities, plugins, and handlers.
+ * Include this file to use the full RestLink API in your project.
+ */
+
+
 #endif // RESTLINK_H

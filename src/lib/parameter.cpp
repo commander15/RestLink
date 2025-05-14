@@ -15,16 +15,77 @@
 
 namespace RestLink {
 
+/*!
+ * \class RestLink::Parameter
+ * \brief Represents a generic parameter, which could be a path, query, or header parameter, with support for special values and flags.
+ *
+ * This class provides a flexible structure to define parameters in various contexts, supporting operations
+ * such as adding/removing values, flagging special attributes, and converting to/from JSON format.
+ * Parameters can represent different types, including path parameters, query parameters, and headers.
+ */
+
+/*!
+ * \enum Parameter::Flag
+ * \brief Defines flags used to specify special attributes for a parameter.
+ *
+ * Flags can be used to indicate attributes like authentication, secrecy, and locale.
+ *
+ * \var Parameter::Flag Parameter::NoFlag
+ * No flags are set. This is the default state.
+ * \var Parameter::Flag Parameter::Authentication
+ * Indicates that the parameter is used for authentication purposes.
+ * \var Parameter::Flag Parameter::Secret
+ * Indicates that the parameter holds secret or sensitive information.
+ * \var Parameter::Flag Parameter::Locale
+ * Indicates that the parameter is related to the locale or language settings.
+ */
+
+/*!
+ * \enum Parameter::Type
+ * \brief Defines the possible types of parameters.
+ *
+ * Parameters can be classified into different types, including base type, path parameter type, query parameter type,
+ * and header type.
+ *
+ * \var Parameter::Type Parameter::BaseType
+ * Represents the base type of the parameter, typically a general or default type.
+ * \var Parameter::Type Parameter::PathParameterType
+ * Represents parameters that are embedded in the URL path, usually used for resource identifiers.
+ * \var Parameter::Type Parameter::QueryParameterType
+ * Represents parameters that are passed as part of the query string in the URL.
+ * \var Parameter::Type Parameter::HeaderType
+ * Represents parameters that are used as HTTP headers.
+ */
+
+/*!
+ * \brief Default constructor for Parameter class.
+ *
+ * Initializes a new parameter instance with default values.
+ */
 Parameter::Parameter()
     : d_ptr(new ParameterData())
 {
 }
 
+/*!
+ * \brief Copy constructor for Parameter class.
+ *
+ * Creates a new Parameter instance as a copy of the provided parameter.
+ *
+ * \param other The parameter to copy.
+ */
 Parameter::Parameter(const Parameter &other)
     : d_ptr(other.d_ptr)
 {
 }
 
+/*!
+ * \brief Move constructor for Parameter class.
+ *
+ * Transfers ownership of the resources from the provided parameter to the new instance.
+ *
+ * \param other The parameter to move.
+ */
 Parameter::Parameter(Parameter &&other)
     : d_ptr(std::move(other.d_ptr))
 {
@@ -40,10 +101,23 @@ Parameter::Parameter(const QSharedDataPointer<ParameterData> &data)
 {
 }
 
+/*!
+ * \brief Destructor for Parameter class.
+ *
+ * Cleans up the resources held by the parameter.
+ */
 Parameter::~Parameter()
 {
 }
 
+/*!
+ * \brief Copy assignment operator for Parameter class.
+ *
+ * Copies the contents of one Parameter instance to another.
+ *
+ * \param other The parameter to copy from.
+ * \return A reference to the current instance.
+ */
 Parameter &Parameter::operator=(const Parameter &other)
 {
     if (this != &other)
@@ -51,6 +125,14 @@ Parameter &Parameter::operator=(const Parameter &other)
     return *this;
 }
 
+/*!
+ * \brief Move assignment operator for Parameter class.
+ *
+ * Transfers ownership of the resources from the provided parameter to the current instance.
+ *
+ * \param other The parameter to move from.
+ * \return A reference to the current instance.
+ */
 Parameter &Parameter::operator=(Parameter &&other)
 {
     if (this != &other)
@@ -98,6 +180,14 @@ void Parameter::setValue(const QVariant &value)
         d_ptr->values.clear();
 }
 
+/*!
+ * \brief Returns a special value for the parameter, based on the provided API.
+ *
+ * This method may return a specific value depending on the context of the API.
+ *
+ * \param api The API used to determine the special value.
+ * \return A QVariant representing the special value.
+ */
 QVariant Parameter::specialValue(Api *api) const
 {
     // ToDo: Optimize for better performances
@@ -105,6 +195,14 @@ QVariant Parameter::specialValue(Api *api) const
     return !values.isEmpty() ? values.first() : QVariant();
 }
 
+/*!
+ * \brief Returns a list of special values for the parameter, based on the provided API.
+ *
+ * This method may return multiple special values depending on the context of the API.
+ *
+ * \param api The API used to determine the special values.
+ * \return A list of special values as QVariantList.
+ */
 QVariantList Parameter::specialValues(Api *api) const
 {
     QVariantList values;
@@ -129,11 +227,22 @@ QVariantList Parameter::specialValues(Api *api) const
     return values;
 }
 
+/*!
+ * \brief Checks if the parameter contains a specific value.
+ *
+ * \param value The value to check.
+ * \return True if the value exists in the parameter, false otherwise.
+ */
 bool Parameter::hasValue(const QVariant &value) const
 {
     return d_ptr->values.contains(value);
 }
 
+/*!
+ * \brief Adds a value to the parameter.
+ *
+ * \param value The value to add.
+ */
 void Parameter::addValue(const QVariant &value)
 {
     const QVariant finalValue = d_ptr->validateValue(value);
@@ -141,16 +250,31 @@ void Parameter::addValue(const QVariant &value)
         d_ptr->values.append(finalValue);
 }
 
+/*!
+ * \brief Removes a value from the parameter.
+ *
+ * \param value The value to remove.
+ */
 void Parameter::removeValue(const QVariant &value)
 {
     d_ptr->values.removeOne(value);
 }
 
+/*!
+ * \brief Returns a list of all values associated with the parameter.
+ *
+ * \return A list of values as QList<QVariant>.
+ */
 QVariantList Parameter::values() const
 {
     return d_ptr->values;
 }
 
+/*!
+ * \brief Sets a list of values for the parameter.
+ *
+ * \param values The new list of values to assign.
+ */
 void Parameter::setValues(const QVariantList &values)
 {
     d_ptr->values = d_ptr->validateValues(values);
@@ -194,6 +318,11 @@ void Parameter::setFlags(const Flags &flags)
     d_ptr->flags = d_ptr->validateFlags(flags);
 }
 
+/*!
+ * \brief Returns the type of the parameter.
+ *
+ * \return The parameter's type.
+ */
 Parameter::Type Parameter::type() const
 {
     return d_ptr->type();
@@ -248,6 +377,11 @@ Header Parameter::toHeader() const
         return Header();
 }
 
+/*!
+ * \brief Converts the parameter to a QJsonObject.
+ *
+ * \return The parameter represented as a QJsonObject.
+ */
 QJsonObject Parameter::toJsonObject() const
 {
     QJsonObject object;
@@ -294,12 +428,29 @@ Parameter Parameter::merge(const Parameter &r1, const Parameter &r2)
     return r1;
 }
 
+/*!
+ * \brief Equality operator for Parameter class.
+ *
+ * Two parameters are considered equal if they have the same name, value, and flags.
+ *
+ * \param other The parameter to compare with.
+ * \return True if the parameters are equal, false otherwise.
+ */
 bool Parameter::operator==(const Parameter &other) const
 {
     return d_ptr->name == other.d_ptr->name
         && d_ptr->values == other.d_ptr->values
         && d_ptr->flags == other.d_ptr->flags;
 }
+
+/*!
+ * \brief Inequality operator for Parameter class.
+ *
+ * Two parameters are considered unequal if they differ in name, value, or flags.
+ *
+ * \param other The parameter to compare with.
+ * \return True if the parameters are unequal, false otherwise.
+ */
 
 bool Parameter::operator!=(const Parameter &other) const
 {
