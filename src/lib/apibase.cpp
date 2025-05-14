@@ -203,12 +203,13 @@ Response *ApiBase::deleteResource(const Request &request)
 Response *ApiBase::send(RequestHandler::Method method, const Request &request, const Body &body)
 {
     // Preprocessing request by adding api url parameters and headers
-    Request finalRequest = request;
+    Request finalRequest = Request::merge(request, Request(d_ptr->internalRequestData));
     finalRequest.setApi(d_ptr->internalRequestData->api);
 
     // Preprocessing request by passing it to interceptors
     for (RequestInterceptor *interceptor : std::as_const(d_ptr->requestInterceptors))
         finalRequest = interceptor->intercept(method, finalRequest, body);
+
 
     // Sending request and return response
     return d_ptr->networkManager()->send(method, finalRequest, body);

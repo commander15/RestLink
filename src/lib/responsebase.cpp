@@ -7,6 +7,18 @@
 
 namespace RestLink {
 
+/*!
+ * \class RestLink::ResponseBase
+ * \brief An abstract base class for handling response data streams.
+ *
+ * This class extends QIODevice to provide convenient methods for reading
+ * different types of content (JSON objects, arrays, raw bytes, strings)
+ * from a response device. It is intended to serve as a flexible interface
+ * for response handling in the RestLink framework.
+ *
+ * It supports streaming and can wrap any QIODevice to perform actual data access.
+ */
+
 ResponseBase::ResponseBase(QObject *parent)
     : QIODevice(parent)
     , m_device(nullptr)
@@ -127,16 +139,14 @@ QString ResponseBase::readString()
     return QString::fromUtf8(readBody());
 }
 
+/*!
+ * \brief Reads the raw response body as a QByteArray.
+ * \return The response body as a QByteArray.
+ */
 QByteArray ResponseBase::readBody()
 {
     return m_device->readAll();
 }
-
-/*!
- * \fn ResponseBase::readBody
- * \brief Reads the raw response body as a QByteArray.
- * \return The response body as a QByteArray.
- */
 
 QIODevice *ResponseBase::responseDevice() const
 {

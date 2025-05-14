@@ -37,7 +37,7 @@ target_headers(RestLink
         requesthandler.h
     PRIVATE
         apibase_p.h api_p.h
-        parameter_p.h pathparameter_p.h queryparameter_p.h header_p.h
+        parameter_p.h pathparameter_p.h queryparameter_p.h header_p.h body_p.h
         request_p.h response_p.h
 )
 

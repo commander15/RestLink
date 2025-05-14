@@ -70,6 +70,10 @@ if (RESTLINK_BUILD_TRANSLATIONS)
     list(APPEND Qt_MODULES LinguistTools)
 endif()
 
+if (RESTLINK_SUPPORT_SQL)
+    list(APPEND Qt_MODULES Sql)
+endif()
+
 find_package(Qt6 REQUIRED COMPONENTS ${Qt_MODULES})
 
 qt_standard_project_setup(

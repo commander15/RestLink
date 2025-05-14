@@ -6,14 +6,18 @@
 
 namespace RestLink {
 
-class ServerRequestPrivate : public RequestPrivate
+class ServerRequestPrivate final : public RequestPrivate
 {
 public:
     ServerRequestPrivate() = default;
     ServerRequestPrivate(const ServerRequestPrivate &other) = default;
-    ServerRequestPrivate(const RequestPrivate *request, const Body &body)
-        : RequestPrivate(*request), body(body) {}
+    ServerRequestPrivate(RequestHandler::Method method, const RequestPrivate *request, const Body &body)
+        : RequestPrivate(*request), method(method), body(body) {}
 
+    RequestPrivate *clone() const override
+    { return new ServerRequestPrivate(*this); }
+
+    RequestHandler::Method method = RequestHandler::GetMethod;
     Body body;
 };
 
@@ -22,8 +26,8 @@ ServerRequest::ServerRequest()
 {
 }
 
-ServerRequest::ServerRequest(const Request &request, const Body &body)
-    : Request(new ServerRequestPrivate(request.d_ptr.data(), body))
+ServerRequest::ServerRequest(RequestHandler::Method method, const Request &request, const Body &body)
+    : Request(new ServerRequestPrivate(method, request.d_ptr.data(), body))
 {
 }
 
@@ -51,6 +55,12 @@ ServerRequest &ServerRequest::operator=(ServerRequest &&rhs)
 {
     Request::operator=(std::move(rhs));
     return *this;
+}
+
+RequestHandler::Method ServerRequest::method() const
+{
+    RESTLINK_D(const ServerRequest);
+    return d->method;
 }
 
 QString ServerRequest::resource() const

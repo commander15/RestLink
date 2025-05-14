@@ -91,7 +91,7 @@ RequestHandler::HandlerType Server::handlerType() const
 
 ServerResponse *Server::sendRequest(Method method, const Request &request, const Body &body)
 {
-    const ServerRequest serverRequest(request, body);
+    const ServerRequest serverRequest(method, request, body);
 
     ServerResponse *serverResponse = new ServerResponse(this);
     initResponse(serverResponse, request, method);
@@ -99,7 +99,7 @@ ServerResponse *Server::sendRequest(Method method, const Request &request, const
     serverResponse->setNetworkRequest(QNetworkRequest(request.url()));
 
     if (request.endpoint().startsWith("/restlink")) {
-        processInternalRequest(method, serverRequest, serverResponse);
+        processInternalRequest(serverRequest, serverResponse);
         return serverResponse;
     }
 
@@ -119,12 +119,12 @@ ServerResponse *Server::sendRequest(Method method, const Request &request, const
     return serverResponse;
 }
 
-void Server::processInternalRequest(Method method, const ServerRequest &request, ServerResponse *response)
+void Server::processInternalRequest(const ServerRequest &request, ServerResponse *response)
 {
     const QString function = request.endpoint().section('/', 1, -1, QString::SectionFlag::SectionSkipEmpty);
 
     if (function == "configuration") {
-        switch (method) {
+        switch (request.method()) {
         case RequestHandler::GetMethod:
             response->setBody(d_ptr->configuration);
             response->setHttpStatusCode(200);
@@ -133,7 +133,7 @@ void Server::processInternalRequest(Method method, const ServerRequest &request,
         case RequestHandler::PostMethod:
         case RequestHandler::PutMethod:
         case RequestHandler::PatchMethod:
-            d_ptr->configuration = QJsonDocument::fromJson(request.body().data()).object();
+            d_ptr->configuration = QJsonDocument::fromJson(request.body().toByteArray()).object();
             response->setBody(request.body());
             response->setHttpStatusCode(200);
             break;
@@ -165,13 +165,13 @@ void Server::processInternalRequest(Method method, const ServerRequest &request,
     }
 }
 
-void Server::processRequest(RequestHandler::Method method, const ServerRequest &request, ServerResponse *response)
+void Server::processRequest(const ServerRequest &request, ServerResponse *response)
 {
     class AbstractController *controller = findController(request);
 
     if (controller) {
-        prepareController(controller, method, request, response);
-        controller->processRequest(method, request, response);
+        prepareController(controller, request, response);
+        controller->processRequest(request, response);
     }
 }
 
@@ -198,10 +198,9 @@ AbstractController *Server::findController(const ServerRequest &request) const
     return nullptr;
 }
 
-void Server::prepareController(AbstractController *controller, RequestHandler::Method method, const ServerRequest &request, ServerResponse *response)
+void Server::prepareController(AbstractController *controller, const ServerRequest &request, ServerResponse *response)
 {
     Q_UNUSED(controller);
-    Q_UNUSED(method);
     Q_UNUSED(request);
     Q_UNUSED(response);
 }
@@ -235,7 +234,7 @@ bool ServerPrivate::processNext()
     mutex.unlock();
 
     if (pending.response) {
-        q_ptr->processRequest(pending.method, ServerRequest(pending.request, pending.body), pending.response);
+        q_ptr->processRequest(ServerRequest(pending.method, pending.request, pending.body), pending.response);
         return true;
     } else {
         return false;

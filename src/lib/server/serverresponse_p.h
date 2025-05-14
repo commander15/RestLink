@@ -14,7 +14,7 @@
 
 namespace RestLink {
 
-class ServerResponsePrivate : public ResponsePrivate
+class ServerResponsePrivate final : public ResponsePrivate
 {
 public:
     ServerResponsePrivate(ServerResponse *q);
@@ -23,7 +23,7 @@ public:
 
     int httpStatusCode;
     Body body;
-    QVector<Header> headers;
+    HeaderList headers;
 
     bool finished;
 

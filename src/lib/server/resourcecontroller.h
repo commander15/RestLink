@@ -18,7 +18,7 @@ public:
     virtual QString endpoint() const = 0;
 
     virtual bool canProcessRequest(const ServerRequest &request) const;
-    virtual void processRequest(RequestHandler::Method method, const ServerRequest &request, ServerResponse *response) = 0;
+    virtual void processRequest(const ServerRequest &request, ServerResponse *response) = 0;
 
     void *dataSource() const;
     void setDataSource(void *source);
@@ -39,7 +39,7 @@ public:
     virtual void destroy(const ServerRequest &request, ServerResponse *response) = 0;
 
     bool canProcessRequest(const ServerRequest &request) const override;
-    void processRequest(RequestHandler::Method method, const ServerRequest &request, ServerResponse *response) override;
+    void processRequest(const ServerRequest &request, ServerResponse *response) override;
 };
 
 } // namespace RestLink

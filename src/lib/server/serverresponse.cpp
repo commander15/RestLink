@@ -68,32 +68,35 @@ bool ServerResponse::hasHeader(const QByteArray &name) const
 
 QByteArray ServerResponse::header(const QByteArray &name) const
 {
-    if (name.compare(QByteArrayLiteral("Content-Type"), Qt::CaseInsensitive) == 0)
-        return QByteArrayLiteral("application/json");
-
     RESTLINK_D(const ServerResponse);
 
     auto it = std::find_if(d->headers.begin(), d->headers.end(), [name](const Header &header) {
         return header.name() == name;
     });
 
-    return (it != d->headers.end() ? it->value().toByteArray() : QByteArray());
+    if (it != d->headers.end())
+        return it->value().toByteArray();
+
+    const HeaderList headers = d->body.headers();
+    it = std::find_if(headers.begin(), headers.end(), [name](const Header &header) {
+        return header.name() == name;
+    });
+
+    if (it != d->headers.end())
+        return it->value().toByteArray();
+
+    return QByteArray();
 }
 
 QByteArrayList ServerResponse::headerList() const
 {
     RESTLINK_D(const ServerResponse);
 
-#if QT_VERSION_MAJOR >= 6
-    QByteArrayList names(d->headers.size());
-    std::transform(d->headers.begin(), d->headers.end(), names.begin(), [](const Header &header) {
+    const HeaderList headers = d->headers + d->body.headers();
+    QByteArrayList names(headers.size());
+    std::transform(headers.begin(), headers.end(), names.begin(), [](const Header &header) {
         return header.name().toUtf8();
     });
-#else
-    QByteArrayList names;
-    for (const Header &header : d->headers)
-        names.append(header.name().toUtf8());
-#endif
 
     return names;
 }
@@ -105,11 +108,46 @@ void ServerResponse::setHeaders(const QList<Header> &headers)
     d->headers = headers.toVector();
 }
 
+QJsonObject ServerResponse::readJsonObject(QJsonParseError *error)
+{
+    RESTLINK_D(ServerResponse);
+    QMutexLocker locker(&d->mutex);
+    return (d->body.hasJsonObject() ? d->body.jsonObject() : QJsonObject());
+}
+
+QJsonArray ServerResponse::readJsonArray(QJsonParseError *error)
+{
+    RESTLINK_D(ServerResponse);
+    QMutexLocker locker(&d->mutex);
+    return (d->body.hasJsonArray() ? d->body.jsonArray() : QJsonArray());
+}
+
+QJsonValue ServerResponse::readJson(QJsonParseError *error)
+{
+    RESTLINK_D(ServerResponse);
+    QMutexLocker locker(&d->mutex);
+
+    if (d->body.hasJsonObject())
+        return d->body.jsonObject();
+
+    if (d->body.hasJsonArray())
+        return d->body.jsonArray();
+
+    return QJsonValue();
+}
+
+QString ServerResponse::readString()
+{
+    RESTLINK_D(ServerResponse);
+    QMutexLocker locker(&d->mutex);
+    return d->body.toString();
+}
+
 QByteArray ServerResponse::readBody()
 {
     RESTLINK_D(ServerResponse);
     QMutexLocker locker(&d->mutex);
-    return d->body.data();
+    return d->body.toByteArray();
 }
 
 void ServerResponse::setBody(const Body &body)
@@ -176,7 +214,7 @@ void ServerResponse::abort()
 ServerResponsePrivate::ServerResponsePrivate(ServerResponse *q)
     : ResponsePrivate(q)
     , method(RequestHandler::UnknownMethod)
-    , httpStatusCode(0)
+    , httpStatusCode(200)
     , finished(false)
     , server(nullptr)
 {

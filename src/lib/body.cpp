@@ -1,28 +1,359 @@
 #include "body.h"
+#include "body_p.h"
 
 #include <RestLink/debug.h>
 
 #include <QtCore/qcoreapplication.h>
-#include <QtCore/qfile.h>
 #include <QtCore/qjsondocument.h>
 #include <QtCore/qjsonobject.h>
 #include <QtCore/qjsonarray.h>
-#include <QtCore/qmimedatabase.h>
+#include <QtCore/qfile.h>
+#include <QtCore/qiodevice.h>
+
+#include <QtNetwork/qhttpmultipart.h>
 
 namespace RestLink {
 
-static QMimeDatabase mimeDb;
+/*!
+ * \class RestLink::Body
+ * \brief Represents the body of an HTTP request.
+ *
+ * The Body class provides an abstraction over various types of request payloads,
+ * including plain text, JSON data, binary data, and streaming via QIODevice or multipart form data.
+ * It allows convenient construction and inspection of content and its metadata such as content type and length.
+ */
 
-File::File(const char *fileName)
-    : m_fileName(fileName)
+/*!
+ * \enum Body::Type
+ * \brief Describes the type of content contained in the request body.
+ *
+ * This enum helps identify how the request body should be processed or interpreted.
+ *
+ * \var Body::Type Body::PlainText
+ * Indicates that the body contains plain text data.
+ *
+ * \var Body::Type Body::JsonData
+ * Indicates that the body contains JSON-encoded data.
+ *
+ * \var Body::Type Body::RawData
+ * Indicates that the body contains raw binary data.
+ *
+ * \var Body::Type Body::IODevice
+ * Indicates that the body is streamed from a QIODevice.
+ *
+ * \var Body::Type Body::HttpMultiPart
+ * Indicates that the body is a multipart/form-data payload, typically used for file uploads.
+ *
+ * \var Body::Type Body::Unknown
+ * Indicates an unknown or unsupported body type.
+ */
+
+/*!
+ * \class RestLink::File
+ * \brief Helper class to manage a file intended for request body usage.
+ *
+ * The File class encapsulates a file path and provides an interface
+ * to open the file for reading, typically used in constructing a Body.
+ */
+
+/*!
+ * \brief Constructs an empty Body.
+ */
+Body::Body()
+    : d_ptr(new BodyData())
 {
 }
 
-File::File(const QString &fileName)
-    : m_fileName(fileName)
+/*!
+ * \brief Constructs a Body from a C-style byte array.
+ * \param data Pointer to the data.
+ * \param size Number of bytes (or -1 for null-terminated).
+ * \param contentType MIME type of the content.
+ */
+Body::Body(const char *data, int size, const QByteArray &contentType)
+    : Body(QByteArray(data, size), contentType)
 {
 }
 
+/*!
+ * \brief Constructs a Body from a QByteArray.
+ * \param data The content as a QByteArray.
+ * \param contentType MIME type of the content.
+ */
+Body::Body(const QByteArray &data, const QByteArray &contentType)
+    : Body(QVariant(data), Type::RawData, contentType.isEmpty() ? RESTLINK_MIME_OCTET_STREAM : contentType, data.length())
+{
+}
+/*!
+ * \brief Constructs a Body from a QString.
+ * \param text The string content.
+ * \param contentType MIME type of the content.
+ */
+Body::Body(const QString &text, const QByteArray &contentType)
+    : Body(QVariant(text), Type::PlainText, contentType.isEmpty() ? RESTLINK_MIME_PLAIN_TEXT : contentType, text.length())
+{
+}
+
+/*!
+ * \brief Constructs a Body from a QJsonObject.
+ */
+Body::Body(const QJsonObject &object)
+    : Body(QJsonDocument(object))
+{
+}
+
+/*!
+ * \brief Constructs a Body from a QJsonArray.
+ */
+Body::Body(const QJsonArray &array)
+    : Body(QJsonDocument(array))
+{
+}
+
+/*!
+ * \brief Constructs a Body from a QJsonDocument.
+ */
+Body::Body(const QJsonDocument &doc)
+    : Body(doc.isObject() ? QVariant::fromValue(doc.object()) : QVariant::fromValue(doc.array()), Type::JsonData, RESTLINK_MIME_JSON, doc.toJson(QJsonDocument::Compact).size())
+{
+}
+
+/*!
+ * \brief Constructs a Body from a RestLink::File.
+ * \see File
+ */
+Body::Body(const File &file)
+    : Body(file.open())
+{
+}
+
+/*!
+ * \brief Constructs a Body from a QFile pointer.
+ */
+Body::Body(QFile *file)
+    : Body(file, file->size(), s_mimeDatabase.mimeTypeForFile(file->fileName()).name().toLatin1())
+{
+}
+
+/*!
+ * \brief Constructs a Body from a QIODevice.
+ * \param device The device supplying the data.
+ * \param contentType MIME type of the content.
+ */
+Body::Body(QIODevice *device, const QByteArray &contentType)
+    : Body(device, device->size(), contentType)
+{
+}
+
+/*!
+ * \brief Constructs a Body from a QIODevice with a known content length.
+ * \param device The device supplying the data.
+ * \param size Length of the content in bytes.
+ * \param contentType MIME type of the content.
+ */
+Body::Body(QIODevice *device, qint64 size, const QByteArray &contentType)
+    : d_ptr(new BodyData())
+{
+    d_ptr->object = QVariant::fromValue(device);
+    d_ptr->objectType = Type::IODevice;
+
+    if (contentType.isEmpty()) {
+        if (device->isSequential() && device->isReadable())
+            d_ptr->contentType = s_mimeDatabase.mimeTypeForData(device).name().toLatin1();
+        else
+            d_ptr->contentType = RESTLINK_MIME_OCTET_STREAM;
+    } else {
+        d_ptr->contentType = contentType;
+    }
+
+    d_ptr->contentLength = size > 0 ? size : device->size();
+}
+
+/*!
+ * \brief Constructs a Body from a QHttpMultiPart.
+ */
+Body::Body(QHttpMultiPart *multiPart)
+    : d_ptr(new BodyData())
+{
+    d_ptr->object = QVariant::fromValue(multiPart);
+    d_ptr->objectType = Type::HttpMultiPart;
+}
+
+Body::Body(const QVariant &object, Type type, const QByteArray &contentType, qint64 contentLength)
+    : d_ptr(new BodyData())
+{
+    d_ptr->object = object;
+    d_ptr->objectType = type;
+    d_ptr->contentLength = contentLength;
+    d_ptr->contentType = contentType.isEmpty() ? RESTLINK_MIME_OCTET_STREAM : contentType;
+}
+
+/*!
+ * \brief Copy constructor.
+ */
+Body::Body(const Body &other) = default;
+
+/*!
+ * \brief Move constructor.
+ */
+Body::Body(Body &&other) = default;
+
+/*!
+ * \brief Destructor.
+ */
+Body::~Body() = default;
+
+/*!
+ * \brief Copy assignment operator.
+ */
+Body &Body::operator=(const Body &other)
+{
+    if (this != &other) {
+        d_ptr = other.d_ptr;
+    }
+
+    return *this;
+}
+
+/*!
+ * \brief Move assignment operator.
+ */
+Body &Body::operator=(Body &&other)
+{
+    if (this != &other) {
+        d_ptr.swap(other.d_ptr);
+    }
+
+    return *this;
+}
+
+bool Body::hasPlainText() const
+{
+    return d_ptr->objectType == Type::PlainText;
+}
+
+QByteArray Body::toByteArray() const
+{
+    switch (d_ptr->objectType) {
+    case Type::RawData:
+    case Type::PlainText:
+        return d_ptr->object.toByteArray();
+
+    case Type::IODevice:
+        return device()->readAll();
+
+    default:
+        return QByteArray();
+    }
+}
+
+QString Body::toString() const
+{
+    return QString::fromUtf8(toByteArray());
+}
+
+bool Body::hasJsonObject() const
+{
+    return d_ptr->object.metaType() == QMetaType::fromType<QJsonObject>();
+}
+
+QJsonObject Body::jsonObject() const
+{
+    return d_ptr->object.toJsonObject();
+}
+
+bool Body::hasJsonArray() const
+{
+    return d_ptr->object.metaType() == QMetaType::fromType<QJsonArray>();
+}
+
+QJsonArray Body::jsonArray() const
+{
+    return d_ptr->object.toJsonArray();
+}
+
+bool Body::isDevice() const
+{
+    return d_ptr->objectType == Type::IODevice;
+}
+
+QIODevice* Body::device() const
+{
+    return d_ptr->object.value<QIODevice *>();
+}
+
+bool Body::isMultiPart() const
+{
+    return d_ptr->objectType == Type::HttpMultiPart;
+}
+
+QHttpMultiPart* Body::multiPart() const
+{
+    return d_ptr->object.value<QHttpMultiPart *>();
+}
+
+QVariant Body::object() const
+{
+    return d_ptr->object;
+}
+
+Body::Type Body::objectType() const
+{
+    return d_ptr->objectType;
+}
+
+/*!
+ * \brief Returns the content type as a MIME string.
+ */
+QString Body::contentType() const
+{
+    return d_ptr->contentType;
+}
+
+/*!
+ * \brief Returns the length of the content, if known.
+ */
+qint64 Body::contentLength() const
+{
+    return d_ptr->contentLength;
+}
+
+/*!
+ * \brief Returns the list of headers associated with the Body.
+ *
+ * headers like Content-Type and Content-Length are added automatically.
+ */
+HeaderList Body::headers() const
+{
+    HeaderList headers = d_ptr->headers;
+
+    if (!d_ptr->contentType.isEmpty())
+        headers.addParameter("Content-Type", d_ptr->contentType);
+
+    if (d_ptr->contentLength > 0)
+        headers.addParameter("Content-Length", d_ptr->contentLength);
+
+    return headers;
+}
+
+QMimeDatabase Body::s_mimeDatabase;
+
+/*!
+ * \fn File::File(const char *fileName)
+ * \brief Constructs a File from a file path.
+ * \param fileName File path.
+ */
+
+/*!
+ * \fn File::File(const QString &fileName)
+ * \brief Constructs a File from a file path.
+ * \param fileName File path.
+ */
+
+/*!
+ * \brief Opens the file and returns a QFile pointer.
+ * \warning The file is parented to app instance.
+ */
 QFile* File::open() const
 {
     QFile* file = new QFile(m_fileName, qApp);
@@ -32,210 +363,6 @@ QFile* File::open() const
         delete file;
         return nullptr;
     }
-}
-
-Body::Body()
-    : m_multiPart(nullptr)
-    , m_device(nullptr)
-    , m_length(-1)
-{
-}
-
-Body::Body(QHttpMultiPart *multiPart)
-    : m_multiPart(multiPart)
-    , m_device(nullptr)
-    , m_length(-1)
-{
-}
-
-Body::Body(const File &file)
-    : Body(file.open())
-{
-    // Assuming file will handle device opening and reading data
-}
-
-Body::Body(QFile *file)
-    : Body(file, file->size(), mimeDb.mimeTypeForFile(file->fileName()).name().toLatin1())
-{
-}
-
-Body::Body(QIODevice *device, qint64 size, const QByteArray &contentType)
-    : m_multiPart(nullptr)
-    , m_device(device)
-    , m_length(size >= 0 ? size : (device->isSequential() ? -1 : device->size()))
-{
-    if (!contentType.isEmpty())
-        m_type = contentType;
-    else
-        m_type = mimeDb.mimeTypeForData(device).name().toLatin1();
-}
-
-Body::Body(const QString &text, const QByteArray &contentType)
-    : Body(text.toUtf8(), contentType)
-{
-}
-
-Body::Body(const QByteArray &data, const QByteArray &contentType)
-    : Body(data.constData(), data.size(), contentType)
-{
-}
-
-Body::Body(const char *data, int size, const QByteArray &contentType)
-    : m_multiPart(nullptr)
-    , m_device(nullptr)
-{
-    QByteArray bodyData(data, size);
-
-    m_data = bodyData;
-    m_length = bodyData.size();
-    if (!contentType.isEmpty())
-        m_type = contentType;
-    else
-        m_type = mimeDb.mimeTypeForData(bodyData).name().toLatin1();
-}
-
-Body::Body(const QJsonObject &object)
-    : Body(QJsonDocument(object))
-{
-}
-
-Body::Body(const QJsonArray &array)
-    : Body(QJsonDocument(array))
-{
-}
-
-Body::Body(const QJsonDocument &doc)
-    : m_multiPart(nullptr)
-    , m_device(nullptr)
-    , m_type(QByteArrayLiteral("application/json"))
-{
-    const QByteArray data = doc.toJson(QJsonDocument::Compact);
-    m_data = data;
-    m_length = data.size();
-}
-
-Body::Body(const QVariant &value, int type, const QByteArray &contentType)
-    : m_multiPart(nullptr)
-    , m_device(nullptr)
-    , m_data(generateData(value, type))
-    , m_type(contentType)
-    , m_length(-1)
-{
-}
-
-Body::~Body()
-{
-}
-
-Body &Body::operator=(const Body &other)
-{
-    if (this != &other) {
-        m_multiPart = other.m_multiPart;
-        m_device = other.m_device;
-        m_data = other.m_data;
-        m_type = other.m_type;
-        m_length = other.m_length;
-        m_headers = other.m_headers;
-    }
-
-    return *this;
-}
-
-Body &Body::operator=(Body &&other)
-{
-    if (this != &other) {
-        m_multiPart = std::move(other.m_multiPart);
-        m_device = std::move(other.m_device);
-        m_data = std::move(other.m_data);
-        m_type = std::move(other.m_type);
-        m_length = std::move(other.m_length);
-        m_headers = std::move(other.m_headers);
-    }
-
-    return *this;
-}
-
-bool Body::isMultiPart() const
-{
-    return m_multiPart;
-}
-
-QHttpMultiPart* Body::multiPart() const
-{
-    return m_multiPart;
-}
-
-bool Body::isDevice() const
-{
-    return m_device;
-}
-
-QIODevice* Body::device() const
-{
-    return m_device;
-}
-
-bool Body::isData() const
-{
-    return !m_data.isNull();
-}
-
-QByteArray Body::data() const
-{
-    return m_data.toByteArray();
-}
-
-QString Body::contentType() const
-{
-    return m_type;
-}
-
-qint64 Body::contentLength() const
-{
-    return m_length;
-}
-
-HeaderList Body::headers() const
-{
-    HeaderList headers;
-
-    if (!m_data.isNull())
-        headers.append(generateHeaders(m_data));
-
-    if (!m_type.isEmpty())
-        headers.append(Header("Content-Type", m_type));
-
-    if (m_length > 0)
-        headers.append(Header("Content-Length", m_length));
-
-    for (const Header &header : m_headers)
-        headers.addParameter(header.name(), header.values());
-
-    return headers;
-}
-
-void Body::setHeaders(const HeaderList &headers)
-{
-    m_headers = headers;
-}
-
-QByteArray Body::generateData(const QVariant &data, int type)
-{
-    Q_UNUSED(type);
-    return data.toByteArray();
-}
-
-QList<Header> Body::generateHeaders(const QVariant &data, int type)
-{
-    if (type == -1)
-        type = data.userType();
-
-    // Generate headers based on the type of the data provided
-    HeaderList headers;
-
-    // You can add your header-generating logic here
-
-    return headers;
 }
 
 }

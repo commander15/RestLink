@@ -82,7 +82,7 @@ P ParameterList<P>::parameter(const QString &name) const
 {
     bool found = false;
     auto it = find(name, &found);
-    return (found ? *it : Parameter());
+    return (found ? *it : P());
 }
 
 template<typename P>
