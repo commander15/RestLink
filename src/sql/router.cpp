@@ -57,7 +57,7 @@ bool Router::maintain()
     return true;
 }
 
-void Router::processRequest(const ServerRequest &request, ServerResponse *response)
+void Router::processStandardRequest(const ServerRequest &request, ServerResponse *response)
 {
     Api *api = Api::api(request.baseUrl());
     if (!api) {
@@ -91,13 +91,14 @@ void Router::processRequest(const ServerRequest &request, ServerResponse *respon
         return;
     }
 
-    unsupported(request, response);
+    processUnsupportedRequest(request, response);
 }
 
 void Router::processConfigurationRequest(const ServerRequest &request, ServerResponse *response, Api *manager)
 {
     switch (request.method()) {
     case PostMethod:
+    case PutMethod:
         manager->configure(JsonUtils::objectFromRawData(request.body().toByteArray()));
 
     case GetMethod:
@@ -106,16 +107,23 @@ void Router::processConfigurationRequest(const ServerRequest &request, ServerRes
         response->complete();
         break;
 
+    case DeleteMethod:
+        manager->reset();
+        response->setHttpStatusCode(200);
+        response->setBody(QJsonObject({ { "message", "configuration reseted successfully" } }));
+        response->complete();
+        break;
+
     default:
-        unsupported(request, response);
+        processUnsupportedRequest(request, response);
         break;
     }
 }
 
 void Router::processQueryRequest(const ServerRequest &request, ServerResponse *response, Api *manager)
 {
-    if (request.method() != RequestHandler::PostMethod) {
-        unsupported(request, response);
+    if (request.method() != AbstractRequestHandler::PostMethod) {
+        processUnsupportedRequest(request, response);
         return;
     }
 
@@ -193,16 +201,6 @@ void Router::processQueryRequest(const ServerRequest &request, ServerResponse *r
     }
 
     response->setHttpStatusCode(200);
-    response->complete();
-}
-
-void Router::unsupported(const ServerRequest &request, ServerResponse *response)
-{
-    QString msg = QStringLiteral("unsupported method %1 for route %2")
-        .arg(HttpUtils::verbString(request.method()), request.endpoint());
-
-    response->setHttpStatusCode(400);
-    response->setBody(QJsonObject({ { "message", msg } }));
     response->complete();
 }
 

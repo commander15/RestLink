@@ -6,14 +6,14 @@
 
 namespace RestLink {
 
-class RequestHandler;
+class AbstractRequestHandler;
 
 class PluginManagerPrivate
 {
 public:
     QStringList names;
     bool discoveryEnabled = false;
-    QList<RequestHandler *> handlers;
+    QList<AbstractRequestHandler *> handlers;
 
     QPluginLoader pluginLoader;
 };

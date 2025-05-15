@@ -15,7 +15,7 @@ class Plugin : public RestLink::Plugin
 public:
     explicit Plugin(QObject *parent = nullptr);
 
-    RequestHandler *createHandler() override;
+    AbstractRequestHandler *createHandler() override;
 };
 
 } // namespace Sql

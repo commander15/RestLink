@@ -17,20 +17,20 @@ namespace RestLink {
  * \param method The HTTP method as defined in RequestHandler::Method.
  * \return The corresponding HTTP verb as a QString (e.g., "GET", "POST").
  */
-QString HttpUtils::verbString(RequestHandler::Method method)
+QString HttpUtils::verbString(AbstractRequestHandler::Method method)
 {
     switch (method) {
-    case RequestHandler::HeadMethod:
+    case AbstractRequestHandler::HeadMethod:
         return QStringLiteral("HEAD");
-    case RequestHandler::GetMethod:
+    case AbstractRequestHandler::GetMethod:
         return QStringLiteral("GET");
-    case RequestHandler::PostMethod:
+    case AbstractRequestHandler::PostMethod:
         return QStringLiteral("POST");
-    case RequestHandler::PutMethod:
+    case AbstractRequestHandler::PutMethod:
         return QStringLiteral("PUT");
-    case RequestHandler::PatchMethod:
+    case AbstractRequestHandler::PatchMethod:
         return QStringLiteral("PATCH");
-    case RequestHandler::DeleteMethod:
+    case AbstractRequestHandler::DeleteMethod:
         return QStringLiteral("DELETE");
     default:
         return QString();

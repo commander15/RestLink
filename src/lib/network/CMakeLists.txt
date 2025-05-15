@@ -3,7 +3,7 @@ target_headers(RestLink
         networkmanager.h cache.h cookiejar.h
         httputils.h
     PRIVATE
-        cache_p.h
+        cache_p.h cookiejar_p.h
         httputils_p.h
         networkresponse_p.h
 )

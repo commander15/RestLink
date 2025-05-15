@@ -3,7 +3,7 @@
 
 #include <RestLink/global.h>
 #include <RestLink/requestinterface.h>
-#include <RestLink/requesthandler.h>
+#include <RestLink/abstractrequesthandler.h>
 
 #include <QtCore/qobject.h>
 
@@ -14,7 +14,6 @@ namespace RestLink {
 class Request;
 class Body;
 class Response;
-class RequestInterceptor;
 class NetworkManager;
 
 typedef std::function<void(Response *)> ApiRunCallback;
@@ -49,13 +48,9 @@ public:
     void deleteResource(const Request &request, const ApiRunCallback &callback);
     Response *deleteResource(const Request &request);
 
-    virtual Response *send(RequestHandler::Method method, const Request &request, const Body &body);
+    virtual Response *send(AbstractRequestHandler::Method method, const Request &request, const Body &body);
 
     virtual QString userAgent() const;
-
-    QList<RequestInterceptor *> requestInterceptors() const;
-    void addRequestInterceptor(RequestInterceptor *interceptor);
-    void removeRequestInterceptor(RequestInterceptor *interceptor);
 
     NetworkManager *networkManager() const;
     void setNetworkManager(NetworkManager *manager);

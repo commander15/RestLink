@@ -191,10 +191,10 @@ bool ModelController::canProcessRequest(const ServerRequest &request) const
         return false;
 
     switch (request.method()) {
-    case RequestHandler::GetMethod:
-    case RequestHandler::PostMethod:
-    case RequestHandler::PutMethod:
-    case RequestHandler::DeleteMethod:
+    case AbstractRequestHandler::GetMethod:
+    case AbstractRequestHandler::PostMethod:
+    case AbstractRequestHandler::PutMethod:
+    case AbstractRequestHandler::DeleteMethod:
         break;
 
     default:

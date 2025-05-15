@@ -2,8 +2,8 @@
 #include "cache_p.h"
 
 #include <RestLink/debug.h>
+#include <RestLink/fileutils.h>
 
-#include <QtCore/qstandardpaths.h>
 #include <QtCore/qurl.h>
 #include <QtCore/qurlquery.h>
 
@@ -160,8 +160,7 @@ void Cache::clear()
 CachePrivate::CachePrivate(Cache *qq) :
     q(qq)
 {
-    static int index = 0;
-    setCacheDirectory(generateCacheDir(QString::number(index++)));
+    setCacheDirectory(FileUtils::generateCacheDir());
 
     setMaximumCacheSize(5242880LL);  // Set the default cache size to 5MB
 }
@@ -179,12 +178,6 @@ QUrl CachePrivate::cacheUrl(QUrl url) const
     // ToDo: Handle in url secrets
     url.setQuery(query);
     return url;
-}
-
-QString CachePrivate::generateCacheDir(const QString &name)
-{
-    static const QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/RestLink/API/";
-    return cacheDir + name;
 }
 
 QIODevice *CachePrivate::prepare(const QNetworkCacheMetaData &metaData)

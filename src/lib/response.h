@@ -43,7 +43,7 @@ public:
     QString endpoint() const;
     Request request() const;
 
-    virtual RequestHandler::Method method() const = 0;
+    virtual AbstractRequestHandler::Method method() const = 0;
     Api *api() const;
 
     QUrl url() const;
@@ -92,7 +92,7 @@ signals:
 
     void sslErrorsOccured(const QList<QSslError> &errors);
 
-    friend class RequestHandler;
+    friend class AbstractRequestHandler;
 };
 
 }

@@ -10,7 +10,7 @@ Plugin::Plugin(QObject *parent)
 {
 }
 
-RequestHandler *Plugin::createHandler()
+AbstractRequestHandler *Plugin::createHandler()
 {
     return new Router;
 }

@@ -19,7 +19,7 @@ class ServerResponsePrivate final : public ResponsePrivate
 public:
     ServerResponsePrivate(ServerResponse *q);
 
-    RequestHandler::Method method;
+    AbstractRequestHandler::Method method;
 
     int httpStatusCode;
     Body body;

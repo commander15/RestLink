@@ -2,7 +2,7 @@
 #include "pluginmanager_p.h"
 
 #include <RestLink/debug.h>
-#include <RestLink/requesthandler.h>
+#include <RestLink/abstractrequesthandler.h>
 
 #include <QtCore/qcoreapplication.h>
 #include <QtCore/qdir.h>
@@ -10,18 +10,43 @@
 
 namespace RestLink {
 
+/**
+ * @class PluginManager
+ * @brief Manages discovery, loading, and instantiation of RestLink plugins.
+ *
+ * This class provides a central interface for registering and loading plugins that extend
+ * RestLink's request handling capabilities. It supports optional plugin discovery, which scans
+ * runtime library paths for valid RestLink plugins.
+ *
+ * @warning Plugin discovery is disabled by default due to security concerns: allowing arbitrary shared libraries
+ * to be loaded from library paths can introduce vulnerabilities. Enabling discovery should be done
+ * with caution and only in trusted environments, use enableDiscovery() to explicitly enable discovery,
+ * alternatively, use the static registerPlugin() method to securely specify which plugins should be loaded by name,
+ * bypassing the need for unrestricted path scanning.
+ */
+
+/**
+ * @brief Constructs a new PluginManager instance.
+ */
 PluginManager::PluginManager()
     : d_ptr(new PluginManagerPrivate)
 {
 }
 
+/**
+ * @brief Destroys the PluginManager instance.
+ */
 PluginManager::~PluginManager()
 {
 }
 
-QList<RequestHandler *> PluginManager::handlers()
+/**
+ * @brief Returns a list of all discovered and valid AbstractRequestHandler instances.
+ * @return QList of AbstractRequestHandler pointers.
+ */
+QList<AbstractRequestHandler *> PluginManager::handlers()
 {
-    static QList<RequestHandler *> handlers;
+    static QList<AbstractRequestHandler *> handlers;
 
     if (!handlers.isEmpty())
         return handlers;
@@ -47,7 +72,7 @@ QList<RequestHandler *> PluginManager::handlers()
                     continue;
 
                 // Retrieve handler
-                RequestHandler *handler = manager->createHandler(plugin);
+                AbstractRequestHandler *handler = manager->createHandler(plugin);
 
                 if (handler) {
                     pluginNames.append(plugin->name());
@@ -62,21 +87,47 @@ QList<RequestHandler *> PluginManager::handlers()
     return handlers;
 }
 
+/**
+ * @brief Returns whether plugin discovery is currently enabled.
+ * @return true if discovery is enabled, false otherwise.
+ */
 bool PluginManager::isDiscoveryEnabled()
 {
     return global()->d_ptr->discoveryEnabled;
 }
 
+/**
+ * @brief Enables plugin discovery.
+ *
+ * When enabled, RestLink will scan library paths at runtime to detect and load available plugins.
+ * This feature is disabled by default to avoid potential security risks from untrusted binaries.
+ *
+ * @note This must be called before creating any NetworkManager instance.
+ * It is recommended to invoke this immediately after initializing the Qt application object
+ * in your main application file.
+ */
 void PluginManager::enableDiscovery()
 {
     global()->d_ptr->discoveryEnabled = true;
 }
 
+/**
+ * @brief Sets whether plugin discovery should be enabled.
+ * @param enable If true, enables discovery; disables it otherwise.
+ */
 void PluginManager::setDiscoveryEnabled(bool enable)
 {
     global()->d_ptr->discoveryEnabled = enable;
 }
 
+/**
+ * @brief Registers a plugin name manually.
+ *
+ * This will cause the plugin manager attempt to load a plugin,
+ * should be more secure than plugin discovery.
+ *
+ * @param name The name of the plugin to load.
+ */
 void PluginManager::registerPlugin(const QString &name)
 {
     QStringList *names = &global()->d_ptr->names;
@@ -84,9 +135,14 @@ void PluginManager::registerPlugin(const QString &name)
         names->append(name);
 }
 
-RequestHandler *PluginManager::createHandler(Plugin *plugin)
+/**
+ * @brief Creates a handler instance from a plugin.
+ * @param plugin The plugin to instantiate a handler from.
+ * @return A pointer to an AbstractRequestHandler, or nullptr if failed.
+ */
+AbstractRequestHandler *PluginManager::createHandler(Plugin *plugin)
 {
-    RequestHandler *handler = plugin->createHandler();
+    AbstractRequestHandler *handler = plugin->createHandler();
 
     if (!handler) {
         restlinkWarning() << "failed to create handler for plugin: " << plugin->name();
@@ -96,7 +152,7 @@ RequestHandler *PluginManager::createHandler(Plugin *plugin)
     const QStringList schemes = handler->supportedSchemes();
     if (schemes.contains("http", Qt::CaseInsensitive) || schemes.contains("https", Qt::CaseInsensitive)) {
         restlinkWarning() << "an HTTP/HTTPS handler has been detected on '" << plugin->name()
-                          << "' plugin, this is unsuported for security reasons";
+        << "' plugin, this is unsuported for security reasons";
         delete handler;
         return nullptr;
     }
@@ -106,6 +162,11 @@ RequestHandler *PluginManager::createHandler(Plugin *plugin)
     return handler;
 }
 
+/**
+ * @brief Loads a plugin from the given name or absolute path.
+ * @param name The plugin file name or absolute path.
+ * @return A pointer to the loaded Plugin, or nullptr on failure.
+ */
 Plugin *PluginManager::loadPlugin(const QString &name)
 {
     unloadPlugin();
@@ -147,12 +208,19 @@ Plugin *PluginManager::loadPlugin(const QString &name)
     return plugin;
 }
 
+/**
+ * @brief Unloads the currently loaded plugin.
+ */
 void PluginManager::unloadPlugin()
 {
     if (d_ptr->pluginLoader.isLoaded())
         d_ptr->pluginLoader.unload();
 }
 
+/**
+ * @brief Returns the global singleton instance of PluginManager.
+ * @return A pointer to the global PluginManager.
+ */
 PluginManager *PluginManager::global()
 {
     static PluginManager manager;

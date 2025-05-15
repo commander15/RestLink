@@ -17,14 +17,14 @@ ServerResponse::ServerResponse(Server *server)
     d->server = server;
 }
 
-RequestHandler::Method ServerResponse::method() const
+AbstractRequestHandler::Method ServerResponse::method() const
 {
     RESTLINK_D(const ServerResponse);
     QMutexLocker locker(&d->mutex);
     return d->method;
 }
 
-void ServerResponse::setMethod(RequestHandler::Method method)
+void ServerResponse::setMethod(AbstractRequestHandler::Method method)
 {
     RESTLINK_D(ServerResponse);
     QMutexLocker locker(&d->mutex);
@@ -213,7 +213,7 @@ void ServerResponse::abort()
 
 ServerResponsePrivate::ServerResponsePrivate(ServerResponse *q)
     : ResponsePrivate(q)
-    , method(RequestHandler::UnknownMethod)
+    , method(AbstractRequestHandler::UnknownMethod)
     , httpStatusCode(200)
     , finished(false)
     , server(nullptr)

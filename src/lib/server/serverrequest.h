@@ -3,7 +3,7 @@
 
 #include <RestLink/global.h>
 #include <RestLink/request.h>
-#include <RestLink/requesthandler.h>
+#include <RestLink/abstractrequesthandler.h>
 #include <RestLink/body.h>
 
 namespace RestLink {
@@ -13,7 +13,7 @@ class RESTLINK_EXPORT ServerRequest : public Request
 {
 public:
     ServerRequest();
-    ServerRequest(RequestHandler::Method method, const Request &request, const Body &body);
+    ServerRequest(AbstractRequestHandler::Method method, const Request &request, const Body &body);
     ServerRequest(const ServerRequest &);
     ServerRequest(ServerRequest &&);
     ~ServerRequest();
@@ -21,7 +21,7 @@ public:
     ServerRequest &operator=(const ServerRequest &);
     ServerRequest &operator=(ServerRequest &&);
 
-    RequestHandler::Method method() const;
+    AbstractRequestHandler::Method method() const;
 
     QString resource() const;
     QString identifier() const;
