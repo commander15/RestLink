@@ -98,31 +98,55 @@ void run(Api *api)
     api->setProperty("count", requests.size());
 }
 
-class Interceptor : public RequestInterceptor
+class Interceptor : public AbstractRequestInterceptor
 {
 public:
-    Request intercept(RequestHandler::Method method, const Request &request, const Body &body) override
+    void intercept(AbstractRequestHandler::Method method, Request &request, Body &body) override
     {
-        // Just a showcase
-        return request;
+        // we log the method and public url, no secrets inside !
+        static QTextStream out(stdout);
+        out << HttpUtils::verbString(method) << ' '
+            << request.url(Request::PublicUrl).toString(QUrl::DecodeReserved)
+            << Qt::endl;
+
+        Q_UNUSED(body)
+
+        // To distinguish requests by api
+        Api *api = request.api();
+        Q_UNUSED(api)
     }
 };
 
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
+    app.setApplicationName("TMDB");
+    app.setApplicationVersion(RESTLINK_VERSION_STR);
+    app.setOrganizationName("RestLink");
 
-    QLoggingCategory::setFilterRules("restlink.info=true");
+    // We will reach the web with this
+    NetworkManager manager;
+    manager.setTransferTimeout(3000);
+
+    // We will reduce network usage with this
+    Cache cache;
+    cache.setMaxCacheSize(2 * 1024 * 1024); // 2MB
+    manager.setCache(&cache);
+
+    // Hungry, let's bake some cookies
+    CookieJar cookies;
+    manager.setCookieJar(&cookies);
+
+    // We will log with this
+    Interceptor interceptor;
+    manager.addRequestInterceptor(&interceptor);
 
     Api api;
     api.setName("TMDB"); // Optional
     api.setVersion(QVersionNumber(3)); // Optional
     api.setUrl(QUrl("http://api.themoviedb.org/3")); // Mandatory
     api.setBearerToken(TMDB_BEARER_TOKEN); // Mandatory if you want to Avoid HTTP - Forbidden :)
-
-    // Just to showcase the thing
-    Interceptor interceptor;
-    api.addRequestInterceptor(&interceptor);
+    api.setNetworkManager(&manager);
 
     // Let's go !
     run(&api);

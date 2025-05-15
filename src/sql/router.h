@@ -23,7 +23,7 @@ protected:
     bool init() override;
     void cleanup() override;
     bool maintain() override;
-    void processRequest(const ServerRequest &request, ServerResponse *response) override;
+    void processStandardRequest(const ServerRequest &request, ServerResponse *response) override;
 
 private:
     void processConfigurationRequest(const ServerRequest &request, ServerResponse *response, Api *manager);

@@ -1,18 +1,19 @@
 #include "api.h"
 #include "api_p.h"
+
 #include "body.h"
 
-#include <RestLink/debug.h>
-#include <RestLink/request.h>
-#include <RestLink/response.h>
-#include <RestLink/networkmanager.h>
+#include <QtCore/qjsonobject.h>
+#include <QtCore/qjsonarray.h>
 
 #include <QtNetwork/qnetworkrequest.h>
 #include <QtNetwork/qnetworkreply.h>
 #include <QtNetwork/qsslsocket.h>
 
-#include <QtCore/qjsonobject.h>
-#include <QtCore/qjsonarray.h>
+#include <RestLink/debug.h>
+#include <RestLink/request.h>
+#include <RestLink/response.h>
+#include <RestLink/networkmanager.h>
 
 namespace RestLink {
 
@@ -24,34 +25,35 @@ namespace RestLink {
  * response data. It supports adding parameters to requests, configuring the API from different sources,
  * and emitting signals for configuration changes and network error events.
  *
- * \property QString Api::name
- * \brief The name of the API.
+ * \property QString name
+ * The name of the API.
  *
- * \property QVersionNumber Api:version
- * \brief The version of the API.
+ * \property QVersionNumber version
+ * The version of the API.
  *
- * \property QUrl Api:url
- * \brief The base URL of the API.
+ * \property QUrl url
+ * The base URL of the API.
  *
- * \property QString Api::userAgent
- * \brief The user agent string to be used in API requests.
+ * \property QString userAgent
+ * The user agent string to be used in API requests.
  *
- * \signal void Api::nameChanged(const QString &name)
- * \brief Emitted when the API name changes.
+ * \fn void Api::nameChanged(const QString &name)
  *
- * \signal void Api::versionChanged(int version)
- * \brief Emitted when the API version changes.
+ * Emitted when the API name changes.
  *
- * \signal void Api::urlChanged(const QUrl &url)
+ * \fn void Api::versionChanged(int version)
+ * Emitted when the API version changes.
+ *
+ * \fn void Api::urlChanged(const QUrl &url)
  * \brief Emitted when the API URL changes.
  *
- * \signal void Api::userAgentChanged(const QString &agent)
+ * \fn void Api::userAgentChanged(const QString &agent)
  * \brief Emitted when the user agent changes.
  *
- * \signal void Api::configurationCompleted()
+ * \fn void Api::configurationCompleted()
  * \brief Emitted when the API configuration is completed.
  *
- * \signal void Api::configurationFailed()
+ * \fn void Api::configurationFailed()
  * \brief Emitted when the API configuration fails.
  *
  * \see ApiBase, Request, RequestParameter
@@ -309,7 +311,7 @@ bool Api::configure(const QJsonObject &config)
     return true;
 }
 
-Response *Api::send(RequestHandler::Method method, const Request &request, const Body &body)
+Response *Api::send(AbstractRequestHandler::Method method, const Request &request, const Body &body)
 {
     RESTLINK_D(Api);
     if (d->hasRemoteRequest(request))

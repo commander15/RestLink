@@ -57,7 +57,7 @@ bool Router::maintain()
     return true;
 }
 
-void Router::processRequest(const ServerRequest &request, ServerResponse *response)
+void Router::processStandardRequest(const ServerRequest &request, ServerResponse *response)
 {
     Api *api = Api::api(request.baseUrl());
     if (!api) {
@@ -122,7 +122,7 @@ void Router::processConfigurationRequest(const ServerRequest &request, ServerRes
 
 void Router::processQueryRequest(const ServerRequest &request, ServerResponse *response, Api *manager)
 {
-    if (request.method() != RequestHandler::PostMethod) {
+    if (request.method() != AbstractRequestHandler::PostMethod) {
         processUnsupportedRequest(request, response);
         return;
     }

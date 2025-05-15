@@ -1,14 +1,13 @@
 target_headers(RestLink
     PUBLIC
-        server.h abstractcontroller.h resourcecontroller.h
-        serverrequest.h serverresponse.h
+        server.h serverrequest.h serverresponse.h
+        abstractcontroller.h resourcecontroller.h
     PRIVATE
-        server_p.h
-        serverresponse_p.h
+        server_p.h serverresponse_p.h
 )
 
 target_sources(RestLink
     PRIVATE
-        server.cpp resourcecontroller.cpp
-        serverrequest.cpp serverresponse.cpp
+        server.cpp serverrequest.cpp serverresponse.cpp
+        abstractcontroller.cpp resourcecontroller.cpp
 )

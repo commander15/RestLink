@@ -4,7 +4,6 @@
 #include "apibase.h"
 
 #include <RestLink/request.h>
-#include <RestLink/requestinterceptor.h>
 
 #include <RestLink/private/request_p.h>
 
@@ -22,7 +21,6 @@ public:
     ApiBase *q_ptr;
 
     RequestPrivate *internalRequestData;
-    QVector<RequestInterceptor *> requestInterceptors;
 
 private:
     mutable NetworkManager *m_networkManager;

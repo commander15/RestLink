@@ -10,7 +10,7 @@
 
 namespace RestLink {
 
-class RequestHandler;
+class AbstractRequestHandler;
 
 class RESTLINK_EXPORT Plugin : public QObject
 {
@@ -28,7 +28,7 @@ public:
     QJsonObject metaData() const;
     void setMetaData(const QJsonObject &metaData);
 
-    virtual RequestHandler *createHandler() = 0;
+    virtual AbstractRequestHandler *createHandler() = 0;
 
 private:
     QJsonObject m_metaData;

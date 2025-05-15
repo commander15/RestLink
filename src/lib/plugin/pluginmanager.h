@@ -13,7 +13,7 @@ public:
     PluginManager();
     ~PluginManager();
 
-    static QList<RequestHandler *> handlers();
+    static QList<AbstractRequestHandler *> handlers();
 
     static bool isDiscoveryEnabled();
     static void enableDiscovery();
@@ -21,13 +21,13 @@ public:
 
     static void registerPlugin(const QString &name);
 
-    RequestHandler *createHandler(Plugin *plugin);
-    Plugin *loadPlugin(const QString &name);
-    void unloadPlugin();
-
     static PluginManager *global();
 
 private:
+    AbstractRequestHandler *createHandler(Plugin *plugin);
+    Plugin *loadPlugin(const QString &name);
+    void unloadPlugin();
+
     QScopedPointer<PluginManagerPrivate> d_ptr;
 };
 

@@ -2,14 +2,13 @@
 #define RESTLINK_NETWORKMANAGER_H
 
 #include <RestLink/global.h>
-#include <RestLink/requesthandler.h>
-#include <RestLink/api.h>
+#include <RestLink/abstractrequesthandler.h>
 
 #include <QtNetwork/qnetworkaccessmanager.h>
 
 namespace RestLink {
 
-class RESTLINK_EXPORT NetworkManager : public QNetworkAccessManager, public RequestHandler
+class RESTLINK_EXPORT NetworkManager : public QNetworkAccessManager, public AbstractRequestHandler
 {
     Q_OBJECT
     Q_PROPERTY(QStringList supportedSchemes READ supportedSchemes CONSTANT FINAL)
@@ -17,12 +16,12 @@ class RESTLINK_EXPORT NetworkManager : public QNetworkAccessManager, public Requ
 public:
     explicit NetworkManager(QObject *parent = nullptr);
 
-    using RequestHandler::head;
-    using RequestHandler::get;
-    using RequestHandler::post;
-    using RequestHandler::put;
-    using RequestHandler::patch;
-    using RequestHandler::deleteResource;
+    using AbstractRequestHandler::head;
+    using AbstractRequestHandler::get;
+    using AbstractRequestHandler::post;
+    using AbstractRequestHandler::put;
+    using AbstractRequestHandler::patch;
+    using AbstractRequestHandler::deleteResource;
 
     QStringList supportedSchemes() const override final;
     HandlerType handlerType() const override final;

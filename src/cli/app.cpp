@@ -296,27 +296,27 @@ void App::monitorResponse(Response *response)
 {
     if (m_parser.isSet(VERBOSE_OPTION)) {
         switch (response->method()) {
-        case RequestHandler::HeadMethod:
+        case AbstractRequestHandler::HeadMethod:
             m_out << "HEAD ";
             break;
 
-        case RequestHandler::GetMethod:
+        case AbstractRequestHandler::GetMethod:
             m_out << "GET ";
             break;
 
-        case RequestHandler::PostMethod:
+        case AbstractRequestHandler::PostMethod:
             m_out << "POST ";
             break;
 
-        case RequestHandler::PutMethod:
+        case AbstractRequestHandler::PutMethod:
             m_out << "PUT ";
             break;
 
-        case RequestHandler::PatchMethod:
+        case AbstractRequestHandler::PatchMethod:
             m_out << "PATCH ";
             break;
 
-        case RequestHandler::DeleteMethod:
+        case AbstractRequestHandler::DeleteMethod:
             m_out << "DELETE ";
             break;
 

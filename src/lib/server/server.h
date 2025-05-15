@@ -2,7 +2,7 @@
 #define RESTLINK_SERVER_H
 
 #include <RestLink/global.h>
-#include <RestLink/requesthandler.h>
+#include <RestLink/abstractrequesthandler.h>
 #include <RestLink/serverrequest.h>
 #include <RestLink/serverresponse.h>
 
@@ -13,7 +13,7 @@ namespace RestLink {
 class AbstractController;
 
 class ServerPrivate;
-class RESTLINK_EXPORT Server : public QObject, public RequestHandler
+class RESTLINK_EXPORT Server : public QObject, public AbstractRequestHandler
 {
     Q_OBJECT
 
@@ -53,7 +53,7 @@ protected:
 
     ServerResponse *sendRequest(Method method, const Request &request, const Body &body) override final;
     virtual void processInternalRequest(const ServerRequest &request, ServerResponse *response);
-    virtual void processRequest(const ServerRequest &request, ServerResponse *response);
+    virtual void processStandardRequest(const ServerRequest &request, ServerResponse *response);
 
     void processUnsupportedRequest(const ServerRequest &request, ServerResponse *response);
 

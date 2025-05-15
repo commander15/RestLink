@@ -1,5 +1,5 @@
-#ifndef RESTLINK_REQUESTHANDLER_H
-#define RESTLINK_REQUESTHANDLER_H
+#ifndef RESTLINK_ABSTRACTREQUESTHANDLER_H
+#define RESTLINK_ABSTRACTREQUESTHANDLER_H
 
 #include <RestLink/global.h>
 
@@ -10,10 +10,10 @@ namespace RestLink {
 class Request;
 class Body;
 class Response;
-class RequestInterceptor;
+class AbstractRequestInterceptor;
 
-class RequestHandlerPrivate;
-class RESTLINK_EXPORT RequestHandler
+class AbstractRequestHandlerPrivate;
+class RESTLINK_EXPORT AbstractRequestHandler
 {
 public:
     enum Method {
@@ -34,7 +34,7 @@ public:
         UnknownHandler = -1
     };
 
-    virtual ~RequestHandler();
+    virtual ~AbstractRequestHandler();
 
     virtual QString handlerName() const;
 
@@ -46,23 +46,23 @@ public:
     Response *deleteResource(const Request &request);
     Response *send(Method method, const Request &request, const Body &body);
 
-    QList<RequestInterceptor *> requestInterceptors() const;
-    void addRequestInterceptor(RequestInterceptor *interceptor);
-    void removeRequestInterceptor(RequestInterceptor *interceptor);
+    QList<AbstractRequestInterceptor *> requestInterceptors() const;
+    void addRequestInterceptor(AbstractRequestInterceptor *interceptor);
+    void removeRequestInterceptor(AbstractRequestInterceptor *interceptor);
 
     virtual QStringList supportedSchemes() const = 0;
     virtual HandlerType handlerType() const = 0;
 
 protected:
-    RequestHandler();
+    AbstractRequestHandler();
 
     bool isRequestSupported(const Request &request) const;
     void initResponse(Response *response, const Request &request, Method method);
     virtual Response *sendRequest(Method method, const Request &request, const Body &body) = 0;
 
-    QScopedPointer<RequestHandlerPrivate> d_ptr;
+    QScopedPointer<AbstractRequestHandlerPrivate> d_ptr;
 };
 
 } // namespace RestLink
 
-#endif // RESTLINK_REQUESTHANDLER_H
+#endif // RESTLINK_ABSTRACTREQUESTHANDLER_H

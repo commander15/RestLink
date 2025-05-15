@@ -85,7 +85,7 @@ void Server::registerController(AbstractController *controller)
 
 }
 
-RequestHandler::HandlerType Server::handlerType() const
+AbstractRequestHandler::HandlerType Server::handlerType() const
 {
     return ServerHandler;
 }
@@ -126,20 +126,20 @@ void Server::processInternalRequest(const ServerRequest &request, ServerResponse
 
     if (function == "configuration") {
         switch (request.method()) {
-        case RequestHandler::GetMethod:
+        case AbstractRequestHandler::GetMethod:
             response->setBody(d_ptr->configuration);
             response->setHttpStatusCode(200);
             break;
 
-        case RequestHandler::PostMethod:
-        case RequestHandler::PutMethod:
-        case RequestHandler::PatchMethod:
+        case AbstractRequestHandler::PostMethod:
+        case AbstractRequestHandler::PutMethod:
+        case AbstractRequestHandler::PatchMethod:
             d_ptr->configuration = QJsonDocument::fromJson(request.body().toByteArray()).object();
             response->setBody(request.body());
             response->setHttpStatusCode(200);
             break;
 
-        case RequestHandler::DeleteMethod:
+        case AbstractRequestHandler::DeleteMethod:
             d_ptr->configuration = QJsonObject();
             response->setBody(QJsonObject({ {"message", "configuration reseted successfully !"} }));
             response->setHttpStatusCode(200);
@@ -166,7 +166,7 @@ void Server::processInternalRequest(const ServerRequest &request, ServerResponse
     }
 }
 
-void Server::processRequest(const ServerRequest &request, ServerResponse *response)
+void Server::processStandardRequest(const ServerRequest &request, ServerResponse *response)
 {
     class AbstractController *controller = findController(request);
 
@@ -245,7 +245,7 @@ bool ServerPrivate::processNext()
     mutex.unlock();
 
     if (pending.response) {
-        q_ptr->processRequest(ServerRequest(pending.method, pending.request, pending.body), pending.response);
+        q_ptr->processStandardRequest(ServerRequest(pending.method, pending.request, pending.body), pending.response);
         return true;
     } else {
         return false;

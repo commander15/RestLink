@@ -68,14 +68,14 @@ Response *NetworkManager::sendRequest(Method method, const Request &request, con
     }
 
     // Otherwise, try using plugin handlers
-    QList<RequestHandler *> handlers = PluginManager::handlers();
+    QList<AbstractRequestHandler *> handlers = PluginManager::handlers();
 
-    auto it = std::find_if(handlers.begin(), handlers.end(), [&requestScheme](const RequestHandler *handler) {
+    auto it = std::find_if(handlers.begin(), handlers.end(), [&requestScheme](const AbstractRequestHandler *handler) {
         return handler->supportedSchemes().contains(requestScheme);
     });
 
     if (it != handlers.end()) {
-        RequestHandler *handler = *it;
+        AbstractRequestHandler *handler = *it;
 
         Response *response = handler->send(method, request, body);
         if (!response)
@@ -92,8 +92,8 @@ QStringList NetworkManager::supportedSchemes() const
 {
     // Getting schemes from QNetworkAccessManager and network handlers
     QStringList schemes = QNetworkAccessManager::supportedSchemes();
-    const QList<RequestHandler *> handlers = PluginManager::handlers();
-    for (RequestHandler *handler : handlers)
+    const QList<AbstractRequestHandler *> handlers = PluginManager::handlers();
+    for (AbstractRequestHandler *handler : handlers)
         schemes.append(handler->supportedSchemes());
 
 #ifdef Q_OS_WASM
@@ -106,9 +106,9 @@ QStringList NetworkManager::supportedSchemes() const
     return schemes;
 }
 
-RequestHandler::HandlerType NetworkManager::handlerType() const
+AbstractRequestHandler::HandlerType NetworkManager::handlerType() const
 {
-    return RequestHandler::NetworkManager;
+    return AbstractRequestHandler::NetworkManager;
 }
 
 QNetworkRequest NetworkManager::generateNetworkRequest(Method method, const Request &request, const Body &body)
@@ -173,15 +173,15 @@ QNetworkReply *NetworkManager::generateNetworkReply(Method method, const QNetwor
     QNetworkReply *reply;
 
     switch (method) {
-    case RequestHandler::HeadMethod:
+    case AbstractRequestHandler::HeadMethod:
         reply = man->head(request);
         break;
 
-    case RequestHandler::GetMethod:
+    case AbstractRequestHandler::GetMethod:
         reply = man->get(request);
         break;
 
-    case RequestHandler::PostMethod:
+    case AbstractRequestHandler::PostMethod:
         if (body.isMultiPart())
             reply =  man->post(request, body.multiPart());
         else if (body.isDevice())
@@ -190,7 +190,7 @@ QNetworkReply *NetworkManager::generateNetworkReply(Method method, const QNetwor
             reply =  man->post(request, body.toByteArray());
         break;
 
-    case RequestHandler::PutMethod:
+    case AbstractRequestHandler::PutMethod:
         if (body.isMultiPart())
             reply =  man->put(request, body.multiPart());
         else if (body.isDevice())
@@ -199,7 +199,7 @@ QNetworkReply *NetworkManager::generateNetworkReply(Method method, const QNetwor
             reply =  man->put(request, body.toByteArray());
         break;
 
-    case RequestHandler::PatchMethod:
+    case AbstractRequestHandler::PatchMethod:
         if (body.isMultiPart())
             reply =  man->sendCustomRequest(request, "PATCH", body.multiPart());
         else if (body.isDevice())
@@ -208,7 +208,7 @@ QNetworkReply *NetworkManager::generateNetworkReply(Method method, const QNetwor
             reply =  man->sendCustomRequest(request, "PATCH", body.toByteArray());
         break;
 
-    case RequestHandler::DeleteMethod:
+    case AbstractRequestHandler::DeleteMethod:
         reply =  man->deleteResource(request);
         break;
 

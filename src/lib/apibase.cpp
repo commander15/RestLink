@@ -5,7 +5,6 @@
 #include <RestLink/request.h>
 #include <RestLink/body.h>
 #include <RestLink/response.h>
-#include <RestLink/requestinterceptor.h>
 #include <RestLink/networkmanager.h>
 #include <RestLink/private/request_p.h>
 
@@ -71,7 +70,7 @@ void ApiBase::head(const Request &request, const ApiRunCallback &callback)
  */
 Response *ApiBase::head(const Request &request)
 {
-    return send(RequestHandler::HeadMethod, request, Body());
+    return send(AbstractRequestHandler::HeadMethod, request, Body());
 }
 
 /**
@@ -95,7 +94,7 @@ void ApiBase::get(const Request &request, const ApiRunCallback &callback)
  */
 Response *ApiBase::get(const Request &request)
 {
-    return send(RequestHandler::GetMethod, request, Body());
+    return send(AbstractRequestHandler::GetMethod, request, Body());
 }
 
 /**
@@ -121,7 +120,7 @@ void ApiBase::post(const Request &request, const Body &body, const ApiRunCallbac
  */
 Response *ApiBase::post(const Request &request, const Body &body)
 {
-    return send(RequestHandler::PostMethod, request, body);
+    return send(AbstractRequestHandler::PostMethod, request, body);
 }
 
 /**
@@ -147,7 +146,7 @@ void ApiBase::put(const Request &request, const Body &body, const ApiRunCallback
  */
 Response *ApiBase::put(const Request &request, const Body &body)
 {
-    return send(RequestHandler::PutMethod, request, body);
+    return send(AbstractRequestHandler::PutMethod, request, body);
 }
 
 /**
@@ -173,7 +172,7 @@ void ApiBase::patch(const Request &request, const Body &body, const ApiRunCallba
  */
 Response *ApiBase::patch(const Request &request, const Body &body)
 {
-    return send(RequestHandler::PatchMethod, request, body);
+    return send(AbstractRequestHandler::PatchMethod, request, body);
 }
 
 /**
@@ -197,19 +196,14 @@ void ApiBase::deleteResource(const Request &request, const ApiRunCallback &callb
  */
 Response *ApiBase::deleteResource(const Request &request)
 {
-    return send(RequestHandler::DeleteMethod, request, Body());
+    return send(AbstractRequestHandler::DeleteMethod, request, Body());
 }
 
-Response *ApiBase::send(RequestHandler::Method method, const Request &request, const Body &body)
+Response *ApiBase::send(AbstractRequestHandler::Method method, const Request &request, const Body &body)
 {
     // Preprocessing request by adding api url parameters and headers
     Request finalRequest = Request::merge(request, Request(d_ptr->internalRequestData));
     finalRequest.setApi(d_ptr->internalRequestData->api);
-
-    // Preprocessing request by passing it to interceptors
-    for (RequestInterceptor *interceptor : std::as_const(d_ptr->requestInterceptors))
-        finalRequest = interceptor->intercept(method, finalRequest, body);
-
 
     // Sending request and return response
     return d_ptr->networkManager()->send(method, finalRequest, body);
@@ -223,37 +217,6 @@ Response *ApiBase::send(RequestHandler::Method method, const Request &request, c
 QString ApiBase::userAgent() const
 {
     return QStringLiteral("libRestLink/") + QStringLiteral(RESTLINK_VERSION_STR);
-}
-
-/**
- * @brief Returns the list of request interceptors.
- *
- * @return A QList of request interceptors.
- */
-QList<RequestInterceptor *> ApiBase::requestInterceptors() const
-{
-    return d_ptr->requestInterceptors.toList();
-}
-
-/**
- * @brief Adds a request interceptor to the list.
- *
- * @param interceptor The interceptor to be added.
- */
-void ApiBase::addRequestInterceptor(RequestInterceptor *interceptor)
-{
-    if (!d_ptr->requestInterceptors.contains(interceptor))
-        d_ptr->requestInterceptors.append(interceptor);
-}
-
-/**
- * @brief Removes a request interceptor from the list.
- *
- * @param interceptor The interceptor to be removed.
- */
-void ApiBase::removeRequestInterceptor(RequestInterceptor *interceptor)
-{
-    d_ptr->requestInterceptors.removeOne(interceptor);
 }
 
 /**
