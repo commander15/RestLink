@@ -1,15 +1,16 @@
 #include "server.h"
 #include "server_p.h"
 
-#include <RestLink/serverrequest.h>
-#include <RestLink/serverresponse.h>
-#include <RestLink/resourcecontroller.h>
-
 #include <QtCore/qtimer.h>
 #include <QtCore/qjsondocument.h>
 #include <QtCore/qjsonobject.h>
 
 #include <QtNetwork/qnetworkrequest.h>
+
+#include <RestLink/serverrequest.h>
+#include <RestLink/serverresponse.h>
+#include <RestLink/abstractcontroller.h>
+#include <RestLink/httputils.h>
 
 namespace RestLink {
 
@@ -173,6 +174,16 @@ void Server::processRequest(const ServerRequest &request, ServerResponse *respon
         prepareController(controller, request, response);
         controller->processRequest(request, response);
     }
+}
+
+void Server::processUnsupportedRequest(const ServerRequest &request, ServerResponse *response)
+{
+    QString msg = QStringLiteral("unsupported method %1 for endpoint %2")
+    .arg(HttpUtils::verbString(request.method()), request.endpoint());
+
+    response->setHttpStatusCode(400);
+    response->setBody(QJsonObject({ { "message", msg } }));
+    response->complete();
 }
 
 void Server::setError(int code, const QString &str)

@@ -55,6 +55,8 @@ protected:
     virtual void processInternalRequest(const ServerRequest &request, ServerResponse *response);
     virtual void processRequest(const ServerRequest &request, ServerResponse *response);
 
+    void processUnsupportedRequest(const ServerRequest &request, ServerResponse *response);
+
     virtual AbstractController *findController(const ServerRequest &request) const;
     virtual void prepareController(AbstractController *controller, const ServerRequest &request, ServerResponse *response);
 
