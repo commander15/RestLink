@@ -37,6 +37,7 @@ CookieJar::CookieJar(QObject *parent)
 
 CookieJar::~CookieJar()
 {
+    save();
 }
 
 bool CookieJar::load()
