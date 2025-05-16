@@ -1,6 +1,6 @@
 #include "relation_base_impl.h"
 
-#include "querybuilder.h"
+#include <utils/querybuilder.h>
 
 #include <QtCore/qjsonarray.h>
 

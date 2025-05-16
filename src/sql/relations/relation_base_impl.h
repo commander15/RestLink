@@ -1,8 +1,8 @@
 #ifndef RELATION_BASE_IMPL_H
 #define RELATION_BASE_IMPL_H
 
-#include "relation.h"
-#include "model.h"
+#include <data/relation.h>
+#include <data/model.h>
 
 namespace RestLink {
 namespace Sql {

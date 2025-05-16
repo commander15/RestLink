@@ -1,17 +1,17 @@
 #include "modelcontroller.h"
 
-#include "jsonutils.h"
-#include "model.h"
-#include "api.h"
-
-#include <RestLink/serverrequest.h>
-#include <RestLink/serverresponse.h>
+#include <api.h>
+#include <data/model.h>
+#include <utils/jsonutils.h>
 
 #include <QtCore/qjsonarray.h>
 
 #include <QtSql/qsqldatabase.h>
-#include <qsqlerror.h>
-#include <qsqlquery.h>
+#include <QtSql/qsqlerror.h>
+#include <QtSql/qsqlquery.h>
+
+#include <RestLink/serverrequest.h>
+#include <RestLink/serverresponse.h>
 
 #define PARAM_WITH_RELATIONS "with_relations"
 #define PARAM_PAGE           "page"
@@ -30,7 +30,7 @@ QString ModelController::endpoint() const
     return m_endpoint;
 }
 
-void ModelController::setApi(Api *api)
+void ModelController::init(Api *api)
 {
     m_api = api;
 }
@@ -99,7 +99,7 @@ error:
 
 void ModelController::show(const ServerRequest &request, ServerResponse *response)
 {
-    Model model = currentModel(request);
+    Model model = requestModel(request);
     if (!model.get())
         goto error;
 
@@ -123,7 +123,7 @@ error:
 
 void ModelController::update(const ServerRequest &request, ServerResponse *response)
 {
-    Model model = currentModel(request);
+    Model model = requestModel(request);
     model.fill(request.body().jsonObject());
     if (model.update())
         goto success;
@@ -145,7 +145,7 @@ error:
 
 void ModelController::store(const ServerRequest &request, ServerResponse *response)
 {
-    Model model = currentModel(request);
+    Model model = requestModel(request);
     model.fill(request.body().jsonObject());
     if (model.insert())
         goto success;
@@ -166,7 +166,7 @@ error:
 
 void ModelController::destroy(const ServerRequest &request, ServerResponse *response)
 {
-    Model model = currentModel(request);
+    Model model = requestModel(request);
 
     if (!model.get(request.identifier().toInt())) {
         response->setHttpStatusCode(404);
@@ -221,7 +221,7 @@ void ModelController::processRequest(const ServerRequest &request, ServerRespons
         db.rollback();
 }
 
-Model ModelController::currentModel(const ServerRequest &request) const
+Model ModelController::requestModel(const ServerRequest &request) const
 {
     Model model(request.resource(), m_api);
 

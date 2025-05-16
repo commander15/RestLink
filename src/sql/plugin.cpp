@@ -1,19 +1,25 @@
-#include "plugin.h"
+#include <RestLink/plugin.h>
 
-#include "router.h"
+#include <routing/router.h>
 
 namespace RestLink {
 namespace Sql {
 
-Plugin::Plugin(QObject *parent)
-    : RestLink::Plugin(parent)
+class Plugin : public RestLink::Plugin
 {
-}
+    Q_OBJECT
 
-AbstractRequestHandler *Plugin::createHandler()
-{
-    return new Router;
-}
+    Q_PLUGIN_METADATA(IID RESTLINK_PLUGIN_IID FILE "metadata.json")
+
+public:
+    explicit Plugin(QObject *parent = nullptr)
+        : RestLink::Plugin(parent) {}
+
+    AbstractRequestHandler *createHandler() override
+    { return new Router; }
+};
 
 } // namespace Sql
 } // namespace RestLink
+
+#include "plugin.moc"

@@ -32,7 +32,8 @@ public:
     bool owned() const;
     bool autoLoadable() const;
     bool nestLoadable() const;
-    bool isValid() const;
+
+    bool isValid() const override;
 
     int type() const;
 

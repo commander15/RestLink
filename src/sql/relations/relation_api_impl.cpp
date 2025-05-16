@@ -1,6 +1,6 @@
 #include "relation_api_impl.h"
 
-#include "api.h"
+#include <api.h>
 
 #include <QtSql/qsqlerror.h>
 #include <QtSql/qsqlquery.h>

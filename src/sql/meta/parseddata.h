@@ -6,6 +6,7 @@
 #include <functional>
 
 class QJsonObject;
+class QJsonArray;
 
 namespace RestLink {
 namespace Sql {
@@ -30,6 +31,8 @@ public:
 
     virtual ~ParsedData() = default;
 
+    virtual bool isValid() const;
+
     static void beginParsing(const QJsonObject &object);
     static void endParsing();
 
@@ -44,6 +47,14 @@ public:
     static void attribute(const QString &name, QStringList *list);
     static void attribute(const QString &name, const Callback<QStringList> &defaultCallback, QStringList *list);
     static void attribute(const QString &name, const QStringList &defaultValue, QStringList *list);
+
+    static void attribute(const QString &name, QVariantHash *hash);
+    static void attribute(const QString &name, const Callback<QVariantHash> &defaultCallback, QVariantHash *hash);
+    static void attribute(const QString &name, const QVariantHash &defaultValue, QVariantHash *hash);
+
+    static void attribute(const QString &name, QJsonArray *array);
+    static void attribute(const QString &name, const Callback<QJsonArray> &defaultCallback, QJsonArray *array);
+    static void attribute(const QString &name, const QJsonArray &defaultValue, QJsonArray *array);
 
 private:
     static int s_level;

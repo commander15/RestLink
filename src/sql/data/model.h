@@ -2,8 +2,9 @@
 #define MODEL_H
 
 #include "crudinterface.h"
-#include "querybuilder.h"
 #include "relation.h"
+
+#include <utils/querybuilder.h>
 
 #include <QtCore/qshareddata.h>
 #include <QtCore/qjsonobject.h>

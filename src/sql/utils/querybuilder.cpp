@@ -1,7 +1,7 @@
 #include "querybuilder.h"
 
-#include "resourceinfo.h"
-#include "api.h"
+#include <api.h>
+#include <meta/resourceinfo.h>
 
 #include <QtCore/qjsonobject.h>
 #include <QtCore/qjsonarray.h>

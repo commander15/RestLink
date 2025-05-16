@@ -1,8 +1,6 @@
 #ifndef CRUDINTERFACE_H
 #define CRUDINTERFACE_H
 
-class QVariant;
-
 namespace RestLink {
 namespace Sql {
 

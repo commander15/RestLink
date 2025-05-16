@@ -1,9 +1,11 @@
 #include "relation.h"
 
 #include "model.h"
-#include "relationinfo.h"
-#include "api.h"
-#include "relation_api_impl.h"
+
+#include <api.h>
+#include <meta/relationinfo.h>
+
+#include <relations/relation_api_impl.h>
 
 #include <QtSql/qsqlquery.h>
 

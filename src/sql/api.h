@@ -10,6 +10,7 @@
 namespace RestLink {
 namespace Sql {
 
+class EndpointInfo;
 class ResourceInfo;
 class Model;
 
@@ -25,6 +26,7 @@ public:
     void configure(const QJsonObject &configuration);
     void reset();
 
+    EndpointInfo endpointInfo(const QString &name) const;
     ResourceInfo resourceInfo(const QString &name) const;
     ResourceInfo resourceInfoByTable(const QString &table) const;
     QStringList resourceNames() const;
@@ -42,8 +44,8 @@ private:
     Api(const QUrl &url);
 
     const QUrl m_url;
-    QHash<QString, ResourceInfo> m_resourceInfos;
-    QJsonObject m_modelDefinitions;
+    QHash<QString, EndpointInfo> m_endpoints;
+    QHash<QString, ResourceInfo> m_resources;
     QString m_dbConnectionName;
 
     QAtomicInt m_activeModels;

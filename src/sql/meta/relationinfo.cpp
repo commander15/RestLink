@@ -1,9 +1,10 @@
 #include "relationinfo.h"
 
-#include "api.h"
-#include "model.h"
 #include "resourceinfo.h"
-#include "relation.h"
+
+#include <api.h>
+#include <data/relation.h>
+#include <data/model.h>
 
 #include <QtCore/qjsonobject.h>
 

@@ -49,7 +49,7 @@ public:
 
     bool loadRelations() const;
 
-    bool isValid() const;
+    bool isValid() const override;
 
     void load(const QString &name, const QJsonObject &object, Api *api);
     void save(QJsonObject *object) const;

@@ -1,16 +1,16 @@
 #include "resourceinfo.h"
 
-#include "api.h"
-#include "relationinfo.h"
-#include "querybuilder.h"
+#include <api.h>
+#include <meta/relationinfo.h>
+#include <utils/querybuilder.h>
 
 #include <QtCore/qjsonobject.h>
 #include <QtCore/qjsonarray.h>
 #include <QtCore/qjsonvalue.h>
 
 #include <QtSql/qsqlrecord.h>
-#include <qsqlfield.h>
-#include <qsqlindex.h>
+#include <QtSql/qsqlfield.h>
+#include <QtSql/qsqlindex.h>
 
 namespace RestLink {
 namespace Sql {

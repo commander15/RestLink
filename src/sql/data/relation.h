@@ -1,9 +1,9 @@
 #ifndef RELATION_H
 #define RELATION_H
 
-#include "crudinterface.h"
-#include "relationinfo.h"
-#include "resourceinfo.h"
+#include <data/crudinterface.h>
+#include <meta/relationinfo.h>
+#include <meta/resourceinfo.h>
 
 #include <QtCore/qscopedpointer.h>
 #include <QtCore/qstring.h>

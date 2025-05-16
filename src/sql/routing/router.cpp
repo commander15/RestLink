@@ -1,8 +1,8 @@
 #include "router.h"
 
-#include "jsonutils.h"
-#include "api.h"
-#include "resourceinfo.h"
+#include <api.h>
+#include <meta/endpointinfo.h>
+#include <utils/jsonutils.h>
 
 #include <QtCore/qfile.h>
 #include <QtCore/qjsonarray.h>
@@ -10,6 +10,7 @@
 #include <QtSql/qsqlerror.h>
 #include <QtSql/qsqlquery.h>
 
+#include <RestLink/queryparameter.h>
 #include <RestLink/httputils.h>
 
 namespace RestLink {
@@ -61,7 +62,7 @@ void Router::processStandardRequest(const ServerRequest &request, ServerResponse
 {
     Api *api = Api::api(request.baseUrl());
     if (!api) {
-        response->setHttpStatusCode(404);
+        response->setHttpStatusCode(500);
         response->complete();
         return;
     }
@@ -85,7 +86,23 @@ void Router::processStandardRequest(const ServerRequest &request, ServerResponse
         return;
     }
 
-    m_defaultController.setApi(api);
+    const EndpointInfo endpoint = api->endpointInfo(request.endpoint());
+    if (endpoint.hasQuery()) {
+        QVariantHash parameters;
+        const QList<QueryParameter> queryParameters = request.queryParameters();
+        for (const QueryParameter &parameter : queryParameters)
+            parameters.insert(parameter.name(), parameter.value());
+
+        const SqlQueryInfo query = endpoint.query();
+
+        ServerRequest queryRequest(AbstractRequestHandler::PostMethod, request, query.formated(parameters));
+        queryRequest.setEndpoint("/query");
+        queryRequest.addQueryParameter("object", query.isObjectQuery());
+        processQueryRequest(queryRequest, response, api);
+        return;
+    }
+
+    m_defaultController.init(api);
     if (m_defaultController.canProcessRequest(request)) {
         m_defaultController.processRequest(request, response);
         return;
@@ -130,7 +147,7 @@ void Router::processQueryRequest(const ServerRequest &request, ServerResponse *r
     QSqlQuery query(manager->database());
     query.setForwardOnly(true);
 
-    auto process = [&query](const QByteArray &statement, bool *success) -> QJsonObject {
+    auto process = [&query](const QByteArray &statement, bool singleResult, bool *success) -> QJsonObject {
         if (!query.exec(statement)) {
             *success = false;
             return JsonUtils::objectFromQuery(query);
@@ -138,15 +155,19 @@ void Router::processQueryRequest(const ServerRequest &request, ServerResponse *r
             *success = true;
         }
 
-        QJsonArray data;
-        while (query.next())
-            data.append(JsonUtils::objectFromRecord(query.record(), ResourceInfo()));
+        QJsonObject body;
+        if (singleResult) {
+            body.insert("data", JsonUtils::objectFromRecord(query.record(), ResourceInfo()));
+        } else {
+            QJsonArray data;
+            while (query.next())
+                data.append(JsonUtils::objectFromRecord(query.record(), ResourceInfo()));
+            body.insert("data", data);
+        }
         query.finish();
 
-        QJsonObject body;
         body.insert("last_insert_id", QJsonValue::fromVariant(query.lastInsertId()));
         body.insert("num_rows_affected", query.numRowsAffected());
-        body.insert("data", data);
         return body;
     };
 
@@ -176,9 +197,10 @@ void Router::processQueryRequest(const ServerRequest &request, ServerResponse *r
             statements.append(statement);
     }
 
-    if (statements.size() == 1) {
+    bool forceObject = request.hasQueryParameter("object") && request.queryParameterValues("object").constFirst().toBool();
+    if (statements.size() == 1 || forceObject) {
         bool success;
-        response->setBody(process(statements.constFirst(), &success));
+        response->setBody(process(statements.constFirst(), forceObject, &success));
         response->setHttpStatusCode(success ? 200 : 401);
         response->complete();
         return;
@@ -190,7 +212,7 @@ void Router::processQueryRequest(const ServerRequest &request, ServerResponse *r
 
         QJsonArray results;
         for (const QByteArray &statement : statements) {
-            results.append(process(statement, &success));
+            results.append(process(statement, false, &success));
             successes += (success ? 1 : 0);
         }
 

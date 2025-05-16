@@ -1,7 +1,5 @@
 #include "crudinterface.h"
 
-#include <QtCore/qvariant.h>
-
 namespace RestLink {
 namespace Sql {
 

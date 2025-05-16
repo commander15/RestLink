@@ -1,13 +1,13 @@
 #include "jsonutils.h"
 
-#include "resourceinfo.h"
+#include <meta/resourceinfo.h>
 
 #include <QtCore/qjsonobject.h>
 #include <QtCore/qjsonarray.h>
 #include <QtCore/qjsonvalue.h>
 
 #include <QtSql/qsqlfield.h>
-#include <qsqlquery.h>
+#include <QtSql/qsqlquery.h>
 
 namespace RestLink {
 namespace Sql {
