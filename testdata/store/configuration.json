@@ -1,0 +1,90 @@
+{
+  "endpoints": {
+    "/statistics": {
+      "query": "SELECT Products.id as product_id, Products.name as product_name, SUM(SaleItems.quantity) AS sell_count FROM Products INNER JOIN SaleItems ON(SaleItems.product_id = Products.id) LIMIT 100 OFFSET ({page} - 1) * 100",
+      "parameters": {
+        "page": 1
+      },
+      "object": false,
+      "array": true
+    }
+  },
+  "resources": {
+    "products": {
+      "table": "Products",
+      "primary_key": "id",
+      "foreign_key": "product_id",
+      "fillable": [ "name", "description", "price", "barcode" ],
+      "relations": {
+        "stock": {
+          "table": "Stocks",
+          "foreign_key": "product_id",
+          "type": "HasOne",
+          "owned": true
+        },
+        "sales": {
+          "table": "Sales",
+          "pivot": "SaleItems",
+          "local_key": "product_id",
+          "foreign_key": "sale_id",
+          "type": "BelongsToMany",
+          "owned": true
+        }
+      }
+    },
+    "stocks": {
+      "table": "Stocks",
+      "primary_key": "id",
+      "foreign_key": "stock_id",
+      "fillable": [ "quantity", "product_id" ],
+      "relations": {
+        "product": {
+          "table": "Products",
+          "foreign_key": "product_id",
+          "type": "BelongsTo",
+          "owned": true
+        }
+      }
+    },
+    "sales": {
+      "table": "Sales",
+      "primary_key": "id",
+      "foreign_key": "sale_id",
+      "fillable": [ "number", "amount" ],
+      "relations": {
+        "items": {
+          "table": "SaleItems",
+          "foreign_key": "sale_id",
+          "type": "HasMany",
+          "owned": true,
+          "nested_load": true
+        },
+        "products": {
+          "table": "Products",
+          "pivot": "SaleItems",
+          "local_key": "sale_id",
+          "foreign_key": "product_id",
+          "type": "BelongsToMany"
+        }
+      }
+    },
+    "sale_items": {
+      "table": "SaleItems",
+      "primary_key": "id",
+      "foreign_key": "sale_item_id",
+      "fillable": [ "quantity", "sale_id", "product_id" ],
+      "relations": {
+        "sale": {
+          "table": "Sales",
+          "foreign_key": "sale_id",
+          "type": "BelongsTo"
+        },
+        "product": {
+          "table": "Products",
+          "foreign_key": "product_id",
+          "type": "BelongsTo"
+        }
+      }
+    }
+  }
+}
