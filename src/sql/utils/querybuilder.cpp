@@ -89,7 +89,7 @@ QString QueryBuilder::updateStatement(const ResourceInfo &resource, const QVaria
     QString whereClause = QueryBuilder::whereClause(options, api);
 
     return QStringLiteral("UPDATE %1 SET %2%3")
-        .arg(table, setClause, !whereClause.isEmpty() ? ' ' + whereClause : QString());
+        .arg(formatTableName(table, api), setClause, !whereClause.isEmpty() ? ' ' + whereClause : QString());
 }
 
 QString QueryBuilder::deleteStatement(const ResourceInfo &resource, const QueryOptions &options, Api *api)

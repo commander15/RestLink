@@ -63,10 +63,10 @@ TEST_F(HasOneRelationTest, updateTest)
 
     ASSERT_EQ(log.at(1).toStdString(), R"(SELECT * FROM "Stocks" WHERE "product_id" = 1 LIMIT 1)");
 
-    QString productQuery = R"(UPDATE Products SET "name" = 'Apple', "description" = 'Fresh red apple', "price" = 0.5, "barcode" = '1234567890123', "category_id" = 1, "created_at" = '%1', "updated_at" = '%2' WHERE "id" = 1)";
+    QString productQuery = R"(UPDATE "Products" SET "name" = 'Apple', "description" = 'Fresh red apple', "price" = 0.5, "barcode" = '1234567890123', "category_id" = 1, "created_at" = '%1', "updated_at" = '%2' WHERE "id" = 1)";
     ASSERT_EQ(log.at(2).toStdString(), productQuery.arg(creationTimestamp(), updateTimestamp()).toStdString());
 
-    QString stockQuery = R"(UPDATE Stocks SET "quantity" = 50, "product_id" = 1, "created_at" = '%1', "updated_at" = '%2' WHERE "id" = 1)";
+    QString stockQuery = R"(UPDATE "Stocks" SET "quantity" = 50, "product_id" = 1, "created_at" = '%1', "updated_at" = '%2' WHERE "id" = 1)";
     ASSERT_EQ(log.at(3).toStdString(), stockQuery.arg(creationTimestamp("stock"), updateTimestamp("stock")).toStdString());
 
     ASSERT_TRUE(root.load({ "stock" }));
