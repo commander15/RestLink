@@ -37,7 +37,7 @@ public:
 
     static bool hasApi(const QUrl &url);
     static Api *api(const QUrl &url);
-    static void cleanupManagers();
+    static void cleanupApis();
 
 protected:
     void refModel(const Model *model);

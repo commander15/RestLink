@@ -25,7 +25,7 @@ Router::Router(QObject *parent)
 
 Router::~Router()
 {
-    Api::cleanupManagers();
+    Api::cleanupApis();
 }
 
 QString Router::handlerName() const

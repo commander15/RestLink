@@ -186,7 +186,7 @@ Api *Api::api(const QUrl &url)
     return new Api(url);
 }
 
-void Api::cleanupManagers()
+void Api::cleanupApis()
 {
     const QList<QUrl> urls = s_apis.keys();
     for (const QUrl &url : urls)
