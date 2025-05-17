@@ -14,8 +14,14 @@
       "table": "Products",
       "primary_key": "id",
       "foreign_key": "product_id",
+      "hidden": [ "category_id" ],
       "fillable": [ "name", "description", "price", "barcode" ],
       "relations": {
+      "category": {
+        "table": "Categories",
+        "foreign_key": "category_id",
+        "type": "BelongsTo"
+      },
         "stock": {
           "table": "Stocks",
           "foreign_key": "product_id",
@@ -31,6 +37,11 @@
           "owned": true
         }
       }
+    },
+    "categories": {
+        "table": "Categories",
+        "primary_key": "id",
+        "foreign_key": "category_id"
     },
     "stocks": {
       "table": "Stocks",

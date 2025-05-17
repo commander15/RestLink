@@ -1,11 +1,21 @@
+CREATE TABLE Categories (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        VARCHAR(30) NOT NULL,
+    description VARCHAR(255),
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE Products (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     name        VARCHAR(30) NOT NULL,
     description VARCHAR(255),
     price       REAL NOT NULL CHECK (price >= 0),
     barcode     VARCHAR(64) UNIQUE,
+    category_id INTEGER,
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(category_id) REFERENCES Categories(id) ON DELETE CASCADE
 );
 
 CREATE TABLE Stocks (

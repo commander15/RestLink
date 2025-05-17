@@ -1,8 +1,13 @@
+-- Insert Categories
+INSERT INTO Categories (name, description) VALUES    
+('Fruits', 'Natural meals'),
+('Milky', 'Food full of milk');
+
 -- Insert Products
-INSERT INTO Products (name, description, price, barcode) VALUES
-('Apple', 'Fresh red apple', 0.50, '1234567890123'),
-('Banana', 'Organic banana', 0.30, '2234567890123'),
-('Milk', '1L whole milk', 1.20, '3234567890123');
+INSERT INTO Products (name, description, price, barcode, category_id) VALUES
+('Apple', 'Fresh red apple', 0.50, '1234567890123', 1),
+('Banana', 'Organic banana', 0.30, '2234567890123', 1),
+('Milk', '1L whole milk', 1.20, '3234567890123', 2);
 
 -- Insert Stocks
 INSERT INTO Stocks (quantity, product_id) VALUES
