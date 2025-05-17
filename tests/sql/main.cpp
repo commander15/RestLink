@@ -14,35 +14,16 @@
 
 using namespace RestLink::Sql;
 
-QtMessageHandler defaultMessageHandler;
-void messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
-{
-    if (strcmp(context.category, "restlink.sql") == 0 && type == QtMsgType::QtInfoMsg) {
-        SqlLog::log(msg);
-        if (!SqlLog::isLoggingEnabled())
-            return;
-    }
-
-    defaultMessageHandler(type, context, msg);
-}
-
-void clearData();
+void installMessageHandler();
+void resetDatabase();
 void runScript(const QString &fileName, Api *api);
-
-void resetDatabase()
-{
-    Api *api = Api::api(QUrl(DB_URL));
-    SqlLog::disableLogging();
-    runScript("store/destroy.sql", api);
-    runScript("store/structure.sql", api);
-    runScript("store/data.sql", api);
-    SqlLog::enableLogging();
-}
 
 void init(QCoreApplication &)
 {
-    defaultMessageHandler = qInstallMessageHandler(messageHandler);
-    clearData();
+    QDir dir(DB_DIR);
+    if (dir.exists())
+        dir.removeRecursively();
+    dir.mkpath(".");
 
     const QUrl url(DB_URL);
     Api *api = Api::api(url);
@@ -52,6 +33,7 @@ void init(QCoreApplication &)
         ASSERT_TRUE(false);
     }
 
+    installMessageHandler();
     resetDatabase();
 
     QFile configuration(QStringLiteral(DATA_DIR) + "/store/configuration.json");
@@ -62,6 +44,37 @@ void init(QCoreApplication &)
 
     const QJsonObject configurationObject = JsonUtils::objectFromRawData(configuration.readAll());
     api->configure(configurationObject);
+}
+
+void cleanup(QCoreApplication &)
+{
+    // Even in tests, we need to release memory
+    Api::cleanupApis();
+}
+
+void installMessageHandler()
+{
+    static QtMessageHandler defaultMessageHandler;
+
+    defaultMessageHandler = qInstallMessageHandler([](QtMsgType type, const QMessageLogContext &context, const QString &msg) {
+        if (strcmp(context.category, "restlink.sql") == 0 && type == QtMsgType::QtInfoMsg) {
+            SqlLog::log(msg);
+            if (!SqlLog::isLoggingEnabled())
+                return;
+        }
+
+        defaultMessageHandler(type, context, msg);
+    });
+}
+
+void resetDatabase()
+{
+    Api *api = Api::api(QUrl(DB_URL));
+    SqlLog::disableLogging();
+    runScript("store/destroy.sql", api);
+    runScript("store/structure.sql", api);
+    runScript("store/data.sql", api);
+    SqlLog::enableLogging();
 }
 
 void runScript(const QString &fileName, Api *api)
@@ -84,12 +97,4 @@ void runScript(const QString &fileName, Api *api)
             ASSERT_TRUE(false);
         }
     }
-}
-
-void clearData()
-{
-    QDir dir(DB_DIR);
-    if (dir.exists())
-        dir.removeRecursively();
-    dir.mkpath(".");
 }
