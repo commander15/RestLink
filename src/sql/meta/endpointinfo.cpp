@@ -80,7 +80,7 @@ void EndpointInfo::save(QJsonObject *object) const
         d_ptr->query.save(object);
 
     if (d_ptr->resource.isValid())
-        d_ptr->resource.save(object);
+        object->insert("resource", d_ptr->resource.name());
 }
 
 EndpointInfo EndpointInfo::fromResource(const ResourceInfo &resource)
