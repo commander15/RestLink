@@ -57,13 +57,16 @@ void Router::cleanup()
 
 bool Router::maintain()
 {
+    Api::purgeApis();
     return true;
 }
 
 void Router::processStandardRequest(const ServerRequest &request, ServerResponse *response)
 {
     Api *api = Api::api(request.baseUrl());
-    if (!api) {
+    if (api) {
+        api->resetIdleTime();
+    } else {
         response->setHttpStatusCode(500);
         response->complete();
         return;

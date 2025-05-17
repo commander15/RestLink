@@ -33,10 +33,15 @@ public:
     ResourceInfo resourceInfoByTable(const QString &table) const;
     QStringList resourceNames() const;
 
+    qint64 idleTime() const;
+    void resetIdleTime();
+
+    void closeDatabase();
     QSqlDatabase database() const;
 
     static bool hasApi(const QUrl &url);
     static Api *api(const QUrl &url);
+    static void purgeApis();
     static void cleanupApis();
 
 protected:
@@ -49,6 +54,7 @@ private:
     const QUrl m_url;
     QHash<QString, EndpointInfo> m_endpoints;
     QHash<QString, ResourceInfo> m_resources;
+    QDateTime m_lastUsedTime;
     QString m_dbConnectionName;
 
     QAtomicInt m_activeModels;

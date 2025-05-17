@@ -44,11 +44,7 @@ Api::Api(const QUrl &url)
 
 Api::~Api()
 {
-    if (m_activeModels == 0)
-        QSqlDatabase::removeDatabase(m_dbConnectionName);
-    else
-        restlinkWarning() << "(Internal Error) - Can't close connection to " << m_url.toString();
-
+    QSqlDatabase::removeDatabase(m_dbConnectionName);
     s_apis.remove(m_url);
 }
 
@@ -73,6 +69,14 @@ QJsonObject Api::configuration() const
         endpoints.insert(info.name(), endpoint);
     }
     configuration.insert("endpoints", endpoints);
+
+    QJsonObject resources;
+    for (const ResourceInfo &info : m_resources) {
+        QJsonObject resource;
+        info.save(&resource);
+        resources.insert(info.name(), resource);
+    }
+    configuration.insert("resources", resources);
 
     return configuration;
 }
@@ -101,12 +105,12 @@ void Api::configure(const QJsonObject &configuration)
     const QJsonObject endpoints = configuration.value("endpoints").toObject();
     const QStringList &endpointNames = endpoints.keys();
     for (const QString &endpointName : endpointNames) {
-        const QJsonObject endpointObject = endpoints.value(endpointName).toObject();
-
         EndpointInfo endpoint;
-        endpoint.load(endpointName, endpointObject, this);
+        endpoint.load(endpointName, endpoints.value(endpointName).toObject(), this);
         m_endpoints.insert(endpointName, endpoint);
     }
+
+    resetIdleTime();
 }
 
 void Api::reset()
@@ -128,6 +132,8 @@ void Api::reset()
         if (endpoint.hasResource())
             m_resources.insert(endpoint.name(), endpoint.resource());
     }
+
+    resetIdleTime();
 }
 
 EndpointInfo Api::endpointInfo(const QString &name) const
@@ -152,6 +158,24 @@ ResourceInfo Api::resourceInfoByTable(const QString &table) const
 QStringList Api::resourceNames() const
 {
     return m_resources.keys();
+}
+
+qint64 Api::idleTime() const
+{
+    const QDateTime now = QDateTime::currentDateTime();
+    return now.secsTo(m_lastUsedTime);
+}
+
+void Api::resetIdleTime()
+{
+    m_lastUsedTime = QDateTime::currentDateTime();
+}
+
+void Api::closeDatabase()
+{
+    QSqlDatabase db = QSqlDatabase::database(m_dbConnectionName, false);
+    if (db.isOpen())
+        db.close();
 }
 
 QSqlDatabase Api::database() const
@@ -184,6 +208,15 @@ Api *Api::api(const QUrl &url)
         return *it;
 
     return new Api(url);
+}
+
+void Api::purgeApis()
+{
+    for (Api *api : std::as_const(s_apis)) {
+        // We close database connections which were unused during at least 30 minutes
+        if (api->idleTime() > 1800)
+            api->closeDatabase();
+    }
 }
 
 void Api::cleanupApis()
