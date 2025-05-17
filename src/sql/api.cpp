@@ -30,7 +30,7 @@ Api::Api(const QUrl &url)
     db.setPassword(url.password());
 
     if (url.scheme() == "sqlite") {
-        if (url.path().startsWith("/:memory:"))
+        if (url.path().startsWith("memory"))
             db.setDatabaseName(":memory:");
         else
             db.setDatabaseName(url.path());

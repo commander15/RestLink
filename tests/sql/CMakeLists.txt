@@ -11,7 +11,7 @@ add_executable(RestLinkSqlTest
 set(DATABASE_DIR  "${PROJECT_BINARY_DIR}/testdata/store")
 set(DATABASE_FILE "database.sqlite")
 
- set(DATABASE_URL "sqlite:///:memory:/1")
+ set(DATABASE_URL "sqlite:memory/1")
 # set(DATABASE_URL "sqlite://${DATABASE_DIR}/${DATABASE_FILE}")
 
 target_compile_definitions(RestLinkSqlTest PRIVATE
