@@ -22,6 +22,7 @@ public:
 
     QString query() const;
     QString formated(const QVariantHash &data) const;
+    QStringList allFormated(const QVariantHash &data) const;
 
     bool isObjectQuery() const;
     bool isArrayQuery() const;

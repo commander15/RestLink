@@ -99,8 +99,9 @@ void Router::processStandardRequest(const ServerRequest &request, ServerResponse
             parameters.insert(parameter.name(), parameter.value());
 
         const SqlQueryInfo query = endpoint.query();
+        const QStringList queries = query.allFormated(parameters);
 
-        ServerRequest queryRequest(AbstractRequestHandler::PostMethod, request, query.formated(parameters));
+        ServerRequest queryRequest(AbstractRequestHandler::PostMethod, request, queries.join(";\n"));
         queryRequest.setEndpoint("/query");
         queryRequest.addQueryParameter("object", query.isObjectQuery());
         processQueryRequest(queryRequest, response, api);

@@ -9,7 +9,22 @@ namespace Sql {
 class SqlQueryInfoData : public QSharedData
 {
 public:
-    QString query;
+    QString format(const QString &query, const QVariantHash &data) const
+    {
+        QString output = query;
+
+        const QStringList dataNames = data.keys();
+        for (const QString &name : dataNames)
+            output.replace('{' + name + '}', data.value(name).toString());
+
+        const QStringList parameterNames = parameters.keys();
+        for (const QString &name : parameterNames)
+            output.replace('{' + name + '}', parameters.value(name).toString());
+
+        return output;
+    }
+
+    QStringList queries;
     QVariantHash parameters;
     bool object = false;
 };
@@ -37,22 +52,23 @@ SqlQueryInfo &SqlQueryInfo::operator=(const SqlQueryInfo &other)
 
 QString SqlQueryInfo::query() const
 {
-    return d_ptr->query;
+    return d_ptr->queries.isEmpty() ? QString() : d_ptr->queries.first();
 }
 
 QString SqlQueryInfo::formated(const QVariantHash &data) const
 {
-    QString query = d_ptr->query;
+    return (d_ptr->queries.isEmpty() ? QString() : d_ptr->format(d_ptr->queries.first(), data));
+}
 
-    const QStringList dataNames = data.keys();
-    for (const QString &name : dataNames)
-        query.replace('{' + name + '}', data.value(name).toString());
+QStringList SqlQueryInfo::allFormated(const QVariantHash &data) const
+{
+    QStringList queries = d_ptr->queries;
 
-    const QStringList parameterNames = d_ptr->parameters.keys();
-    for (const QString &name : parameterNames)
-        query.replace('{' + name + '}', d_ptr->parameters.value(name).toString());
+    std::transform(queries.begin(), queries.end(), queries.begin(), [this, &data](const QString &query) {
+        return d_ptr->format(query, data);
+    });
 
-    return query;
+    return queries;
 }
 
 bool SqlQueryInfo::isObjectQuery() const
@@ -67,13 +83,23 @@ bool SqlQueryInfo::isArrayQuery() const
 
 bool SqlQueryInfo::isValid() const
 {
-    return !d_ptr->query.isEmpty();
+    return !d_ptr->queries.isEmpty();
 }
 
 void SqlQueryInfo::load(const QJsonObject &object)
 {
+    auto generateQueries = [](const QJsonObject &object) -> QStringList {
+        if (object.contains("query"))
+            return QStringList() << object.value("query").toString();
+
+        if (object.contains("queries"))
+            return object.value("queries").toVariant().toStringList();
+
+        return QStringList();
+    };
+
     beginParsing(object);
-    attribute("query", &d_ptr->query);
+    attribute("queries", Callback<QStringList>(generateQueries), &d_ptr->queries);
     attribute("object", false, &d_ptr->object);
     attribute("parameters", &d_ptr->parameters);
     endParsing();
@@ -81,8 +107,9 @@ void SqlQueryInfo::load(const QJsonObject &object)
 
 void SqlQueryInfo::save(QJsonObject *object) const
 {
-    object->insert("query", d_ptr->query);
+    object->insert("queries", QJsonValue::fromVariant(d_ptr->queries));
     object->insert("object", d_ptr->object);
+    object->insert("parameters", QJsonValue::fromVariant(d_ptr->parameters));
 }
 
 } // namespace Sql
