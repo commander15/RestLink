@@ -238,7 +238,7 @@ bool Model::update()
 
     for (Relation &relation : d_ptr->relations) {
         relation.prepareOperations(Relation::PreProcessing);
-        if (!relation.insert())
+        if (!relation.update())
             return false;
     }
 
@@ -248,10 +248,6 @@ bool Model::update()
     QSqlQuery query = exec(QueryBuilder::updateStatement(d_ptr->resource, d_ptr->data, options, d_ptr->api));
     if (query.lastError().type() != QSqlError::NoError)
         return false;
-
-    for (Relation &relation : d_ptr->relations)
-        if (!relation.update())
-            return false;
 
     for (Relation &relation : d_ptr->relations) {
         relation.prepareOperations(Relation::PostProcessing);
