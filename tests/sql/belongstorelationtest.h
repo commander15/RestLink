@@ -6,7 +6,7 @@
 class BelongsToRelationTest : public RelationTest
 {
 protected:
-    BelongsToRelationTest() : RelationTest("products") {}
+    BelongsToRelationTest() : RelationTest("stocks") {}
 };
 
 #endif // BELONGSTORELATIONTEST_H
