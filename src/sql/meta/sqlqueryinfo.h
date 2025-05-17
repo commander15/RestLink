@@ -3,13 +3,15 @@
 
 #include "parseddata.h"
 
+#include <global.h>
+
 #include <QtCore/qshareddata.h>
 
 namespace RestLink {
 namespace Sql {
 
 class SqlQueryInfoData;
-class SqlQueryInfo : public ParsedData
+class SQL_EXPORT SqlQueryInfo : public ParsedData
 {
 public:
     SqlQueryInfo();

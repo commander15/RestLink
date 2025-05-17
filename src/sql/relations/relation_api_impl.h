@@ -16,6 +16,7 @@ public:
     bool update() override;
     bool deleteData() override;
 
+    Relation::OperationMode operationMode() const override { return Relation::PostProcessing; }
     Relation::Type relationType() const override { return Relation::Type::HasOne; }
     RelationImpl *clone() const override { return new HasOneImpl(relation); }
 };
@@ -30,7 +31,9 @@ public:
     bool update() override;
     bool deleteData() override;
 
-    Relation::OperationMode operationMode() const override { return Relation::OperationMode::PostProcessing; }
+    //void setJsonValue(const QJsonValue &value) override;
+
+    Relation::OperationMode operationMode() const override { return Relation::OperationMode::PreProcessing; }
     Relation::Type relationType() const override { return Relation::Type::BelongsTo; }
     RelationImpl *clone() const override { return new BelongsToImpl(relation); }
 };
@@ -46,6 +49,7 @@ public:
     bool update() override;
     bool deleteData() override;
 
+    Relation::OperationMode operationMode() const override { return Relation::OperationMode::PreProcessing; }
     Relation::Type relationType() const override { return Relation::Type::HasMany; }
     RelationImpl *clone() const override { return new HasManyImpl(relation); }
 };
@@ -61,6 +65,7 @@ public:
     bool update() override;
     bool deleteData() override;
 
+    Relation::OperationMode operationMode() const override { return Relation::OperationMode::PostProcessing; }
     Relation::Type relationType() const override { return Relation::Type::BelongsToMany; }
     RelationImpl *clone() const override { return new BelongsToManyImpl(relation); }
 };

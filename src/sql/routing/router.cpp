@@ -1,4 +1,6 @@
 #include "router.h"
+#include "utils/querybuilder.h"
+#include "utils/queryrunner.h"
 
 #include <api.h>
 #include <meta/endpointinfo.h>
@@ -147,58 +149,18 @@ void Router::processQueryRequest(const ServerRequest &request, ServerResponse *r
     QSqlQuery query(manager->database());
     query.setForwardOnly(true);
 
-    auto process = [&query](const QByteArray &statement, bool singleResult, bool *success) -> QJsonObject {
-        if (!query.exec(statement)) {
-            *success = false;
-            return JsonUtils::objectFromQuery(query);
-        } else {
-            *success = true;
-        }
-
-        QJsonObject body;
-        if (singleResult) {
-            body.insert("data", JsonUtils::objectFromRecord(query.record(), ResourceInfo()));
-        } else {
-            QJsonArray data;
-            while (query.next())
-                data.append(JsonUtils::objectFromRecord(query.record(), ResourceInfo()));
-            body.insert("data", data);
-        }
-        query.finish();
-
-        body.insert("last_insert_id", QJsonValue::fromVariant(query.lastInsertId()));
-        body.insert("num_rows_affected", query.numRowsAffected());
-        return body;
+    auto process = [&query, manager](const QString &statement, bool singleResult, bool *success) -> QJsonObject {
+        Query query;
+        query.statement = statement;
+        query.array = !singleResult;
+        return QueryRunner::exec(query, manager, success);
     };
 
-    QByteArrayList statements;
-    QByteArrayList input = request.body().toByteArray().trimmed().split('\n');
-
-    {
-        QByteArray statement;
-        QByteArray delimiter = ";";
-        for (QByteArray &line : input) {
-            line = line.trimmed();
-
-            // We skip empty lines
-            if (line.isEmpty())
-                continue;
-
-            statement.append(line);
-
-            if (line.endsWith(delimiter)) {
-                statements.append(statement);
-                statement.clear();
-            }
-        }
-
-        // If there is only one statement without delimiter
-        if (statements.isEmpty() && !statement.isEmpty())
-            statements.append(statement);
-    }
+    const QString input = request.body().toString().trimmed();
+    const QStringList statements = QueryBuilder::statementsFromScript(input);
 
     bool forceObject = request.hasQueryParameter("object") && request.queryParameterValues("object").constFirst().toBool();
-    if (statements.size() == 1 || forceObject) {
+    if (statements.size() == 1 && forceObject) {
         bool success;
         response->setBody(process(statements.constFirst(), forceObject, &success));
         response->setHttpStatusCode(success ? 200 : 401);
@@ -211,7 +173,7 @@ void Router::processQueryRequest(const ServerRequest &request, ServerResponse *r
         bool success;
 
         QJsonArray results;
-        for (const QByteArray &statement : statements) {
+        for (const QString &statement : statements) {
             results.append(process(statement, false, &success));
             successes += (success ? 1 : 0);
         }

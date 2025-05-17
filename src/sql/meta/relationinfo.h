@@ -3,6 +3,8 @@
 
 #include "parseddata.h"
 
+#include <global.h>
+
 #include <QtCore/qshareddata.h>
 
 class QJsonObject;
@@ -14,7 +16,7 @@ class ResourceInfo;
 class Api;
 
 class RelationInfoData;
-class RelationInfo : public ParsedData
+class SQL_EXPORT RelationInfo : public ParsedData
 {
 public:
     RelationInfo();

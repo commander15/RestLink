@@ -115,8 +115,8 @@ success:
     return;
 
 error:
-    response->setHttpStatusCode(httpStatusCodeFromSqlError(model.lastQuery().lastError().type()));
-    response->setBody(JsonUtils::objectFromQuery(model.lastQuery()));
+    response->setHttpStatusCode(httpStatusCodeFromSqlError(model.lastError()));
+    response->setBody(model.lastError());
     response->complete();
     return;
 }
@@ -137,8 +137,8 @@ success:
     return;
 
 error:
-    response->setHttpStatusCode(httpStatusCodeFromSqlError(model.lastQuery().lastError().type()));
-    response->setBody(JsonUtils::objectFromQuery(model.lastQuery()));
+    response->setHttpStatusCode(httpStatusCodeFromSqlError(model.lastError()));
+    response->setBody(model.lastError());
     response->complete();
     return;
 }
@@ -158,7 +158,7 @@ success:
     return;
 
 error:
-    response->setBody(JsonUtils::objectFromQuery(model.lastQuery()));
+    response->setBody(model.lastQuery());
     response->setHttpStatusCode(404);
     response->complete();
     return;
@@ -175,8 +175,8 @@ void ModelController::destroy(const ServerRequest &request, ServerResponse *resp
     }
 
     if (!model.deleteData()) {
-        response->setHttpStatusCode(httpStatusCodeFromSqlError(model.lastQuery().lastError().type()));
-        response->setBody(JsonUtils::objectFromQuery(model.lastQuery()));
+        response->setHttpStatusCode(httpStatusCodeFromSqlError(model.lastError()));
+        response->setBody(model.lastError());
         response->complete();
         return;
     }
@@ -233,9 +233,13 @@ Model ModelController::requestModel(const ServerRequest &request) const
     return model;
 }
 
+int ModelController::httpStatusCodeFromSqlError(const QJsonObject &error)
+{
+    return 500;
+}
+
 int ModelController::httpStatusCodeFromSqlError(int type)
 {
-
     switch (type) {
     case QSqlError::ConnectionError:
         return 503;

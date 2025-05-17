@@ -28,7 +28,14 @@ Api::Api(const QUrl &url)
     db.setPort(url.port());
     db.setUserName(url.userName());
     db.setPassword(url.password());
-    db.setDatabaseName(url.path());
+
+    if (url.scheme() == "sqlite") {
+        if (url.path().startsWith("/:memory:"))
+            db.setDatabaseName(":memory:");
+        else
+            db.setDatabaseName(url.path());
+    } else
+        db.setDatabaseName(url.path().mid(1));
 
     reset();
 
@@ -150,6 +157,18 @@ QStringList Api::resourceNames() const
 QSqlDatabase Api::database() const
 {
     return QSqlDatabase::database(m_dbConnectionName, true);
+}
+
+bool Api::hasApi(const QUrl &url)
+{
+    if (!url.isValid())
+        return false;
+
+    auto it = std::find_if(s_apis.begin(), s_apis.end(), [&url](const Api *manager) {
+        return manager->m_url == url;
+    });
+
+    return (it != s_apis.end());
 }
 
 Api *Api::api(const QUrl &url)

@@ -8,6 +8,7 @@
 
 #include <QtSql/qsqlfield.h>
 #include <QtSql/qsqlquery.h>
+#include <QtSql/qsqldriver.h>
 
 namespace RestLink {
 namespace Sql {
@@ -61,10 +62,23 @@ QJsonObject JsonUtils::objectFromRecord(const QSqlRecord &record, const Resource
 
 QJsonObject JsonUtils::objectFromQuery(const QSqlQuery &query)
 {
+    const QSqlDriver *driver = query.driver();
+
     QJsonObject object;
     object.insert("statement", query.isActive() ? query.executedQuery() : query.lastQuery());
-    object.insert("last_insert_id", QJsonValue::fromVariant(query.lastInsertId()));
-    object.insert("num_rows_affected", query.numRowsAffected());
+
+    if (query.isSelect()) {
+        if (driver->hasFeature(QSqlDriver::QuerySize)) {
+            int size = query.size();
+            object.insert("size", size < 0 ? 0 : size);
+        }
+    } else {
+        int numRowsAffected = query.numRowsAffected();
+        object.insert("num_rows_affected", numRowsAffected < 0 ? 0 : numRowsAffected);
+
+        if (driver->hasFeature(QSqlDriver::LastInsertId))
+            object.insert("last_insert_id", QJsonValue::fromVariant(query.lastInsertId()));
+    }
 
     const QSqlError lastError = query.lastError();
     if (lastError.type() != QSqlError::NoError)

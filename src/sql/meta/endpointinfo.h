@@ -5,11 +5,13 @@
 #include "sqlqueryinfo.h"
 #include "resourceinfo.h"
 
+#include <global.h>
+
 namespace RestLink {
 namespace Sql {
 
 class EndpointInfoData;
-class EndpointInfo : public ParsedData
+class SQL_EXPORT EndpointInfo : public ParsedData
 {
 public:
     EndpointInfo();

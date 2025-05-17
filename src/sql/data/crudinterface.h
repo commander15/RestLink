@@ -1,10 +1,12 @@
 #ifndef CRUDINTERFACE_H
 #define CRUDINTERFACE_H
 
+#include <global.h>
+
 namespace RestLink {
 namespace Sql {
 
-class CRUDInterface
+class SQL_EXPORT CRUDInterface
 {
 public:
     virtual ~CRUDInterface() = default;

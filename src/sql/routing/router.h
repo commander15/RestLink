@@ -3,12 +3,14 @@
 
 #include "modelcontroller.h"
 
+#include <global.h>
+
 #include <RestLink/server.h>
 
 namespace RestLink {
 namespace Sql {
 
-class Router final : public RestLink::Server
+class SQL_EXPORT Router final : public RestLink::Server
 {
     Q_OBJECT
 

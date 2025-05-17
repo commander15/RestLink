@@ -6,6 +6,7 @@
 #include <meta/resourceinfo.h>
 #include <meta/relationinfo.h>
 
+#include <utils/queryrunner.h>
 #include <utils/querybuilder.h>
 #include <utils/jsonutils.h>
 
@@ -17,25 +18,14 @@
 namespace RestLink {
 namespace Sql {
 
-class ModelData final : public QSharedData
+class ModelData : public QSharedData
 {
 public:
-    ModelData() = default;
-
-    ModelData(const ModelData &other)
-        : QSharedData(other),
-        data(other.data),
-        relations(other.relations),
-        resource(other.resource),
-        api(other.api)
-    {}
-
-    ModelData(ModelData &&other) = default;
-
     QVariantHash data;
-    QList<Relation> relations;
+    QHash<QString, Relation> relations;
 
-    QSqlQuery lastQuery;
+    QJsonObject lastQuery;
+    QJsonObject lastError;
 
     ResourceInfo resource;
     Api *api = nullptr;
@@ -75,6 +65,18 @@ void Model::setPrimary(const QVariant &value)
     setField(d_ptr->resource.primaryKey(), value);
 }
 
+QDateTime Model::createdAt() const
+{
+    const QString field = d_ptr->resource.creationTimestampField();
+    return this->field(field).toDateTime();
+}
+
+QDateTime Model::updatedAt() const
+{
+    const QString field = d_ptr->resource.updateTimestamp();
+    return this->field(field).toDateTime();
+}
+
 QVariant Model::field(const QString &name) const
 {
     return d_ptr->data.value(name);
@@ -88,12 +90,39 @@ void Model::setField(const QString &name, const QVariant &value)
         d_ptr->data.remove(name);
 }
 
-void Model::fill(const QJsonObject &data)
+Relation Model::relation(const QString &name) const
 {
-    d_ptr->data = data.toVariantHash();
+    return d_ptr->relations.value(name);
+}
 
-    for (Relation &relation : d_ptr->relations)
-        relation.fill(data);
+void Model::fill(const QJsonObject &data, FillMode mode)
+{
+    QStringList fieldNames = d_ptr->resource.fillableFields();
+    if (mode == FullFill)
+        fieldNames.prepend(d_ptr->resource.primaryKey());
+
+    const QStringList relationNames = d_ptr->resource.relationNames();
+    const QStringList inputs = data.keys();
+
+    for (const QString &input : inputs) {
+        const QJsonValue value = data.value(input);
+
+        if (fieldNames.contains(input)) {
+            d_ptr->data.insert(input, value.toVariant());
+        } else if (d_ptr->relations.contains(input)) {
+            d_ptr->relations[input].fill(value);
+        } else if (relationNames.contains(input)) {
+            Relation relation(input, this);
+            relation.fill(value);
+            d_ptr->relations.insert(input, relation);
+        }
+    }
+
+    return;
+    for (Relation &relation : d_ptr->relations) {
+        const QJsonValue value = data.value(relation.relationName());
+        relation.fill(value);
+    }
 }
 
 void Model::fill(const QSqlRecord &record)
@@ -102,9 +131,6 @@ void Model::fill(const QSqlRecord &record)
 
     for (int i(0); i < record.count(); ++i)
         d_ptr->data.insert(record.fieldName(i), record.value(i));
-
-    for (Relation &relation : d_ptr->relations)
-        relation.fill(record);
 }
 
 QJsonObject Model::jsonObject() const
@@ -166,7 +192,7 @@ bool Model::load(const QStringList &relations)
         Relation relation(name, this);
         if (!relation.get())
             return false;
-        d_ptr->relations.append(relation);
+        d_ptr->relations.insert(name, relation);
     }
 
     return true;
@@ -174,10 +200,17 @@ bool Model::load(const QStringList &relations)
 
 bool Model::insert()
 {
-    QVariantHash data = d_ptr->data;
-    data.remove(d_ptr->resource.primaryKey());
+    const QString timestampField = d_ptr->resource.creationTimestampField();
+    if (!timestampField.isEmpty())
+        d_ptr->data.insert(timestampField, QDateTime::currentDateTime());
 
-    QSqlQuery query = exec(QueryBuilder::insertStatement(d_ptr->resource, data, d_ptr->api));
+    for (Relation &relation : d_ptr->relations) {
+        relation.prepareOperations(Relation::PreProcessing);
+        if (!relation.insert())
+            return false;
+    }
+
+    QSqlQuery query = exec(QueryBuilder::insertStatement(d_ptr->resource, d_ptr->data, d_ptr->api));
 
     const QVariant id = query.lastInsertId();
     if (!id.isValid())
@@ -185,9 +218,11 @@ bool Model::insert()
 
     setPrimary(id);
 
-    for (Relation &relation : d_ptr->relations)
+    for (Relation &relation : d_ptr->relations) {
+        relation.prepareOperations(Relation::PostProcessing);
         if (!relation.insert())
             return false;
+    }
 
     return true;
 }
@@ -196,6 +231,16 @@ bool Model::update()
 {
     if (!exists())
         return false;
+
+    const QString timestampField = d_ptr->resource.updateTimestamp();
+    if (!timestampField.isEmpty())
+        d_ptr->data.insert(timestampField, QDateTime::currentDateTime());
+
+    for (Relation &relation : d_ptr->relations) {
+        relation.prepareOperations(Relation::PreProcessing);
+        if (!relation.insert())
+            return false;
+    }
 
     QueryOptions options;
     options.filters.andWhere(d_ptr->resource.primaryKey(), primary());
@@ -208,6 +253,12 @@ bool Model::update()
         if (!relation.update())
             return false;
 
+    for (Relation &relation : d_ptr->relations) {
+        relation.prepareOperations(Relation::PostProcessing);
+        if (!relation.update())
+            return false;
+    }
+
     return true;
 }
 
@@ -215,6 +266,12 @@ bool Model::deleteData()
 {
     if (!exists())
         return false;
+
+    for (Relation &relation : d_ptr->relations) {
+        relation.prepareOperations(Relation::PreProcessing);
+        if (!relation.deleteData())
+            return false;
+    }
 
     QueryOptions options;
     options.filters.andWhere(d_ptr->resource.primaryKey(), primary());
@@ -227,12 +284,23 @@ bool Model::deleteData()
         if (!relation.deleteData())
             return false;
 
+    for (Relation &relation : d_ptr->relations) {
+        relation.prepareOperations(Relation::PostProcessing);
+        if (!relation.deleteData())
+            return false;
+    }
+
     return true;
 }
 
-const QSqlQuery &Model::lastQuery() const
+QJsonObject Model::lastQuery() const
 {
     return d_ptr->lastQuery;
+}
+
+QJsonObject Model::lastError() const
+{
+    return d_ptr->lastError;
 }
 
 RelationInfo Model::relationInfo(const QString &name) const
@@ -242,7 +310,12 @@ RelationInfo Model::relationInfo(const QString &name) const
 
 ResourceInfo Model::resourceInfo() const
 {
-    return d_ptr->api->resourceInfo(d_ptr->resource.table());
+    return d_ptr->resource;
+}
+
+bool Model::isValid() const
+{
+    return d_ptr->resource.isValid();
 }
 
 Api *Model::api() const
@@ -303,19 +376,11 @@ int Model::count(const QString &resource, const QueryOptions &options, Api *api)
 
 QSqlQuery Model::exec(const QString &statement)
 {
-    if (!d_ptr->api)
-        return QSqlQuery();
+    QSqlQuery query = QueryRunner::exec(statement, d_ptr->api);
 
-    QSqlQuery query(d_ptr->api->database());
-    query.setForwardOnly(true);
-
-#ifdef QT_DEBUG
-    sqlInfo() << statement;
-    if (!query.exec(statement)) {
-        sqlWarning() << statement;
-        sqlWarning() << query.lastError().databaseText();
-    }
-#endif
+    d_ptr->lastQuery = JsonUtils::objectFromQuery(query);
+    if (d_ptr->lastQuery.contains("error"))
+        d_ptr->lastError = d_ptr->lastQuery.value("error").toObject();
 
     return query;
 }

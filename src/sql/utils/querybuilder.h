@@ -1,6 +1,8 @@
 #ifndef QUERYBUILDER_H
 #define QUERYBUILDER_H
 
+#include <global.h>
+
 #include <QtCore/qjsonobject.h>
 #include <QtCore/qlist.h>
 #include <QtCore/qpair.h>
@@ -14,7 +16,7 @@ class ResourceInfo;
 class Api;
 class QueryOptions;
 
-class QueryBuilder
+class SQL_EXPORT QueryBuilder
 {
 public:
     static bool canGenerate(const ResourceInfo &resource, const QueryOptions &options, Api *api);
@@ -31,6 +33,8 @@ public:
 
     static QString formatValue(const QVariant &value, Api *api);
     static QString formatValue(const QVariant &value, const QMetaType &type, Api *api);
+
+    static QStringList statementsFromScript(const QString &script);
 };
 
 class Expression : public QString

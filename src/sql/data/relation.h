@@ -1,6 +1,7 @@
 #ifndef RELATION_H
 #define RELATION_H
 
+#include <global.h>
 #include <data/crudinterface.h>
 #include <meta/relationinfo.h>
 #include <meta/resourceinfo.h>
@@ -16,7 +17,7 @@ class QSqlRecord;
 namespace RestLink {
 namespace Sql {
 
-class Model;
+class SQL_EXPORT Model;
 
 class RelationData;
 class RelationImpl;
@@ -49,8 +50,7 @@ public:
     QString modelName() const;
     bool isOwnedModel() const;
 
-    void fill(const QJsonObject &object);
-    void fill(const QSqlRecord &record);
+    void fill(const QJsonValue &value);
 
     Model *root() const;
 
@@ -88,8 +88,8 @@ public:
     virtual QVariant field(const QString &name) const = 0;
     virtual void setField(const QString &name, const QVariant &value) = 0;
 
-    virtual void fillFromRootObject(const QJsonObject &object) {}
-    virtual void fillFromRootRecord(const QSqlRecord &record) {};
+    virtual void fillFromJson(const QJsonValue &value)
+    { setJsonValue(value); }
 
     virtual QList<Model> relatedModels() const = 0;
     virtual void setRelatedModels(const QList<Model> &models) = 0;
@@ -97,8 +97,7 @@ public:
     virtual QJsonValue jsonValue() const = 0;
     virtual void setJsonValue(const QJsonValue &value) = 0;
 
-    virtual Relation::OperationMode operationMode() const
-    { return Relation::OperationMode::PreProcessing; }
+    virtual Relation::OperationMode operationMode() const = 0;
     virtual Relation::Type relationType() const = 0;
 
     virtual RelationImpl *clone() const = 0;
@@ -128,17 +127,22 @@ class NullRelationImpl final : public RelationImpl
 public:
     NullRelationImpl(Relation *relation) : RelationImpl(relation) {}
 
+    QDateTime creationTimestamp() const;
+    QDateTime updateTimestamp() const;
+
     QVariant field(const QString &name) const override { error(); return QVariant(); }
     void setField(const QString &name, const QVariant &value) override { error(); }
 
-    void fillFromRootObject(const QJsonObject &object) override { error(); }
-    void fillFromRootRecord(const QSqlRecord &record) override { error(); }
+    void fillFromJson(const QJsonValue &value) override { error(); }
 
     QList<Model> relatedModels() const override { error(); return {}; }
     void setRelatedModels(const QList<Model> &models) override { error(); }
 
     QJsonValue jsonValue() const override { error(); return QJsonValue(); }
     void setJsonValue(const QJsonValue &value) override { error(); };
+
+    Relation::OperationMode operationMode() const override
+    { error(); return Relation::PostProcessing; }
 
     bool exists() const override { return error(); }
     bool get() override { return error(); }

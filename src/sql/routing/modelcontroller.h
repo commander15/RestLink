@@ -1,9 +1,13 @@
 #ifndef MODELCONTROLLER_H
 #define MODELCONTROLLER_H
 
+#include <global.h>
+
 #include <QtCore/qstring.h>
 
 #include <RestLink/resourcecontroller.h>
+
+class QJsonObject;
 
 namespace RestLink {
 namespace Sql {
@@ -12,7 +16,7 @@ class Model;
 
 class Api;
 
-class ModelController : public RestLink::AbstractResourceController
+class SQL_EXPORT ModelController : public RestLink::AbstractResourceController
 {
 public:
     ModelController();
@@ -32,6 +36,7 @@ public:
 
     Model requestModel(const ServerRequest &request) const;
 
+    static int httpStatusCodeFromSqlError(const QJsonObject &error);
     static int httpStatusCodeFromSqlError(int type);
 
 private:

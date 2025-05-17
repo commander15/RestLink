@@ -1,6 +1,8 @@
 #ifndef RESTLINK_SQLUTILS_H
 #define RESTLINK_SQLUTILS_H
 
+#include <global.h>
+
 #include <RestLink/global.h>
 
 class QJsonObject;
@@ -10,7 +12,7 @@ class QSqlDatabase;
 
 namespace RestLink {
 
-class SqlUtils
+class SQL_EXPORT SqlUtils
 {
 public:
     static QSqlRecord jsonToRecord(const QByteArray &json);

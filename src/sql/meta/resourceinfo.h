@@ -3,6 +3,8 @@
 
 #include "parseddata.h"
 
+#include <global.h>
+
 #include <QtCore/qshareddata.h>
 #include <QtCore/qlist.h>
 
@@ -17,7 +19,7 @@ class RelationInfo;
 class Api;
 
 class ResourceInfoData;
-class ResourceInfo final : public ParsedData
+class SQL_EXPORT ResourceInfo final : public ParsedData
 {
 public:
     ResourceInfo();
@@ -32,6 +34,12 @@ public:
     QString table() const;
     QString primaryKey() const;
     QString foreignKey() const;
+
+    bool hasCreationTimestamp() const;
+    QString creationTimestampField() const;
+
+    bool hasUpdateTimestamp() const;
+    QString updateTimestamp() const;
 
     QStringList fillableFields() const;
 

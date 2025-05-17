@@ -62,7 +62,7 @@ QString QueryBuilder::insertStatement(const ResourceInfo &resource, const QVaria
         return QString();
 
     return QStringLiteral("INSERT INTO %1 (%2) VALUES (%3)")
-        .arg(table, columns.join(", "), values.join(", "));
+        .arg(formatTableName(table, api), columns.join(", "), values.join(", "));
 }
 
 QString QueryBuilder::updateStatement(const ResourceInfo &resource, const QVariantHash &data, const QueryOptions &options, Api *api)
@@ -105,7 +105,7 @@ QString QueryBuilder::deleteStatement(const ResourceInfo &resource, const QueryO
     QString whereClause = QueryBuilder::whereClause(options, api);
 
     return QStringLiteral("DELETE FROM %1%2")
-        .arg(table, !whereClause.isEmpty() ? ' ' + whereClause : QString());
+        .arg(formatTableName(table, api), !whereClause.isEmpty() ? ' ' + whereClause : QString());
 }
 
 void QueryBuilder::extract(const ResourceInfo &resource, const QVariantHash &data, QStringList *columns, QStringList *values, Api *api)
@@ -113,8 +113,9 @@ void QueryBuilder::extract(const ResourceInfo &resource, const QVariantHash &dat
     if (!canGenerate(resource, QueryOptions(), api))
         return;
 
-    const QStringList fieldNames = resource.fillableFields();
-    for (const QString &fieldName : fieldNames) {
+    QStringList fieldNames = resource.fieldNames();
+    fieldNames.removeOne(resource.primaryKey());
+    for (const QString &fieldName : std::as_const(fieldNames)) {
         if (!data.contains(fieldName))
             continue;
 
@@ -185,6 +186,45 @@ QString QueryBuilder::formatValue(const QVariant &value, const QMetaType &type, 
     QSqlField field(QStringLiteral("x"), type);
     field.setValue(value);
     return api->database().driver()->formatValue(field);
+}
+
+QStringList QueryBuilder::statementsFromScript(const QString &script)
+{
+    QStringList statements;
+    QStringList input = script.trimmed().split('\n');
+
+    QString statement;
+    QString delimiter = ";";
+    for (QString &line : input) {
+        line = line.trimmed();
+
+        // We skip empty lines
+        if (line.isEmpty())
+            continue;
+
+        // We skip comments
+        if (line.startsWith("--"))
+            continue;
+
+        // We change delimiter
+        if (line.contains("DELIMITER", Qt::CaseInsensitive)) {
+            line.remove("DELIMITER", Qt::CaseInsensitive);
+            delimiter = line.trimmed();
+        }
+
+        statement.append(line);
+
+        if (line.endsWith(delimiter)) {
+            statements.append(statement);
+            statement.clear();
+        }
+    }
+
+    // If there is only one statement without delimiter
+    if (statements.isEmpty() && !statement.isEmpty())
+        statements.append(statement);
+
+    return statements;
 }
 
 } // namespace Sql

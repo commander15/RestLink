@@ -1,19 +1,29 @@
 #ifndef QUERYRUNNER_H
 #define QUERYRUNNER_H
 
+#include <global.h>
+
 #include <QtCore/qjsonobject.h>
 
-class QSqlQuery;
+#include <QtSql/qsqlquery.h>
 
 namespace RestLink {
 namespace Sql {
 
 class Api;
 
-class QueryRunner
+class SQL_EXPORT Query
 {
 public:
-    //static QSqlQuery exec(const QString &statement, QJsonObject *error = nullptr);
+    QString statement;
+    bool array = true;
+};
+
+class SQL_EXPORT QueryRunner
+{
+public:
+    static QJsonObject exec(const Query &query, Api *api, bool *success = nullptr);
+    static QSqlQuery exec(const QString &statement, Api *api, bool *success = nullptr);
 };
 
 } // namespace Sql

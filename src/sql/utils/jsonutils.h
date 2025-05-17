@@ -1,6 +1,8 @@
 #ifndef JSONUTILS_H
 #define JSONUTILS_H
 
+#include <global.h>
+
 #include <QtCore/qjsonobject.h>
 
 #include <QtSql/qsqlrecord.h>
@@ -13,7 +15,7 @@ namespace Sql {
 
 class ResourceInfo;
 
-class JsonUtils
+class SQL_EXPORT JsonUtils
 {
 public:
     static QSqlRecord recordFromRawData(const QByteArray &rawData, const ResourceInfo &resource);

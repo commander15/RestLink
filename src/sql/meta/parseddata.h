@@ -1,6 +1,8 @@
 #ifndef PARSEDDATA_H
 #define PARSEDDATA_H
 
+#include <global.h>
+
 #include <QtCore/qglobal.h>
 
 #include <functional>
@@ -11,7 +13,7 @@ class QJsonArray;
 namespace RestLink {
 namespace Sql {
 
-class ParsedData
+class SQL_EXPORT ParsedData
 {
 public:
     template<typename T>

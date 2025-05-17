@@ -82,14 +82,9 @@ bool Relation::isOwnedModel() const
     return m_info.owned();
 }
 
-void Relation::fill(const QJsonObject &object)
+void Relation::fill(const QJsonValue &value)
 {
-    m_impl->fillFromRootObject(object);
-}
-
-void Relation::fill(const QSqlRecord &record)
-{
-    m_impl->fillFromRootRecord(record);
+    m_impl->fillFromJson(value);
 }
 
 Model *Relation::root() const
@@ -208,6 +203,22 @@ Model RelationImpl::createModel() const
 QSqlQuery RelationImpl::exec(const QString &statement)
 {
     return root->exec(statement);
+}
+
+QDateTime NullRelationImpl::creationTimestamp() const
+{
+    QDateTime timestamp = root->createdAt();
+    if (!timestamp.isValid())
+        timestamp = QDateTime::currentDateTime();
+    return timestamp;
+}
+
+QDateTime NullRelationImpl::updateTimestamp() const
+{
+    QDateTime timestamp = root->updatedAt();
+    if (!timestamp.isValid())
+        timestamp = QDateTime::currentDateTime();
+    return timestamp;
 }
 
 } // namespace Sql

@@ -84,6 +84,26 @@ QString ResourceInfo::foreignKey() const
     return d->foreignKey;
 }
 
+bool ResourceInfo::hasCreationTimestamp() const
+{
+    return !d->createdAtField.isEmpty();
+}
+
+QString ResourceInfo::creationTimestampField() const
+{
+    return d->createdAtField;
+}
+
+bool ResourceInfo::hasUpdateTimestamp() const
+{
+    return !d->updatedAtField.isEmpty();
+}
+
+QString ResourceInfo::updateTimestamp() const
+{
+    return d->updatedAtField;
+}
+
 QStringList ResourceInfo::fillableFields() const
 {
     return d->fillableProperties;

@@ -1,6 +1,8 @@
 #ifndef API_H
 #define API_H
 
+#include <global.h>
+
 #include <QtCore/qurl.h>
 #include <QtCore/qjsonobject.h>
 #include <QtCore/qatomic.h>
@@ -14,7 +16,7 @@ class EndpointInfo;
 class ResourceInfo;
 class Model;
 
-class Api final
+class SQL_EXPORT Api final
 {
 public:
     ~Api();
@@ -33,6 +35,7 @@ public:
 
     QSqlDatabase database() const;
 
+    static bool hasApi(const QUrl &url);
     static Api *api(const QUrl &url);
     static void cleanupManagers();
 

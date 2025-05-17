@@ -39,6 +39,8 @@ QJsonValue SingleRelationImpl::jsonValue() const
 
 void SingleRelationImpl::setJsonValue(const QJsonValue &value)
 {
+    if (!m_relatedModel.isValid())
+        m_relatedModel = createModel();
     m_relatedModel.fill(value.toObject());
 }
 

@@ -11,10 +11,14 @@ namespace Sql {
 bool HasOneImpl::get()
 {
     QueryFilters filters;
-    filters.andWhere(rootResource.foreignKey(), root->primary());
+    filters.andWhere(info.foreignKey(), root->primary());
 
     m_relatedModel = createModel();
-    return m_relatedModel.getByFilters(filters);
+
+    if (!m_relatedModel.getByFilters(filters))
+        return false;
+
+    return true;
 }
 
 bool HasOneImpl::insert()
@@ -23,7 +27,7 @@ bool HasOneImpl::insert()
     if (!info.owned())
         return true;
 
-    m_relatedModel.setField(rootResource.foreignKey(), root->primary());
+    m_relatedModel.setField(info.foreignKey(), root->primary());
     return m_relatedModel.insert();
 }
 
@@ -33,7 +37,7 @@ bool HasOneImpl::update()
     if (!info.owned())
         return true;
 
-    m_relatedModel.setField(rootResource.foreignKey(), root->primary());
+    m_relatedModel.setField(info.foreignKey(), root->primary());
     return m_relatedModel.update();
 }
 
@@ -48,51 +52,45 @@ bool HasOneImpl::deleteData()
 
 bool BelongsToImpl::get()
 {
-    const QString foreignKey = foreignResource.foreignKey();
-
     QueryFilters filters;
-    filters.andWhere(foreignResource.primaryKey(), root->field(foreignKey));
+    filters.andWhere(foreignResource.primaryKey(), root->field(info.foreignKey()));
 
     m_relatedModel = createModel();
-    return m_relatedModel.getByFilters(filters);
+
+    if (!m_relatedModel.getByFilters(filters))
+        return false;
+
+    return true;
 }
 
 bool BelongsToImpl::insert()
 {
-    // If root doesn't own the resource, it can't create it
-    if (!info.owned())
-        return true;
-
-    if (!m_relatedModel.insert())
+    if (info.owned() && !m_relatedModel.insert())
         return false;
 
     // We update foreign key on root
-    root->setField(foreignResource.foreignKey(), m_relatedModel.primary());
+    root->setField(info.foreignKey(), m_relatedModel.primary());
+
     return true;
 }
 
 bool BelongsToImpl::update()
 {
-    // If root doesn't own the resource, it can't modiffy it
-    if (!info.owned())
-        return true;
-
-    if (!m_relatedModel.update())
+    if (info.owned() && !m_relatedModel.update())
         return false;
 
     // We update foreign key on root
-    root->setField(foreignResource.foreignKey(), m_relatedModel.primary());
+    root->setField(info.foreignKey(), m_relatedModel.primary());
+
     return true;
 }
 
 bool BelongsToImpl::deleteData()
 {
-    // If root doesn't own the resource, it can't delete it
-    if (!info.owned())
-        return true;
-
-    if (!m_relatedModel.deleteData())
+    if (info.owned() && !m_relatedModel.deleteData())
         return false;
+
+    root->setField(info.foreignKey(), QVariant());
 
     return true;
 }

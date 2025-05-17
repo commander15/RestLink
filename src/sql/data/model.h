@@ -4,6 +4,7 @@
 #include "crudinterface.h"
 #include "relation.h"
 
+#include <global.h>
 #include <utils/querybuilder.h>
 
 #include <QtCore/qshareddata.h>
@@ -20,9 +21,14 @@ class Api;
 class Relation;
 
 class ModelData;
-class Model final: public CRUDInterface
+class SQL_EXPORT Model final: public CRUDInterface
 {
 public:
+    enum FillMode {
+        NormalFill,
+        FullFill
+    };
+
     Model();
     Model(const QString &resource, Api *manager);
     Model(const Model &other);
@@ -33,10 +39,15 @@ public:
     QVariant primary() const;
     void setPrimary(const QVariant &value);
 
+    QDateTime createdAt() const;
+    QDateTime updatedAt() const;
+
     QVariant field(const QString &name) const;
     void setField(const QString &name, const QVariant &value);
 
-    void fill(const QJsonObject &data);
+    Relation relation(const QString &name) const;
+
+    void fill(const QJsonObject &data, FillMode mode = FullFill);
     void fill(const QSqlRecord &record);
 
     QJsonObject jsonObject() const;
@@ -54,10 +65,13 @@ public:
     bool update() override;
     bool deleteData() override;
 
-    const QSqlQuery &lastQuery() const;
+    QJsonObject lastQuery() const;
+    QJsonObject lastError() const;
 
     RelationInfo relationInfo(const QString &name) const;
     ResourceInfo resourceInfo() const;
+
+    bool isValid() const;
 
     Api *api() const;
 
