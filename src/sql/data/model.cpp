@@ -36,13 +36,18 @@ Model::Model()
 {
 }
 
-Model::Model(const QString &resource, Api *manager)
+Model::Model(const QString &resource, Api *api)
+    : Model(api->resourceInfo(resource), api)
+{
+}
+
+Model::Model(const ResourceInfo &resource, Api *api)
     : d_ptr(new ModelData)
 {
-    d_ptr->resource = manager->resourceInfo(resource);
-    d_ptr->api = manager;
+    d_ptr->resource = resource;
+    d_ptr->api = api;
 
-    manager->refModel(this);
+    api->refModel(this);
 }
 
 Model::Model(const Model &other) = default;
@@ -321,13 +326,16 @@ Api *Model::api() const
 
 QList<Model> Model::getMulti(const QString &resource, const QueryOptions &options, Api *api, QSqlQuery *query)
 {
-    const ResourceInfo info = api->resourceInfo(resource);
-    const QString statement = QueryBuilder::selectStatement(info, options, api);
+    return getMulti(api->resourceInfo(resource), options, api, query);
+}
 
-    QSqlQuery sqlQuery(api->database());
-    sqlQuery.setForwardOnly(true);
+QList<Model> Model::getMulti(const ResourceInfo &resource, const QueryOptions &options, Api *api, QSqlQuery *query)
+{
+    const QString statement = QueryBuilder::selectStatement(resource, options, api);
 
-    if (!sqlQuery.exec(statement)) {
+    bool success = false;
+    QSqlQuery sqlQuery = QueryRunner::exec(statement, api, &success);
+    if (!success) {
         sqlWarning() << statement;
         sqlWarning() << sqlQuery.lastError().databaseText();
         if (query) query->swap(sqlQuery);
@@ -347,8 +355,12 @@ QList<Model> Model::getMulti(const QString &resource, const QueryOptions &option
 
 int Model::count(const QString &resource, const QueryOptions &options, Api *api)
 {
-    const ResourceInfo info = api->resourceInfo(resource);
-    QString statement = QStringLiteral("SELECT COUNT(*) FROM ") + info.table();
+    return count(api->resourceInfo(resource), options, api);
+}
+
+int Model::count(const ResourceInfo &resource, const QueryOptions &options, Api *api)
+{
+    QString statement = QStringLiteral("SELECT COUNT(*) FROM ") + resource.table();
 
     const QString whereClause = QueryBuilder::whereClause(options, api);
     if (!whereClause.isEmpty()) {

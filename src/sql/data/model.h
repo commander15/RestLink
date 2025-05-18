@@ -30,7 +30,8 @@ public:
     };
 
     Model();
-    Model(const QString &resource, Api *manager);
+    Model(const QString &resource, Api *api);
+    Model(const ResourceInfo &resource, Api *api);
     Model(const Model &other);
     ~Model();
 
@@ -76,7 +77,10 @@ public:
     Api *api() const;
 
     static QList<Model> getMulti(const QString &resource, const QueryOptions &options, Api *api, QSqlQuery *query);
+    static QList<Model> getMulti(const ResourceInfo &resource, const QueryOptions &options, Api *api, QSqlQuery *query);
+
     static int count(const QString &resource, const QueryOptions &options, Api *api);
+    static int count(const ResourceInfo &resource, const QueryOptions &options, Api *api);
 
 private:
     QSqlQuery exec(const QString &statement);
