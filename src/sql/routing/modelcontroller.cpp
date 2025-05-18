@@ -62,7 +62,7 @@ void ModelController::index(const ServerRequest &request, ServerResponse *respon
     QJsonArray result;
     int count;
 
-    QSqlQuery query;
+    QSqlQuery query(m_api->database());
     const QList<Model> models = Model::getMulti(m_resource, options, m_api, &query);
 
     QSqlError::ErrorType sqlErrorType = query.lastError().type();
@@ -211,14 +211,27 @@ void ModelController::processRequest(const ServerRequest &request, ServerRespons
     m_resource = request.resource();
 
     QSqlDatabase db = m_api->database();
-    db.transaction();
+
+    if (!db.isOpen()) {
+        QJsonObject body = JsonUtils::objectFromError(db.lastError());
+        body.insert("connection", db.connectionName());
+
+        response->setHttpStatusCode(httpStatusCodeFromSqlError(db.lastError().type()));
+        response->setBody(body);
+        response->complete();
+        return;
+    }
+
+    bool transactionStarted = db.transaction();
 
     AbstractResourceController::processRequest(request, response);
 
-    if (response->isSuccess())
-        db.commit();
-    else
-        db.rollback();
+    if (transactionStarted) {
+        if (response->isSuccess())
+            db.commit();
+        else
+            db.rollback();
+    }
 }
 
 Model ModelController::requestModel(const ServerRequest &request) const
