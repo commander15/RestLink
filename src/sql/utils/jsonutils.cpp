@@ -65,7 +65,9 @@ QJsonObject JsonUtils::objectFromQuery(const QSqlQuery &query)
     const QSqlDriver *driver = query.driver();
 
     QJsonObject object;
+#ifdef RESTLINK_DEBUG
     object.insert("statement", query.isActive() ? query.executedQuery() : query.lastQuery());
+#endif
 
     if (query.isSelect()) {
         if (driver->hasFeature(QSqlDriver::QuerySize)) {
