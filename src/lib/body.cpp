@@ -239,6 +239,15 @@ QByteArray Body::toByteArray() const
     case Type::PlainText:
         return d_ptr->object.toByteArray();
 
+    case Type::JsonData:
+    {
+        const QJsonValue value = d_ptr->object.toJsonValue();
+        if (value.isObject())
+            return QJsonDocument(value.toObject()).toJson();
+        else
+            return QJsonDocument(value.toArray()).toJson();
+    }
+
     case Type::IODevice:
         return device()->readAll();
 
