@@ -5,6 +5,7 @@
 #include <RestLink/abstractrequesthandler.h>
 
 #include <QtCore/qcoreapplication.h>
+#include <QtCore/qdiriterator.h>
 #include <QtCore/qdir.h>
 #include <QtCore/qlibrary.h>
 
@@ -50,7 +51,6 @@ PluginManager::~PluginManager()
 QList<AbstractRequestHandler *> PluginManager::handlers()
 {
     static QList<AbstractRequestHandler *> handlers;
-
     if (!handlers.isEmpty())
         return handlers;
 
@@ -62,31 +62,39 @@ QList<AbstractRequestHandler *> PluginManager::handlers()
     PluginManager *manager = global();
     PluginManagerPrivate *data = manager->d_ptr.get();
 
-    QStringList names = data->names;
+    QStringList fileNames;
+    auto processFile = [data, &fileNames](const QFileInfo &file) {
+        if (!QLibrary::isLibrary(file.fileName()))
+            return;
 
-    if (data->discoveryEnabled) {
-        const QStringList searchPaths = QCoreApplication::libraryPaths();
-        for (const QString &path : searchPaths) {
-            QDir dir(path + "/restlink");
-            const QFileInfoList infos = dir.entryInfoList(QDir::Files);
-            for (const QFileInfo &file : infos)
-                names.append(file.baseName());
+        for (const QString &pluginName : std::as_const(data->names)) {
+            if (file.baseName() == pluginName) {
+                fileNames.append(file.absoluteFilePath());
+                return;
+            }
         }
+
+        if (data->discoveryEnabled)
+            fileNames.append(file.absoluteFilePath());
+    };
+
+    const QStringList searchPaths = QCoreApplication::libraryPaths();
+    for (const QString &path : searchPaths) {
+        QDirIterator it(path, { "restlink*" }, QDir::Files, QDirIterator::Subdirectories);
+        while (it.hasNext())
+            processFile(it.nextFileInfo());
     }
 
-    for (const QString &name : std::as_const(names)) {
+    for (const QString &fileName : std::as_const(fileNames)) {
         // loading plugin
-        Plugin *plugin = manager->loadPlugin(name);
+        Plugin *plugin = manager->loadPlugin(fileName);
         if (!plugin)
             continue;
 
         // Retrieve handler
         AbstractRequestHandler *handler = manager->createHandler(plugin);
-
-        if (handler) {
-            pluginNames.append(plugin->name());
+        if (handler)
             handlers.append(handler);
-        }
 
         manager->unloadPlugin();
     }
@@ -178,11 +186,7 @@ Plugin *PluginManager::loadPlugin(const QString &name)
 {
     unloadPlugin();
 
-    if (QDir::isAbsolutePath(name))
-        d_ptr->pluginLoader.setFileName(name);
-    else
-        d_ptr->pluginLoader.setFileName("restlink/" + name);
-
+    d_ptr->pluginLoader.setFileName(name);
     if (!d_ptr->pluginLoader.load()) {
         restlinkWarning() << "Failed to load plugin: " << name << d_ptr->pluginLoader.errorString();
         return nullptr;
@@ -190,7 +194,7 @@ Plugin *PluginManager::loadPlugin(const QString &name)
 
     // Loading meta data
     const QJsonObject metaData = d_ptr->pluginLoader.metaData();
-    if (!metaData.value("IID").toString().startsWith("com.restlink.")) {
+    if (metaData.value("IID").toString() != RESTLINK_PLUGIN_IID) {
         restlinkWarning() << "invalid plugin";
         unloadPlugin();
         return nullptr;
