@@ -103,7 +103,9 @@ if (RESTLINK_BUILD_DOCS)
     add_subdirectory(docs)
 endif()
 
-add_subdirectory(tests)
+if (RESTLINK_BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
 
 if (RESTLINK_BUILD_EXAMPLES)
     add_subdirectory(examples)
