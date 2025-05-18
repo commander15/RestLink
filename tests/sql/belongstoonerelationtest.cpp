@@ -1,6 +1,6 @@
-#include "belongstorelationtest.h"
+#include "belongstoonerelationtest.h"
 
-TEST_F(BelongsToRelationTest, getTest)
+TEST_F(BelongsToOneRelationTest, getTest)
 {
     initializeTest();
 
@@ -23,7 +23,7 @@ TEST_F(BelongsToRelationTest, getTest)
     ASSERT_EQ(log.at(1).toStdString(), R"(SELECT * FROM "Products" WHERE "id" = 1 LIMIT 1)");
 }
 
-TEST_F(BelongsToRelationTest, insertTest)
+TEST_F(BelongsToOneRelationTest, insertTest)
 {
     QJsonObject stock;
     stock.insert("quantity", 50);
@@ -53,7 +53,7 @@ TEST_F(BelongsToRelationTest, insertTest)
     ASSERT_EQ(log.at(2).toStdString(), stockQuery.arg(creationTimestamp()).toStdString());
 }
 
-TEST_F(BelongsToRelationTest, updateTest)
+TEST_F(BelongsToOneRelationTest, updateTest)
 {
     ASSERT_TRUE(root.load({ "product" }));
     QJsonObject stock = root.jsonObject();
@@ -75,7 +75,7 @@ TEST_F(BelongsToRelationTest, updateTest)
     ASSERT_EQ(log.at(3).toStdString(), stockQuery.arg(creationTimestamp(), updateTimestamp()).toStdString());
 }
 
-TEST_F(BelongsToRelationTest, deleteTest)
+TEST_F(BelongsToOneRelationTest, deleteTest)
 {
     ASSERT_TRUE(root.load({ "product" }));
     ASSERT_TRUE(root.deleteData());

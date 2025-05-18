@@ -5,7 +5,7 @@ add_executable(RestLinkSqlTest
     relationtest.h relationtest.cpp
     hasonerelationtest.h hasonerelationtest.cpp
     sqllog.h sqllog.cpp
-    belongstorelationtest.h belongstorelationtest.cpp
+    belongstoonerelationtest.h belongstoonerelationtest.cpp
 )
 
 set(DATABASE_DIR  "${PROJECT_BINARY_DIR}/testdata/store")
