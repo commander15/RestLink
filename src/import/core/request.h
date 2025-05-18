@@ -3,7 +3,7 @@
 
 #include "requestparameter.h"
 
-#include <RestLink/requesthandler.h>
+#include <RestLink/abstractrequesthandler.h>
 #include <RestLink/response.h>
 
 #include <QtCore/qobject.h>
@@ -17,6 +17,8 @@ class Response;
 
 namespace Qml {
 
+class Body;
+
 class Request : public QObject, public QQmlParserStatus
 {
     QML_ELEMENT
@@ -25,7 +27,7 @@ class Request : public QObject, public QQmlParserStatus
     Q_OBJECT
     Q_PROPERTY(Method method MEMBER m_method NOTIFY methodChanged FINAL)
     Q_PROPERTY(QString endpoint MEMBER m_endpoint NOTIFY endpointChanged FINAL)
-    Q_PROPERTY(QVariant body MEMBER m_body NOTIFY bodyChanged FINAL)
+    Q_PROPERTY(RestLink::Qml::Body* body READ body NOTIFY bodyChanged FINAL)
     Q_PROPERTY(bool autoRun MEMBER m_autoRun NOTIFY autoRunChanged)
     Q_PROPERTY(bool running READ isRunning NOTIFY finished FINAL)
     Q_PROPERTY(bool finished READ isFinished NOTIFY finished FINAL)
@@ -39,15 +41,17 @@ class Request : public QObject, public QQmlParserStatus
 
 public:
     enum Method {
-        Get = RequestHandler::GetMethod,
-        Post = RequestHandler::PostMethod,
-        Put = RequestHandler::PutMethod,
-        Patch = RequestHandler::PatchMethod,
-        Delete = RequestHandler::DeleteMethod
+        Get = AbstractRequestHandler::GetMethod,
+        Post = AbstractRequestHandler::PostMethod,
+        Put = AbstractRequestHandler::PutMethod,
+        Patch = AbstractRequestHandler::PatchMethod,
+        Delete = AbstractRequestHandler::DeleteMethod
     };
     Q_ENUM(Method)
 
     explicit Request(QObject *parent = nullptr);
+
+    Body *body() const;
 
     bool isRunning() const;
     bool isFinished() const;
@@ -74,7 +78,7 @@ signals:
 private:
     Method m_method;
     QString m_endpoint;
-    QVariant m_body;
+    Body *m_body;
     bool m_autoRun;
 
     Response *m_response;
@@ -82,6 +86,39 @@ private:
 
     QList<RequestParameter *> m_parameters;
     QQmlListProperty<RequestParameter> m_parametersProperty;
+};
+
+class Body : public QObject
+{
+    QML_ANONYMOUS
+    QML_ADDED_IN_VERSION(2, 0)
+
+    Q_OBJECT
+    Q_PROPERTY(QVariant data READ data WRITE setData NOTIFY contentChanged FINAL)
+    Q_PROPERTY(QString file READ fileName WRITE setFileName NOTIFY contentChanged FINAL)
+
+public:
+    enum Content {
+        Data,
+        File
+    };
+
+    explicit Body(QObject *parent = nullptr);
+
+    QVariant data() const;
+    void setData(const QVariant &data);
+
+    QString fileName() const;
+    void setFileName(const QString &fileName);
+
+    RestLink::Body body() const;
+
+signals:
+    void contentChanged();
+
+private:
+    QVariant m_content;
+    Content m_contentType;
 };
 
 } // namespace Qml
