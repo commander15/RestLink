@@ -31,9 +31,11 @@ public:
 
     enum Type {
         HasOne = 0,
-        BelongsTo = 1,
+        BelongsToOne = 1,
         HasMany = 2,
         BelongsToMany = 3,
+        HasManyThrough = 4,
+        BelongsToManyThrough = 5,
 
         Null = -1
     };
@@ -85,8 +87,8 @@ public:
     RelationImpl(Relation *relation);
     virtual ~RelationImpl() = default;
 
-    virtual QVariant field(const QString &name) const = 0;
-    virtual void setField(const QString &name, const QVariant &value) = 0;
+    virtual QVariant field(const QString &name, int index = 0) const { return QVariant(); }
+    virtual void setField(const QString &name, const QVariant &value, int index = 0) {}
 
     virtual void fillFromJson(const QJsonValue &value)
     { setJsonValue(value); }
@@ -126,12 +128,6 @@ class NullRelationImpl final : public RelationImpl
 {
 public:
     NullRelationImpl(Relation *relation) : RelationImpl(relation) {}
-
-    QDateTime creationTimestamp() const;
-    QDateTime updateTimestamp() const;
-
-    QVariant field(const QString &name) const override { error(); return QVariant(); }
-    void setField(const QString &name, const QVariant &value) override { error(); }
 
     void fillFromJson(const QJsonValue &value) override { error(); }
 

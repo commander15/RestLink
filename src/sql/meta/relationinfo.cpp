@@ -106,11 +106,15 @@ void RelationInfo::load(const QString &name, const QJsonObject &object, const Re
     if (type == "HasOne")
         d->type = static_cast<int>(Relation::Type::HasOne);
     else if (type == "BelongsTo")
-        d->type = static_cast<int>(Relation::Type::BelongsTo);
+        d->type = static_cast<int>(Relation::Type::BelongsToOne);
     else if (type == "HasMany")
         d->type = static_cast<int>(Relation::Type::HasMany);
     else if (type == "BelongsToMany")
         d->type = static_cast<int>(Relation::Type::BelongsToMany);
+    else if (type == "HasManyThrough")
+        d->type = static_cast<Relation::Type>(Relation::Type::HasManyThrough);
+    else if (type == "BelongsToManyThrough")
+        d->type = static_cast<Relation::Type>(Relation::Type::BelongsToManyThrough);
     else
         d->type = static_cast<int>(Relation::Type::Null);
 
@@ -132,8 +136,8 @@ void RelationInfo::save(QJsonObject *object) const
         object->insert("type", "HasOne");
             break;
 
-        case Relation::Type::BelongsTo:
-            object->insert("type", "BelongsTo");
+        case Relation::Type::BelongsToOne:
+            object->insert("type", "BelongsToOne");
             break;
 
         case Relation::Type::HasMany:
@@ -142,6 +146,14 @@ void RelationInfo::save(QJsonObject *object) const
 
         case Relation::Type::BelongsToMany:
             object->insert("type", "BelongsToMany");
+            break;
+
+        case Relation::Type::HasManyThrough:
+            object->insert("type", "HasManyThrough");
+            break;
+
+        case Relation::Type::BelongsToManyThrough:
+            object->insert("type", "BelongsToManyThrough");
             break;
 
         default:

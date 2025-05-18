@@ -12,16 +12,6 @@ SingleRelationImpl::SingleRelationImpl(Relation *relation)
 {
 }
 
-QVariant SingleRelationImpl::field(const QString &name) const
-{
-    return m_relatedModel.field(name);
-}
-
-void SingleRelationImpl::setField(const QString &name, const QVariant &value)
-{
-    m_relatedModel.setField(name, value);
-}
-
 QList<Model> SingleRelationImpl::relatedModels() const
 {
     return { m_relatedModel };
@@ -52,18 +42,6 @@ bool SingleRelationImpl::exists() const
 MultipleRelationImpl::MultipleRelationImpl(Relation *relation)
     : RelationImpl(relation)
 {
-}
-
-QVariant MultipleRelationImpl::field(const QString &name) const
-{
-    Q_UNUSED(name);
-    return QVariant();
-}
-
-void MultipleRelationImpl::setField(const QString &name, const QVariant &value)
-{
-    Q_UNUSED(name);
-    Q_UNUSED(value);
 }
 
 QList<Model> MultipleRelationImpl::relatedModels() const
@@ -101,6 +79,54 @@ void MultipleRelationImpl::setJsonValue(const QJsonValue &value)
 bool MultipleRelationImpl::exists() const
 {
     return false;
+}
+
+QVariant MultipleThroughRelationImpl::field(const QString &name, int index) const
+{
+    if (index >= 0 && index < m_pivots.size())
+        return m_pivots.at(index).value(name);
+    return QVariant();
+}
+
+void MultipleThroughRelationImpl::setField(const QString &name, const QVariant &value, int index)
+{
+    if (index >= 0 && index < m_pivots.size())
+        m_pivots[index].insert(name, value);
+}
+
+QJsonValue MultipleThroughRelationImpl::jsonValue() const
+{
+    QJsonArray data;
+    for (int i(0); i < m_relatedModels.size(); ++i) {
+        QJsonObject object = m_relatedModels.at(i).jsonObject();
+
+        const QVariantHash pivot = m_pivots.at(i);
+        if (!pivot.isEmpty())
+            object.insert("pivot", QJsonObject::fromVariantHash(pivot));
+
+        data.append(object);
+    }
+    return data;
+}
+
+void MultipleThroughRelationImpl::setJsonValue(const QJsonValue &value)
+{
+    m_relatedModels.clear();
+    m_pivots.clear();
+
+    if (!value.isArray())
+        return;
+
+    const QJsonArray array = value.toArray();
+    for (int i(0); i < array.size(); ++i) {
+        const QJsonObject object = array.at(i).toObject();
+        if (object.contains("pivot"))
+            m_pivots.append(object.value("pivot").toObject().toVariantHash());
+
+        Model model = createModel();
+        model.fill(object);
+        m_relatedModels.append(model);
+    }
 }
 
 } // namespace Sql

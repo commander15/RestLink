@@ -27,8 +27,8 @@ Relation::Relation(const QString &name, Model *model)
         m_impl.reset(new HasOneImpl(this));
         break;
 
-    case Type::BelongsTo:
-        m_impl.reset(new BelongsToImpl(this));
+    case Type::BelongsToOne:
+        m_impl.reset(new BelongsToOneImpl(this));
         break;
 
     case Type::HasMany:
@@ -36,7 +36,7 @@ Relation::Relation(const QString &name, Model *model)
         break;
 
     case Type::BelongsToMany:
-        m_impl.reset(new BelongsToManyImpl(this));
+        m_impl.reset(new BelongsToManyThroughImpl(this));
         break;
 
     default:
@@ -203,22 +203,6 @@ Model RelationImpl::createModel() const
 QSqlQuery RelationImpl::exec(const QString &statement)
 {
     return root->exec(statement);
-}
-
-QDateTime NullRelationImpl::creationTimestamp() const
-{
-    QDateTime timestamp = root->createdAt();
-    if (!timestamp.isValid())
-        timestamp = QDateTime::currentDateTime();
-    return timestamp;
-}
-
-QDateTime NullRelationImpl::updateTimestamp() const
-{
-    QDateTime timestamp = root->updatedAt();
-    if (!timestamp.isValid())
-        timestamp = QDateTime::currentDateTime();
-    return timestamp;
 }
 
 } // namespace Sql

@@ -13,9 +13,6 @@ public:
     SingleRelationImpl(Relation *relation);
     virtual ~SingleRelationImpl() = default;
 
-    QVariant field(const QString &name) const override;
-    void setField(const QString &name, const QVariant &value) override;
-
     QList<Model> relatedModels() const override;
     void setRelatedModels(const QList<Model> &models) override;
 
@@ -34,9 +31,6 @@ public:
     MultipleRelationImpl(Relation *relation);
     virtual ~MultipleRelationImpl() = default;
 
-    QVariant field(const QString &name) const override;
-    void setField(const QString &name, const QVariant &value) override;
-
     QList<Model> relatedModels() const override;
     void setRelatedModels(const QList<Model> &models) override;
 
@@ -47,6 +41,22 @@ public:
 
 protected:
     QList<Model> m_relatedModels;
+};
+
+class MultipleThroughRelationImpl : public MultipleRelationImpl
+{
+public:
+    MultipleThroughRelationImpl(Relation *relation);
+    virtual ~MultipleThroughRelationImpl() = default;
+
+    QVariant field(const QString &name, int index) const override;
+    void setField(const QString &name, const QVariant &value, int index) override;
+
+    QJsonValue jsonValue() const override;
+    void setJsonValue(const QJsonValue &value) override;
+
+protected:
+    QList<QVariantHash> m_pivots;
 };
 
 } // namespace Sql
