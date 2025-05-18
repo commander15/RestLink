@@ -5,7 +5,7 @@ qt_add_plugin(RestLinkSql
     plugin.cpp
 )
 
-set(OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/restlink)
+set(OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/plugins/restlink)
 
 set_target_properties(RestLinkSql PROPERTIES
     OUTPUT_NAME restlinksql
