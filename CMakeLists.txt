@@ -13,8 +13,10 @@ option(RESTLINK_BUILD_DOCS         ON  "Build RestLink documentation")
 option(RESTLINK_BUILD_TRANSLATIONS OFF "Build RestLink translations")
 option(RESTLINK_BUILD_EXAMPLES     OFF "Build RestLink Examples")
 
-option(RESTLINK_SUPPORT_SQL        OFF "Enable SQL support")
-option(RESTLINK_SUPPORT_EXCEL      OFF "Enable EXCEL support")
+if (NOT WASM)
+    option(RESTLINK_SUPPORT_SQL        OFF "Enable SQL support")
+    option(RESTLINK_SUPPORT_EXCEL      OFF "Enable EXCEL support")
+endif()
 
 set(RESTLINK_LOCALES en fr)
 

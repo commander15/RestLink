@@ -54,8 +54,10 @@ QList<AbstractRequestHandler *> PluginManager::handlers()
     if (!handlers.isEmpty())
         return handlers;
 
-    QStringList pluginNames;
-    QPluginLoader loader;
+// Plugins disabled for WASM
+#ifdef Q_OS_WASM
+    return handlers;
+#endif
 
     PluginManager *manager = global();
     PluginManagerPrivate *data = manager->d_ptr.get();
