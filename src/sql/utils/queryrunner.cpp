@@ -41,6 +41,11 @@ QJsonObject QueryRunner::exec(const Query &query, Api *api, bool *success)
 
 QSqlQuery QueryRunner::exec(const QString &statement, Api *api, bool *success)
 {
+    if (statement.isEmpty()) {
+        sqlWarning() << "Empty query detected !";
+        return QSqlQuery();
+    }
+
     sqlInfo() << statement;
 
     QSqlQuery sqlQuery(api->database());
