@@ -50,7 +50,7 @@ bool HasOneImpl::deleteData()
     return m_relatedModel.deleteData();
 }
 
-bool BelongsToImpl::get()
+bool BelongsToOneImpl::get()
 {
     QueryFilters filters;
     filters.andWhere(foreignResource.primaryKey(), root->field(info.foreignKey()));
@@ -63,7 +63,7 @@ bool BelongsToImpl::get()
     return true;
 }
 
-bool BelongsToImpl::insert()
+bool BelongsToOneImpl::insert()
 {
     if (info.owned() && !m_relatedModel.insert())
         return false;
@@ -74,7 +74,7 @@ bool BelongsToImpl::insert()
     return true;
 }
 
-bool BelongsToImpl::update()
+bool BelongsToOneImpl::update()
 {
     if (info.owned() && !m_relatedModel.update())
         return false;
@@ -85,7 +85,7 @@ bool BelongsToImpl::update()
     return true;
 }
 
-bool BelongsToImpl::deleteData()
+bool BelongsToOneImpl::deleteData()
 {
     if (info.owned() && !m_relatedModel.deleteData())
         return false;
@@ -125,7 +125,7 @@ bool HasManyImpl::deleteData()
     return false;
 }
 
-bool BelongsToManyImpl::get()
+bool BelongsToManyThroughImpl::get()
 {
     Api *api = root->api();
     const QString pivot = info.pivot();
@@ -143,26 +143,26 @@ bool BelongsToManyImpl::get()
     options.filters.andWhere(Expression("id IN(" + ids.join(", ") + ')'));
     // options.withRelations = true;
 
-    m_relatedModels = Model::getMulti(relation->modelName(), options, api, &query);
+    m_relatedModels = Model::getMulti(foreignResource, options, api, &query);
     return query.lastError().type() == QSqlError::NoError;
 }
 
-bool BelongsToManyImpl::save()
+bool BelongsToManyThroughImpl::save()
 {
     return false;
 }
 
-bool BelongsToManyImpl::insert()
+bool BelongsToManyThroughImpl::insert()
 {
     return false;
 }
 
-bool BelongsToManyImpl::update()
+bool BelongsToManyThroughImpl::update()
 {
     return false;
 }
 
-bool BelongsToManyImpl::deleteData()
+bool BelongsToManyThroughImpl::deleteData()
 {
     return false;
 }

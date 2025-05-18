@@ -21,10 +21,10 @@ public:
     RelationImpl *clone() const override { return new HasOneImpl(relation); }
 };
 
-class BelongsToImpl : public RestLink::Sql::SingleRelationImpl
+class BelongsToOneImpl : public RestLink::Sql::SingleRelationImpl
 {
 public:
-    BelongsToImpl(Relation *relation) : SingleRelationImpl(relation) {}
+    BelongsToOneImpl(Relation *relation) : SingleRelationImpl(relation) {}
 
     bool get() override;
     bool insert() override;
@@ -34,8 +34,8 @@ public:
     //void setJsonValue(const QJsonValue &value) override;
 
     Relation::OperationMode operationMode() const override { return Relation::OperationMode::PreProcessing; }
-    Relation::Type relationType() const override { return Relation::Type::BelongsTo; }
-    RelationImpl *clone() const override { return new BelongsToImpl(relation); }
+    Relation::Type relationType() const override { return Relation::Type::BelongsToOne; }
+    RelationImpl *clone() const override { return new BelongsToOneImpl(relation); }
 };
 
 class HasManyImpl : public RestLink::Sql::MultipleRelationImpl
@@ -54,10 +54,10 @@ public:
     RelationImpl *clone() const override { return new HasManyImpl(relation); }
 };
 
-class BelongsToManyImpl : public RestLink::Sql::MultipleRelationImpl
+class BelongsToManyThroughImpl : public RestLink::Sql::MultipleRelationImpl
 {
 public:
-    BelongsToManyImpl(Relation *relation) : MultipleRelationImpl(relation) {}
+    BelongsToManyThroughImpl(Relation *relation) : MultipleRelationImpl(relation) {}
 
     bool get() override;
     bool save() override;
@@ -66,8 +66,8 @@ public:
     bool deleteData() override;
 
     Relation::OperationMode operationMode() const override { return Relation::OperationMode::PostProcessing; }
-    Relation::Type relationType() const override { return Relation::Type::BelongsToMany; }
-    RelationImpl *clone() const override { return new BelongsToManyImpl(relation); }
+    Relation::Type relationType() const override { return Relation::Type::BelongsToManyThrough; }
+    RelationImpl *clone() const override { return new BelongsToManyThroughImpl(relation); }
 };
 
 } // namespace Sql
