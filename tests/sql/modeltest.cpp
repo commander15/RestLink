@@ -71,7 +71,7 @@ TEST_F(ModelTest, relationInfosAreValid)
     ASSERT_EQ(relation.owned(), false);
     ASSERT_EQ(relation.autoLoadable(), false);
     ASSERT_EQ(relation.nestLoadable(), false);
-    ASSERT_EQ(relation.type(), Relation::BelongsTo);
+    ASSERT_EQ(relation.type(), Relation::BelongsToOne);
 
     relation = resource.relation("stock");
     ASSERT_TRUE(relation.isValid());
