@@ -26,6 +26,7 @@ class Request : public QObject, public QQmlParserStatus
     Q_PROPERTY(Method method MEMBER m_method NOTIFY methodChanged FINAL)
     Q_PROPERTY(QString endpoint MEMBER m_endpoint NOTIFY endpointChanged FINAL)
     Q_PROPERTY(QVariant body MEMBER m_body NOTIFY bodyChanged FINAL)
+    Q_PROPERTY(bool autoRun MEMBER m_autoRun NOTIFY autoRunChanged)
     Q_PROPERTY(bool running READ isRunning NOTIFY finished FINAL)
     Q_PROPERTY(bool finished READ isFinished NOTIFY finished FINAL)
     Q_PROPERTY(RestLink::Response *response READ response NOTIFY started FINAL)
@@ -65,6 +66,7 @@ signals:
     void apiChanged();
 
     void parametersChanged();
+    void autoRunChanged();
 
     void started();
     void finished();
@@ -73,6 +75,7 @@ private:
     Method m_method;
     QString m_endpoint;
     QVariant m_body;
+    bool m_autoRun;
 
     Response *m_response;
     Api *m_api;

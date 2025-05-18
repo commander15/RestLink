@@ -11,6 +11,7 @@ namespace Qml {
 Request::Request(QObject *parent)
     : QObject(parent)
     , m_method(Get)
+    , m_autoRun(true)
     , m_response(nullptr)
     , m_api(nullptr)
     , m_parametersProperty(this, &m_parameters)
@@ -38,7 +39,8 @@ void Request::classBegin()
 
 void Request::componentComplete()
 {
-    run();
+    if (m_autoRun)
+        run();
 }
 
 void Request::run()
