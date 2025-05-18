@@ -31,6 +31,9 @@ namespace RestLink {
 PluginManager::PluginManager()
     : d_ptr(new PluginManagerPrivate)
 {
+#ifdef RESTLINK_SUPPORT_SQL
+    d_ptr->names.append("restlinksql");
+#endif
 }
 
 /**
@@ -57,31 +60,33 @@ QList<AbstractRequestHandler *> PluginManager::handlers()
     PluginManager *manager = global();
     PluginManagerPrivate *data = manager->d_ptr.get();
 
+    QStringList names = data->names;
+
     if (data->discoveryEnabled) {
         const QStringList searchPaths = QCoreApplication::libraryPaths();
-
         for (const QString &path : searchPaths) {
             QDir dir(path + "/restlink");
-
-            const QStringList files = dir.entryList(QDir::Files);
-
-            for (const QString &file : files) {
-                // loading plugin
-                Plugin *plugin = manager->loadPlugin(dir.filePath(file));
-                if (!plugin)
-                    continue;
-
-                // Retrieve handler
-                AbstractRequestHandler *handler = manager->createHandler(plugin);
-
-                if (handler) {
-                    pluginNames.append(plugin->name());
-                    handlers.append(handler);
-                }
-
-                manager->unloadPlugin();
-            }
+            const QFileInfoList infos = dir.entryInfoList(QDir::Files);
+            for (const QFileInfo &file : infos)
+                names.append(file.baseName());
         }
+    }
+
+    for (const QString &name : std::as_const(names)) {
+        // loading plugin
+        Plugin *plugin = manager->loadPlugin(name);
+        if (!plugin)
+            continue;
+
+        // Retrieve handler
+        AbstractRequestHandler *handler = manager->createHandler(plugin);
+
+        if (handler) {
+            pluginNames.append(plugin->name());
+            handlers.append(handler);
+        }
+
+        manager->unloadPlugin();
     }
 
     return handlers;
