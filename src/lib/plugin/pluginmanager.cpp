@@ -63,26 +63,30 @@ QList<AbstractRequestHandler *> PluginManager::handlers()
     PluginManagerPrivate *data = manager->d_ptr.get();
 
     QStringList fileNames;
-    auto processFile = [data, &fileNames](const QFileInfo &file) {
-        if (!QLibrary::isLibrary(file.fileName()))
-            return;
+    auto processDir = [data, &fileNames](const QFileInfo &entry) {
+        const QDir dir(entry.absoluteFilePath());
+        const QFileInfoList files = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
+        for (const QFileInfo &file : files) {
+            if (!QLibrary::isLibrary(file.fileName()))
+                continue;
 
-        for (const QString &pluginName : std::as_const(data->names)) {
-            if (file.baseName() == pluginName) {
-                fileNames.append(file.absoluteFilePath());
-                return;
+            for (const QString &pluginName : std::as_const(data->names)) {
+                if (file.baseName() == pluginName) {
+                    fileNames.append(file.absoluteFilePath());
+                    continue;
+                }
             }
-        }
 
-        if (data->discoveryEnabled)
-            fileNames.append(file.absoluteFilePath());
+            if (data->discoveryEnabled)
+                fileNames.append(file.absoluteFilePath());
+        }
     };
 
     const QStringList searchPaths = QCoreApplication::libraryPaths();
     for (const QString &path : searchPaths) {
-        QDirIterator it(path, { "restlink*" }, QDir::Files, QDirIterator::Subdirectories);
+        QDirIterator it(path, { "restlink" }, QDir::Dirs, QDirIterator::Subdirectories);
         while (it.hasNext())
-            processFile(it.nextFileInfo());
+            processDir(it.nextFileInfo());
     }
 
     for (const QString &fileName : std::as_const(fileNames)) {
