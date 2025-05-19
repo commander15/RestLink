@@ -17,6 +17,8 @@ namespace Sql {
 
 Api::Api(const QUrl &url)
     : m_url(url)
+    , m_connectionClosable(true)
+    , m_autoConfigured(true)
 {
     static unsigned int connectionId = 0;
 
@@ -53,9 +55,24 @@ QUrl Api::url() const
     return m_url;
 }
 
+bool Api::canCloseConnection() const
+{
+    return m_connectionClosable;
+}
+
+void Api::setConnectionClosable(bool closeable)
+{
+    m_connectionClosable = closeable;
+}
+
 bool Api::isConfigured() const
 {
     return !m_resources.isEmpty();
+}
+
+bool Api::isAutoConfigured() const
+{
+    return m_autoConfigured;
 }
 
 QJsonObject Api::configuration() const
@@ -111,6 +128,8 @@ void Api::configure(const QJsonObject &configuration)
     }
 
     resetIdleTime();
+
+    m_autoConfigured = false;
 }
 
 void Api::reset()
@@ -134,6 +153,8 @@ void Api::reset()
     }
 
     resetIdleTime();
+
+    m_autoConfigured = true;
 }
 
 EndpointInfo Api::endpointInfo(const QString &name) const
@@ -210,13 +231,47 @@ Api *Api::api(const QUrl &url)
     return new Api(url);
 }
 
-void Api::purgeApis()
+int Api::apiCount()
 {
-    for (Api *api : std::as_const(s_apis)) {
-        // We close database connections which were unused during at least 30 minutes
-        if (api->idleTime() > 1800)
-            api->closeDatabase();
-    }
+    return s_apis.count();
+}
+
+void Api::purgeApis(int atLeast, bool remove)
+{
+    if (atLeast < 0)
+        atLeast = 0;
+    else if (atLeast > s_apis.size())
+        atLeast = s_apis.size();
+
+    int closed = 0;
+    auto closeConnections = [&closed, &remove](const QList<Api *> apis, bool force) {
+        for (Api *api : apis) {
+            // We close database connections which were unused during at least 30 minutes
+            if (force || api->idleTime() > 1800) {
+                closed++;
+                if (remove)
+                    delete api;
+                else if (api->canCloseConnection())
+                    api->closeDatabase();
+                else
+                    closed--;
+            }
+        }
+    };
+
+    closeConnections(s_apis.values(), false);
+    if (closed >= atLeast)
+        return;
+
+    QList<Api *> apis = s_apis.values();
+    std::sort(apis.begin(), apis.end(), [](Api *a1, Api *a2) {
+        if (a1->isAutoConfigured() != a2->isAutoConfigured())
+            return a1->isAutoConfigured(); // auto-configured first
+        return a1->idleTime() > a2->idleTime(); // then by idle time
+    });
+
+    apis.remove(0, atLeast);
+    closeConnections(apis, true);
 }
 
 void Api::cleanupApis()

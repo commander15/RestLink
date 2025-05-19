@@ -23,7 +23,11 @@ public:
 
     QUrl url() const;
 
+    bool canCloseConnection() const;
+    void setConnectionClosable(bool closeable);
+
     bool isConfigured() const;
+    bool isAutoConfigured() const;
     QJsonObject configuration() const;
     void configure(const QJsonObject &configuration);
     void reset();
@@ -41,7 +45,8 @@ public:
 
     static bool hasApi(const QUrl &url);
     static Api *api(const QUrl &url);
-    static void purgeApis();
+    static int apiCount();
+    static void purgeApis(int atLeast = 0, bool remove = false);
     static void cleanupApis();
 
 protected:
@@ -52,8 +57,11 @@ private:
     Api(const QUrl &url);
 
     const QUrl m_url;
+    bool m_connectionClosable;
+
     QHash<QString, EndpointInfo> m_endpoints;
     QHash<QString, ResourceInfo> m_resources;
+    bool m_autoConfigured;
     QDateTime m_lastUsedTime;
     QString m_dbConnectionName;
 

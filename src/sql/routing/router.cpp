@@ -57,7 +57,10 @@ void Router::cleanup()
 
 bool Router::maintain()
 {
-    Api::purgeApis();
+    if (Api::apiCount() >= 5)
+        Api::purgeApis(1, true);
+    else
+        Api::purgeApis(0, false);
     return true;
 }
 
@@ -123,6 +126,8 @@ void Router::processConfigurationRequest(const ServerRequest &request, ServerRes
     case PostMethod:
     case PutMethod:
         manager->configure(JsonUtils::objectFromRawData(request.body().toByteArray()));
+        if (request.hasHeader("Connection"))
+            manager->setConnectionClosable(request.headerValues("Connection").constFirst() == "keep-alive");
 
     case GetMethod:
         response->setHttpStatusCode(200);
