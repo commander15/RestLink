@@ -1,9 +1,5 @@
 #include "app.h"
 
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
-
 #include <RestLink/api.h>
 #include <RestLink/request.h>
 #include <RestLink/body.h>

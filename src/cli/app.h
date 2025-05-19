@@ -1,9 +1,9 @@
 #ifndef APP_H
 #define APP_H
 
-#include <QCoreApplication>
-#include <QTextStream>
-#include <QCommandLineParser>
+#include <QtCore/qcoreapplication.h>
+#include <QtCore/qtextstream.h>
+#include <QtCore/qcommandlineparser.h>
 
 namespace RestLink {
 class Api;
