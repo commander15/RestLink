@@ -279,7 +279,7 @@ Body App::makeBody()
     }
 
     if (m_parser.isSet(JSON_OPTION)) {
-        return Body(m_parser.value(JSON_OPTION), QByteArrayLiteral("application/json"));
+        return Body(m_parser.value(JSON_OPTION), RESTLINK_MIME_JSON);
     }
 
     if (m_parser.isSet(FILE_OPTION))
