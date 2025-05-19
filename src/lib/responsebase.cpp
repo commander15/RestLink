@@ -177,6 +177,13 @@ void ResponseBase::setResponseDevice(QIODevice *device)
 {
     m_device = device;
 
+    setOpenMode(device->openMode());
+    setErrorString(device->errorString());
+
+    setCurrentReadChannel(device->currentReadChannel());
+    setCurrentWriteChannel(device->currentWriteChannel());
+    setTextModeEnabled(device->isTextModeEnabled());
+
     connect(device, &QIODevice::readyRead, this, &QIODevice::readyRead);
     connect(device, &QIODevice::channelReadyRead, this, &QIODevice::channelReadyRead);
     connect(device, &QIODevice::bytesWritten, this, &QIODevice::bytesWritten);

@@ -45,7 +45,7 @@ public:
     virtual ~Request();
 
     Request &operator=(const Request &other);
-    Request &operator=(const Request &&other);
+    Request &operator=(Request &&other);
 
     QString endpoint() const;
     void setEndpoint(const QString &endpoint);

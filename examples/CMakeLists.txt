@@ -36,4 +36,10 @@ if (RESTLINK_BUILD_QML)
     add_subdirectory(tmdb)
 
     #add_subdirectory(blagues)
+
+    if (RESTLINK_SUPPORT_SQL)
+        add_subdirectory(store)
+    endif()
 endif()
+
+file(COPY ${PROJECT_SOURCE_DIR}/testdata/ DESTINATION ${PROJECT_BINARY_DIR}/testdata)

@@ -185,10 +185,10 @@ Request &Request::operator=(const Request &other)
  * \param other The Request object to move from.
  * \return A reference to the updated Request object.
  */
-Request &Request::operator=(const Request &&other)
+Request &Request::operator=(Request &&other)
 {
     if (this != &other)
-        d_ptr = std::move(other.d_ptr);
+        d_ptr.swap(other.d_ptr);
     return *this;
 }
 

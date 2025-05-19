@@ -273,10 +273,12 @@ void ServerPrivate::run()
         QTimer timer;
         timer.setInterval(interval);
         connect(&timer, &QTimer::timeout, &timer, [this] {
-            if (!isInterruptionRequested())
-                processNext();
-            else
+            if (!isInterruptionRequested()) {
+                if (!processNext())
+                    q_ptr->setListening(q_ptr->maintain());
+            } else {
                 quit();
+            }
         });
 
         // Calling init function
