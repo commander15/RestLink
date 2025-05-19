@@ -73,20 +73,27 @@ QString ServerRequest::resource() const
     if (endpoint.size() == 1)
         return endpoint.first();
 
-    if (!identifier().isEmpty())
-        endpoint.removeLast();
+    const QString identifier = this->identifier();
+    if (!identifier.isEmpty())
+        endpoint.removeOne(identifier);
+
     return endpoint.join('.');
 }
 
 QString ServerRequest::identifier() const
 {
-    const QString last = d_ptr->endpoint.section('/', -1, -1);
-    if (last.isEmpty())
-        return QString();
+    static const QRegularExpression exp(R"(^\d+$|^[a-fA-F0-9]{8}-([a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}$)");
 
-    static const QRegularExpression exp("^\\d+$|^[a-fA-F0-9]{8}-([a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}$");
-    const QRegularExpressionMatch match = exp.match(last);
-    return (match.hasMatch() ? last : QString());
+    QStringList endpoint = d_ptr->endpoint.split('/', Qt::SkipEmptyParts);
+    std::reverse(endpoint.begin(), endpoint.end());
+
+    for (const QString &part : std::as_const(endpoint)) {
+        const QRegularExpressionMatch match = exp.match(part);
+        if (match.hasMatch())
+            return part;
+    }
+
+    return QString();
 }
 
 Body ServerRequest::body() const
