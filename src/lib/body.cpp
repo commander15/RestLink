@@ -184,8 +184,8 @@ Body::Body(const QVariant &object, Type type, const QByteArray &contentType, qin
 {
     d_ptr->object = object;
     d_ptr->objectType = type;
-    d_ptr->contentLength = contentLength;
     d_ptr->contentType = contentType.isEmpty() ? RESTLINK_MIME_OCTET_STREAM : contentType;
+    d_ptr->contentLength = contentLength;
 }
 
 /*!
@@ -243,9 +243,9 @@ QByteArray Body::toByteArray() const
     {
         const QJsonValue value = d_ptr->object.toJsonValue();
         if (value.isObject())
-            return QJsonDocument(value.toObject()).toJson();
+            return QJsonDocument(value.toObject()).toJson(QJsonDocument::Compact);
         else
-            return QJsonDocument(value.toArray()).toJson();
+            return QJsonDocument(value.toArray()).toJson(QJsonDocument::Compact);
     }
 
     case Type::IODevice:
