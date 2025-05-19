@@ -13,14 +13,14 @@
     "products": {
       "table": "Products",
       "primary_key": "id",
-      "foreign_key": "product_id",
+      "local_key": "product_id",
       "hidden": [ "category_id" ],
       "fillable": [ "name", "description", "price", "barcode" ],
       "relations": {
       "category": {
         "table": "Categories",
-        "foreign_key": "category_id",
-        "type": "BelongsTo"
+        "local_key": "category_id",
+        "type": "BelongsToOne"
       },
         "stock": {
           "table": "Stocks",
@@ -40,19 +40,18 @@
     },
     "categories": {
         "table": "Categories",
-        "primary_key": "id",
-        "foreign_key": "category_id"
+        "local_key": "category_id"
     },
     "stocks": {
       "table": "Stocks",
       "primary_key": "id",
-      "foreign_key": "stock_id",
+      "local_key": "stock_id",
       "fillable": [ "quantity", "product_id" ],
       "relations": {
         "product": {
           "table": "Products",
-          "foreign_key": "product_id",
-          "type": "BelongsTo",
+          "local_key": "product_id",
+          "type": "BelongsToOne",
           "owned": true
         }
       }
@@ -60,7 +59,7 @@
     "sales": {
       "table": "Sales",
       "primary_key": "id",
-      "foreign_key": "sale_id",
+      "local_key": "sale_id",
       "fillable": [ "number", "amount" ],
       "relations": {
         "items": {
@@ -82,18 +81,18 @@
     "sale_items": {
       "table": "SaleItems",
       "primary_key": "id",
-      "foreign_key": "sale_item_id",
+      "local_key": "sale_item_id",
       "fillable": [ "quantity", "sale_id", "product_id" ],
       "relations": {
         "sale": {
           "table": "Sales",
-          "foreign_key": "sale_id",
-          "type": "BelongsTo"
+          "local_key": "sale_id",
+          "type": "BelongsToOne"
         },
         "product": {
           "table": "Products",
-          "foreign_key": "product_id",
-          "type": "BelongsTo"
+          "local_key": "product_id",
+          "type": "BelongsToOne"
         }
       }
     }

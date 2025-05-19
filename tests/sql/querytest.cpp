@@ -7,7 +7,7 @@
 using namespace RestLink;
 using namespace RestLink::Sql;
 
-TEST(QueryTest, queryRunnerReturnDataObject)
+TEST(QueryRunnerTest, queryRunnerReturnDataObject)
 {
     Query query;
     query.statement = R"(SELECT * FROM Products WHERE name="Apple")";
@@ -31,7 +31,7 @@ TEST(QueryTest, queryRunnerReturnDataObject)
     ASSERT_EQ(barcode.toStdString(), "1234567890123");
 }
 
-TEST(QueryTest, queryRunnerReturnDataArray)
+TEST(QueryRunnerTest, queryRunnerReturnDataArray)
 {
     Query query;
     query.statement = R"(SELECT * FROM Products WHERE name="Apple")";

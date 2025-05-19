@@ -1,10 +1,9 @@
 add_executable(RestLinkSqlTest
+    main.cpp sqllog.h sqllog.cpp
     querytest.cpp
-    main.cpp
     modeltest.h modeltest.cpp
     relationtest.h relationtest.cpp
     hasonerelationtest.h hasonerelationtest.cpp
-    sqllog.h sqllog.cpp
     belongstoonerelationtest.h belongstoonerelationtest.cpp
     hasmanyrelationtest.h hasmanyrelationtest.cpp
 )

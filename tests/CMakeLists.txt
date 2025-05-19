@@ -4,7 +4,7 @@ find_package(GTest REQUIRED)
 
 add_library(RestLinkTest STATIC main.cpp)
 target_compile_definitions(RestLinkTest INTERFACE DATA_DIR="${PROJECT_SOURCE_DIR}/testdata")
-target_link_libraries(RestLinkTest PUBLIC GTest::gtest RestLink INTERFACE Qt::Test)
+target_link_libraries(RestLinkTest PUBLIC GTest::gtest Qt::Core INTERFACE Qt::Test RestLink)
 link_libraries(RestLinkTest)
 
 # add_subdirectory(core)

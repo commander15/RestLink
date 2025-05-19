@@ -80,7 +80,7 @@ TEST_F(BelongsToOneRelationTest, deleteTest)
     ASSERT_TRUE(root.load({ "product" }));
     ASSERT_TRUE(root.deleteData());
 
-    ASSERT_EQ(log.count(), 5);
+    ASSERT_EQ(log.count(), 4);
     ASSERT_EQ(log.at(2).toStdString(), R"(DELETE FROM "Products" WHERE "id" = 1)");
     ASSERT_EQ(log.at(3).toStdString(), R"(DELETE FROM "Stocks" WHERE "id" = 1)");
 }

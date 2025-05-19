@@ -20,6 +20,8 @@ void runScript(const QString &fileName, Api *api);
 
 void init(QCoreApplication &)
 {
+    installMessageHandler();
+
     QDir dir(DB_DIR);
     if (dir.exists())
         dir.removeRecursively();
@@ -33,7 +35,6 @@ void init(QCoreApplication &)
         ASSERT_TRUE(false);
     }
 
-    installMessageHandler();
     resetDatabase();
 
     QFile configuration(QStringLiteral(DATA_DIR) + "/store/configuration.json");
@@ -54,16 +55,17 @@ void cleanup(QCoreApplication &)
 
 void installMessageHandler()
 {
-    static QtMessageHandler defaultMessageHandler;
+    static const char *categoryName = "restlink.sql";
+
+    QLoggingCategory::setFilterRules(QStringLiteral("%1.info=true").arg(categoryName));
+
+    static QtMessageHandler defaultMessageHandler = nullptr;
 
     defaultMessageHandler = qInstallMessageHandler([](QtMsgType type, const QMessageLogContext &context, const QString &msg) {
-        if (strcmp(context.category, "restlink.sql") == 0 && type == QtMsgType::QtInfoMsg) {
+        if (strcmp(context.category, categoryName) == 0 && type == QtMsgType::QtInfoMsg)
             SqlLog::log(msg);
-            if (!SqlLog::isLoggingEnabled())
-                return;
-        }
-
-        defaultMessageHandler(type, context, msg);
+        else
+            defaultMessageHandler(type, context, msg);
     });
 }
 

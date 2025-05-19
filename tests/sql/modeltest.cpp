@@ -16,7 +16,7 @@ TEST_F(ModelTest, resourceInfoAreValid)
     const QString primaryKey = resource.primaryKey();
     ASSERT_EQ(primaryKey.toStdString(), "id");
 
-    const QString foreignKey = resource.foreignKey();
+    const QString foreignKey = resource.localKey();
     ASSERT_EQ(foreignKey.toStdString(), "product_id");
 
     const QStringList fillableFieldNames = resource.fillableFields();
@@ -66,8 +66,8 @@ TEST_F(ModelTest, relationInfosAreValid)
     ASSERT_TRUE(relation.isValid());
     ASSERT_EQ(relation.name().toStdString(), "category");
     ASSERT_EQ(relation.table().toStdString(), "Categories");
-    ASSERT_EQ(relation.localKey().toStdString(), "product_id");
-    ASSERT_EQ(relation.foreignKey().toStdString(), "category_id");
+    ASSERT_EQ(relation.localKey().toStdString(), "category_id");
+    ASSERT_EQ(relation.foreignKey().toStdString(), "id");
     ASSERT_EQ(relation.owned(), false);
     ASSERT_EQ(relation.autoLoadable(), false);
     ASSERT_EQ(relation.nestLoadable(), false);
@@ -77,7 +77,7 @@ TEST_F(ModelTest, relationInfosAreValid)
     ASSERT_TRUE(relation.isValid());
     ASSERT_EQ(relation.name().toStdString(), "stock");
     ASSERT_EQ(relation.table().toStdString(), "Stocks");
-    ASSERT_EQ(relation.localKey().toStdString(), "product_id");
+    ASSERT_EQ(relation.localKey().toStdString(), "id");
     ASSERT_EQ(relation.foreignKey().toStdString(), "product_id");
     ASSERT_EQ(relation.owned(), true);
     ASSERT_EQ(relation.autoLoadable(), false);
@@ -100,6 +100,8 @@ TEST_F(ModelTest, relationInfosAreValid)
 TEST_F(ModelTest, getTest)
 {
     ASSERT_TRUE(model.get(1));
+
+    ASSERT_EQ(sqlLog.count(), 1);
     ASSERT_EQ(sqlLog.at(0).toStdString(), R"(SELECT * FROM "Products" WHERE "id" = 1 LIMIT 1)");
 
     const QJsonObject product = model.jsonObject();
