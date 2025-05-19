@@ -8,23 +8,37 @@ Page {
 
     required property Api api
 
-    ListView {
-        id: listView
-
-        delegate: ProductItemDelegate {
-            product: modelData
-            width: ListView.view.width
-        }
-
-        spacing: 6
+    StackView {
+        id: stack
 
         anchors.fill: parent
         anchors.margins: 9
-    }
 
-    BusyIndicator {
-        running: request.running
-        anchors.centerIn: parent
+        initialItem: ListView {
+            id: listView
+
+            delegate: ProductItemDelegate {
+                product: modelData
+                width: ListView.view.width
+                onClicked: stack.push(detailsPage)
+
+                Component {
+                    id: detailsPage
+
+                    ProductDetailsPage {
+                        product: modelData
+                        api: page.api
+                    }
+                }
+            }
+
+            spacing: 6
+
+            BusyIndicator {
+                running: request.running
+                anchors.centerIn: parent
+            }
+        }
     }
 
     Request {
@@ -33,13 +47,13 @@ Page {
         endpoint: "/products"
         api: page.api
 
-        onFinished: function() {
+        onFinished: function () {
             if (response.success) {
-                var body = JSON.parse(response.body);
-                listView.model = body.data;
+                var body = JSON.parse(response.body)
+                listView.model = body.data
             } else {
-                console.log("HTTP " + response.httpStatusCode);
-                console.log(response.body);
+                console.log("HTTP " + response.httpStatusCode)
+                console.log(response.body)
             }
         }
 

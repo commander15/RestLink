@@ -13,6 +13,7 @@ qt_add_qml_module(Store
     RESOURCES resources.qrc
     QML_FILES ConfigurationPage.qml
     QML_FILES CategoryItemDelegate.qml
+    QML_FILES ProductDetailsPage.qml
 )
 
 target_link_libraries(Store PRIVATE Qt::Quick Qt::Sql)
