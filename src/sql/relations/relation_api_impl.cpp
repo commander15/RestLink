@@ -53,7 +53,7 @@ bool HasOneImpl::deleteData()
 bool BelongsToOneImpl::get()
 {
     QueryFilters filters;
-    filters.andWhere(foreignResource.primaryKey(), root->field(info.foreignKey()));
+    filters.andWhere(info.foreignKey(), root->field(info.foreignKey()));
 
     m_relatedModel = createModel();
 
@@ -69,7 +69,7 @@ bool BelongsToOneImpl::insert()
         return false;
 
     // We update foreign key on root
-    root->setField(info.foreignKey(), m_relatedModel.primary());
+    root->setField(info.localKey(), m_relatedModel.primary());
 
     return true;
 }
@@ -80,7 +80,7 @@ bool BelongsToOneImpl::update()
         return false;
 
     // We update foreign key on root
-    root->setField(info.foreignKey(), m_relatedModel.primary());
+    root->setField(info.localKey(), m_relatedModel.primary());
 
     return true;
 }
@@ -90,7 +90,8 @@ bool BelongsToOneImpl::deleteData()
     if (info.owned() && !m_relatedModel.deleteData())
         return false;
 
-    root->setField(info.foreignKey(), QVariant());
+    // We update foreign key on root
+    root->setField(info.localKey(), QVariant());
 
     return true;
 }
@@ -98,11 +99,11 @@ bool BelongsToOneImpl::deleteData()
 bool HasManyImpl::get()
 {
     QueryOptions options;
-    options.filters.andWhere(rootResource.foreignKey(), root->primary());
+    options.filters.andWhere(info.foreignKey(), root->primary());
 
-    QSqlQuery query;
-    m_relatedModels = Model::getMulti(relation->modelName(), options, root->api(), &query);
-    return query.lastError().type() == QSqlError::NoError;
+    bool success = false;
+    m_relatedModels = Model::getMulti(foreignResource, options, root->api(), &success);
+    return success;
 }
 
 bool HasManyImpl::save()
@@ -122,7 +123,7 @@ bool HasManyImpl::update()
 
 bool HasManyImpl::deleteData()
 {
-    return false;
+    return MultipleRelationImpl::deleteData();
 }
 
 bool BelongsToManyThroughImpl::get()
@@ -130,7 +131,7 @@ bool BelongsToManyThroughImpl::get()
     Api *api = root->api();
     const QString pivot = info.pivot();
 
-    QString statement = "SELECT " + foreignResource.foreignKey() + " FROM " + pivot;
+    QString statement = "SELECT " + foreignResource.localKey() + " FROM " + pivot;
     statement.append(" WHERE " + rootResource.primaryKey() + " = " + QueryBuilder::formatValue(root->primary(), api));
 
     QSqlQuery query = exec(statement);

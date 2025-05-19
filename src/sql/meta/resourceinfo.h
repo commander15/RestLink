@@ -33,7 +33,7 @@ public:
     QString name() const;
     QString table() const;
     QString primaryKey() const;
-    QString foreignKey() const;
+    QString localKey() const;
 
     bool hasCreationTimestamp() const;
     QString creationTimestampField() const;

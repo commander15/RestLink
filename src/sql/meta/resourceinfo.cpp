@@ -21,7 +21,7 @@ public:
     QString name;
     QString table;
     QString primaryKey;
-    QString foreignKey;
+    QString localKey;
     QStringList fillableProperties;
     QStringList hiddenFields;
     QString createdAtField;
@@ -79,9 +79,9 @@ QString ResourceInfo::primaryKey() const
     return d->primaryKey;
 }
 
-QString ResourceInfo::foreignKey() const
+QString ResourceInfo::localKey() const
 {
-    return d->foreignKey;
+    return d->localKey;
 }
 
 bool ResourceInfo::hasCreationTimestamp() const
@@ -166,48 +166,58 @@ bool ResourceInfo::isValid() const
 {
     return !d->name.isEmpty()
            && !d->table.isEmpty()
+           && !d->primaryKey.isEmpty()
            && !d->record.isEmpty();
 }
 
 void ResourceInfo::load(const QString &name, const QJsonObject &object, Api *api)
 {
-    beginParsing(object);
-
     d->name = name;
 
-    auto findPrimaryKey = [this, &api](const QJsonObject &) -> QString {
-        const QSqlIndex index = api->database().primaryIndex(d->table);
-        if (index.count() == 1)
-            return index.fieldName(0);
+    const QString table = object.value("table").toString();
+    const QSqlIndex primaryIndex = api->database().primaryIndex(table);
+    const QSqlRecord record = api->database().record(table);
+
+    int recordFieldCount = record.count();
+    d->record = record;
+
+    auto findPrimaryKey = [&primaryIndex](const QJsonObject &) -> QString {
+        if (primaryIndex.count() == 1)
+            return primaryIndex.fieldName(0);
         return "id";
     };
 
-    auto generateForeignKey = [this](const QJsonObject &) -> QString {
-        QString name = d->table;
-        if (name.endsWith('s'))
-            name.removeLast();
-        return name.toLower() + '_' + d->primaryKey;
+    auto generateLocalKey = [&table, &primaryIndex](const QJsonObject &) -> QString {
+        QString tableName = table;
+        if (tableName.endsWith('s'))
+            tableName.removeLast();
+
+        QString primary;
+        if (primaryIndex.count() == 1)
+            primary = primaryIndex.fieldName(0);
+        else
+            primary = "id";
+
+        return tableName.toLower() + '_' + primary;
     };
 
-    auto generateCreationTimestamp = [this](const QJsonObject &) {
-        const QStringList fields = fieldNames();
-        return (fields.contains("created_at") ? "created_at" : "");
+    auto generateCreationTimestamp = [&record](const QJsonObject &) {
+        return (record.contains("created_at") ? "created_at" : "");
     };
 
-    auto generateUpdateTimestamp = [this](const QJsonObject &) {
-        const QStringList fields = fieldNames();
-        return (fields.contains("updated_at") ? "updated_at" : "");
+    auto generateUpdateTimestamp = [&record](const QJsonObject &) {
+        return (record.contains("updated_at") ? "updated_at" : "");
     };
 
-    auto generateFillable = [this](const QJsonObject &) -> QStringList {
+    auto generateFillable = [this, &record](const QJsonObject &) -> QStringList {
         QStringList exceptions;
         exceptions.append(d->primaryKey); // We don't fill primary key
         exceptions.append(d->createdAtField); // we don't fill timestamps
         exceptions.append(d->updatedAtField); // we don't fill timestamps
 
         QStringList fields;
-        for (int i(0); i < d->record.count(); ++i) {
-            const QString fieldName = d->record.fieldName(i);
+        for (int i(0); i < record.count(); ++i) {
+            const QString fieldName = record.fieldName(i);
 
             // We skip exceptions
             if (exceptions.contains(fieldName))
@@ -218,30 +228,27 @@ void ResourceInfo::load(const QString &name, const QJsonObject &object, Api *api
         return fields;
     };
 
-    auto generateHiddenFields = [this](const QJsonObject &) -> QStringList {
+    auto generateHiddenFields = [&record](const QJsonObject &) -> QStringList {
         QStringList fields;
-        for (const RelationInfo &relation : std::as_const(d->relations)) {
-            const QString foreignKey = relation.foreignKey();
-            if (d->record.contains(foreignKey))
-                fields.append(foreignKey);
+        for (int i(0); i < record.count(); ++i) {
+            const QString fieldName = record.fieldName(i);
+            if (fieldName.endsWith("_id"))
+                fields.append(fieldName);
         }
         return fields;
     };
 
+    beginParsing(object);
+
     attribute("table", d->name, &d->table);
     attribute("primary_key", Callback<QString>(findPrimaryKey), &d->primaryKey);
-    attribute("foreign_key", Callback<QString>(generateForeignKey), &d->foreignKey);
-    d->record = api->database().record(d->table);
+    attribute("local_key", Callback<QString>(generateLocalKey), &d->localKey);
 
     const QJsonObject timestamps = object.value("timestamps").toObject();
     beginParsing(timestamps);
     attribute("created_at", Callback<QString>(generateCreationTimestamp), &d->createdAtField);
     attribute("updated_at", Callback<QString>(generateUpdateTimestamp), &d->updatedAtField);
     endParsing();
-
-    attribute("fillable", Callback<QStringList>(generateFillable), &d->fillableProperties);
-    attribute("hidden", Callback<QStringList>(generateHiddenFields), &d->hiddenFields);
-    attribute("load_relations", false, &d->loadRelations);
 
     const QJsonObject relations = object.value("relations").toObject();
     const QStringList relationNames = relations.keys();
@@ -252,6 +259,10 @@ void ResourceInfo::load(const QString &name, const QJsonObject &object, Api *api
             d->relations.insert(name, info);
     }
 
+    attribute("fillable", Callback<QStringList>(generateFillable), &d->fillableProperties);
+    attribute("hidden", Callback<QStringList>(generateHiddenFields), &d->hiddenFields);
+    attribute("load_relations", false, &d->loadRelations);
+
     endParsing();
 }
 
@@ -259,7 +270,7 @@ void ResourceInfo::save(QJsonObject *object) const
 {
     object->insert("table", d->table);
     object->insert("primary_key", d->primaryKey);
-    object->insert("foreign_key", d->foreignKey);
+    object->insert("local_key", d->localKey);
     if (!d->fillableProperties.isEmpty())
         object->insert("fillable", QJsonValue::fromVariant(d->fillableProperties));
     if (!d->hiddenFields.isEmpty())

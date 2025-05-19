@@ -39,6 +39,11 @@ public:
 
     bool exists() const override;
 
+    bool save() override;
+    bool insert() override;
+    bool update() override;
+    bool deleteData() override;
+
 protected:
     QList<Model> m_relatedModels;
 };

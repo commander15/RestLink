@@ -76,6 +76,12 @@ public:
 
     Api *api() const;
 
+    static QList<Model> getMulti(const QString &resource, const QueryOptions &options, Api *api, bool *success);
+    static QList<Model> getMulti(const ResourceInfo &resource, const QueryOptions &options, Api *api, bool *success);
+
+    static QList<Model> getMulti(const QString &resource, const QueryOptions &options, Api *api, QSqlError *error);
+    static QList<Model> getMulti(const ResourceInfo &resource, const QueryOptions &options, Api *api, QSqlError *error);
+
     static QList<Model> getMulti(const QString &resource, const QueryOptions &options, Api *api, QSqlQuery *query);
     static QList<Model> getMulti(const ResourceInfo &resource, const QueryOptions &options, Api *api, QSqlQuery *query);
 

@@ -46,19 +46,6 @@ private:
     QExplicitlySharedDataPointer<RelationInfoData> d;
 };
 
-class RelationInfoData : public QSharedData {
-public:
-    QString name;
-    QString table;
-    QString pivot;
-    QString localKey;
-    QString foreignKey;
-    bool owned = false;
-    bool autoLoadable = false;
-    bool nestedLoadable = false;
-    int type = -1;
-};
-
 } // namespace Sql
 } // namespace RestLink
 

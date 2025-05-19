@@ -170,6 +170,30 @@ void Relation::prepareOperations(OperationMode mode)
     m_operationMode = mode;
 }
 
+Relation::Type Relation::typeFromString(const QString &str)
+{
+    if (str == "HasOne") return HasOne;
+    if (str == "BelongsToOne") return BelongsToOne;
+    if (str == "HasMany") return HasMany;
+    if (str == "BelongsToMany") return BelongsToMany;
+    if (str == "HasManyThrough") return HasManyThrough;
+    if (str == "BelongsToManyThrough") return BelongsToManyThrough;
+    return Null;
+}
+
+QString Relation::stringFromType(Type type)
+{
+    switch (type) {
+    case HasOne: return "HasOne";
+    case BelongsToOne: return "BelongsToOne";
+    case HasMany: return "HasMany";
+    case BelongsToMany: return "BelongsToMany";
+    case HasManyThrough: return "HasManyThrough";
+    case BelongsToManyThrough: return "BelongsToManyThrough";
+    default: return "Null";
+    }
+}
+
 RelationImpl::RelationImpl(Relation *relation)
     : relation(relation)
 {

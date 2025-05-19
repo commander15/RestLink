@@ -8,8 +8,25 @@
 
 #include <QtCore/qjsonobject.h>
 
+#include <QtSql/qsqlrecord.h>
+
 namespace RestLink {
 namespace Sql {
+
+class RelationInfoData : public QSharedData {
+public:
+    QString name;
+    QString table;
+    QString intermediate;
+    QString pivot;
+    QString localKey;
+    QString foreignKey;
+    QSqlRecord intermediateRecord;
+    bool owned = false;
+    bool autoLoadable = false;
+    bool nestedLoadable = false;
+    Relation::Type type = Relation::Null;
+};
 
 RelationInfo::RelationInfo()
     : d(new RelationInfoData)
@@ -64,7 +81,10 @@ bool RelationInfo::nestLoadable() const
 
 bool RelationInfo::isValid() const
 {
-    return !d->table.isEmpty();
+    return !d->table.isEmpty()
+           || !d->localKey.isEmpty()
+           || !d->foreignKey.isEmpty()
+           || d->type != Relation::Null;
 }
 
 int RelationInfo::type() const
@@ -75,91 +95,84 @@ int RelationInfo::type() const
 void RelationInfo::load(const QString &name, const QJsonObject &object, const ResourceInfo &resource, Api *api)
 {
     d->name = name;
+    d->type = Relation::typeFromString(object.value("type").toString());
+
+    auto generateLocalKey = [&resource](const QJsonObject &relation) -> QString {
+        QString table = relation.value("table").toString();
+        table = table.toLower();
+        if (table.endsWith('s'))
+            table.removeLast();
+
+        switch (Relation::typeFromString(relation.value("type").toString())) {
+        case Relation::HasOne:
+        case Relation::HasMany:
+            return resource.primaryKey();
+
+        case Relation::HasManyThrough:
+            return "id";
+
+        case Relation::BelongsToOne:
+        case Relation::BelongsToManyThrough:
+            return table + "_id";
+
+        case Relation::BelongsToMany:
+            return resource.localKey();
+
+        default:
+            return QString();
+        }
+    };
+
+    auto generateForeignKey = [&resource](const QJsonObject &relation) -> QString {
+        QString table = relation.value("table").toString();
+        table = table.toLower();
+        if (table.endsWith('s'))
+            table.removeLast();
+
+        switch (Relation::typeFromString(relation.value("type").toString())) {
+        case Relation::HasOne:
+        case Relation::HasMany:
+        case Relation::HasManyThrough:
+        case Relation::BelongsToManyThrough:
+            return resource.localKey();
+
+        case Relation::BelongsToOne:
+            return "id";
+
+        case Relation::BelongsToMany:
+            return table + "_id";
+
+        default:
+            return QString();
+        }
+    };
 
     beginParsing(object);
-
-    auto generateLocalKey = [&resource](const QJsonObject &) -> QString {
-        return resource.foreignKey();
-    };
-
-    auto generateForeignKey = [&api, this](const QJsonObject &) -> QString {
-        const QString table = d->table;
-
-        QString prefix = table;
-        if (prefix.endsWith('s'))
-            prefix.removeLast();
-
-        QString id = api->resourceInfoByTable(table).primaryKey();
-
-        return table.toLower() + '_' + id;
-    };
-
     attribute("table", &d->table);
+    attribute("intermediate", &d->intermediate);
     attribute("pivot", &d->pivot);
     attribute("local_key", Callback<QString>(generateLocalKey), &d->localKey);
     attribute("foreign_key", Callback<QString>(generateForeignKey), &d->foreignKey);
     attribute("owned", false, &d->owned);
     attribute("auto_load", false, &d->autoLoadable);
     attribute("nested_load", false, &d->nestedLoadable);
-
-    const QString type = object.value("type").toString();
-    if (type == "HasOne")
-        d->type = static_cast<int>(Relation::Type::HasOne);
-    else if (type == "BelongsTo")
-        d->type = static_cast<int>(Relation::Type::BelongsToOne);
-    else if (type == "HasMany")
-        d->type = static_cast<int>(Relation::Type::HasMany);
-    else if (type == "BelongsToMany")
-        d->type = static_cast<int>(Relation::Type::BelongsToMany);
-    else if (type == "HasManyThrough")
-        d->type = static_cast<Relation::Type>(Relation::Type::HasManyThrough);
-    else if (type == "BelongsToManyThrough")
-        d->type = static_cast<Relation::Type>(Relation::Type::BelongsToManyThrough);
-    else
-        d->type = static_cast<int>(Relation::Type::Null);
-
     endParsing();
+
+    if (!d->intermediate.isEmpty())
+        d->intermediateRecord = api->database().record(d->intermediate);
 }
 
 void RelationInfo::save(QJsonObject *object) const
 {
     object->insert("table", d->table);
+    object->insert("intermediate", d->intermediate);
     object->insert("pivot", d->pivot);
     object->insert("local_key", d->localKey);
     object->insert("foreign_key", d->foreignKey);
     object->insert("owned", d->owned);
     object->insert("auto_load", d->autoLoadable);
     object->insert("nested_load", d->nestedLoadable);
-
-    switch (static_cast<Relation::Type>(d->type)) {
-        case Relation::Type::HasOne:
-        object->insert("type", "HasOne");
-            break;
-
-        case Relation::Type::BelongsToOne:
-            object->insert("type", "BelongsToOne");
-            break;
-
-        case Relation::Type::HasMany:
-            object->insert("type", "HasMany");
-            break;
-
-        case Relation::Type::BelongsToMany:
-            object->insert("type", "BelongsToMany");
-            break;
-
-        case Relation::Type::HasManyThrough:
-            object->insert("type", "HasManyThrough");
-            break;
-
-        case Relation::Type::BelongsToManyThrough:
-            object->insert("type", "BelongsToManyThrough");
-            break;
-
-        default:
-            object->insert("type", "Unknown");
-            break;
-        }
+    object->insert("type", Relation::stringFromType(d->type));
 }
 
 } // namespace Sql

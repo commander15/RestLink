@@ -281,10 +281,6 @@ bool Model::deleteData()
     if (query.lastError().type() != QSqlError::NoError)
         return false;
 
-    for (Relation &relation : d_ptr->relations)
-        if (!relation.deleteData())
-            return false;
-
     for (Relation &relation : d_ptr->relations) {
         relation.prepareOperations(Relation::PostProcessing);
         if (!relation.deleteData())
@@ -322,6 +318,42 @@ bool Model::isValid() const
 Api *Model::api() const
 {
     return d_ptr->api;
+}
+
+QList<Model> Model::getMulti(const QString &resource, const QueryOptions &options, Api *api, bool *success)
+{
+    QSqlQuery query(api->database());
+
+    const QList<Model> models = getMulti(api->resourceInfo(resource), options, api, &query);
+    *success = query.lastError().type() == QSqlError::NoError;
+    return models;
+}
+
+QList<Model> Model::getMulti(const ResourceInfo &resource, const QueryOptions &options, Api *api, bool *success)
+{
+    QSqlQuery query(api->database());
+
+    const QList<Model> models = getMulti(resource, options, api, &query);
+    *success = query.lastError().type() == QSqlError::NoError;
+    return models;
+}
+
+QList<Model> Model::getMulti(const QString &resource, const QueryOptions &options, Api *api, QSqlError *error)
+{
+    QSqlQuery query(api->database());
+
+    const QList<Model> models = getMulti(api->resourceInfo(resource), options, api, &query);
+    *error = query.lastError();
+    return models;
+}
+
+QList<Model> Model::getMulti(const ResourceInfo &resource, const QueryOptions &options, Api *api, QSqlError *error)
+{
+    QSqlQuery query(api->database());
+
+    const QList<Model> models = getMulti(resource, options, api, &query);
+    *error = query.lastError();
+    return models;
 }
 
 QList<Model> Model::getMulti(const QString &resource, const QueryOptions &options, Api *api, QSqlQuery *query)

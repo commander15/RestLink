@@ -81,6 +81,38 @@ bool MultipleRelationImpl::exists() const
     return false;
 }
 
+bool MultipleRelationImpl::save()
+{
+    for (Model &model : m_relatedModels)
+        if (!model.save())
+            return false;
+    return true;
+}
+
+bool MultipleRelationImpl::insert()
+{
+    for (Model &model : m_relatedModels)
+        if (!model.insert())
+            return false;
+    return true;
+}
+
+bool MultipleRelationImpl::update()
+{
+    for (Model &model : m_relatedModels)
+        if (!model.update())
+            return false;
+    return true;
+}
+
+bool MultipleRelationImpl::deleteData()
+{
+    for (Model &model : m_relatedModels)
+        if (!model.deleteData())
+            return false;
+    return true;
+}
+
 QVariant MultipleThroughRelationImpl::field(const QString &name, int index) const
 {
     if (index >= 0 && index < m_pivots.size())

@@ -74,6 +74,9 @@ public:
 
     void prepareOperations(OperationMode mode);
 
+    static Relation::Type typeFromString(const QString &str);
+    static QString stringFromType(Relation::Type type);
+
 private:
     RelationInfo m_info;
     Model *m_model;
