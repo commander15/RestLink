@@ -1,0 +1,69 @@
+{
+  "resources": {
+    "users": {
+        "relations": {
+            "role": {
+                "table": "UserRoles",
+                "primary_key": "id",
+                "foreign_key": "role_id",
+                "type": "BelongsToOne"
+            }
+        }
+    },
+    "products": {
+      "relations": {
+        "category": {
+            "table": "Categories",
+            "primary_key": "id",
+            "foreign_key": "category_id",
+            "type": "BelongsToOne",
+            "load": {
+                "auto": true
+            }
+        },
+        "stock": {
+            "table": "Stocks",
+            "primary_key": "id",
+            "foreign_key": "stock_id",
+            "type": "HasOne",
+            "load": {
+                "auto": true
+            }
+        }
+      }
+    },
+    "stocks": {
+      "relations": {
+        "product": {
+            "table": "Products",
+            "primary_key": "id",
+            "foreign_key": "product_id",
+            "type": "BelongsToOne"
+        }
+      }
+    },
+    "sales": {
+        "relations": {
+            "seller": {
+                "table": "Users",
+            "primary_key": "id",
+                "foreign_key": "seller_id",
+                "type": "BelongsToOne",
+                "load": {
+                    "auto": true
+                }
+            }
+        }
+    },
+    "sale_items": {
+        "ralations": {
+            "product": {
+                "table": "Products",
+            "primary_key": "id",
+                "foreign_key": "product_id",
+                "type": "BelongsToOne"
+            }
+        }
+    }
+  }
+}

@@ -1,19 +1,18 @@
-#include <gtest/gtest.h>
+#include "querytest.h"
 
-#include <api.h>
-#include <qjsonarray.h>
 #include <utils/queryrunner.h>
+
+#include <QtCore/qjsonarray.h>
 
 using namespace RestLink;
 using namespace RestLink::Sql;
 
-TEST(QueryRunnerTest, queryRunnerReturnDataObject)
+TEST_F(QueryRunnerTest, queryRunnerReturnDataObject)
 {
     Query query;
     query.statement = R"(SELECT * FROM Products WHERE name="Apple")";
     query.array = false; // Want object instead of array
 
-    Api *api = Api::api(QUrl(DB_URL));
     const QJsonObject object = QueryRunner::exec(query, api);
 
     const QJsonObject data = object.value("data").toObject();
@@ -31,13 +30,12 @@ TEST(QueryRunnerTest, queryRunnerReturnDataObject)
     ASSERT_EQ(barcode.toStdString(), "1234567890123");
 }
 
-TEST(QueryRunnerTest, queryRunnerReturnDataArray)
+TEST_F(QueryRunnerTest, queryRunnerReturnDataArray)
 {
     Query query;
     query.statement = R"(SELECT * FROM Products WHERE name="Apple")";
     query.array = true; // Want array instead of object
 
-    Api *api = Api::api(QUrl(DB_URL));
     const QJsonObject object = QueryRunner::exec(query, api);
 
     const QJsonArray dataArray = object.value("data").toArray();

@@ -1,0 +1,52 @@
+{
+  "resources": {
+    "users": {
+        "table": "Users",
+        "primary_key": "id",
+        "local_key": "user_id",
+        "fillable": [ "name", "email", "password" ]
+    },
+    "user_roles": {
+        "table": "UserRoles",
+        "primary_key": "id",
+        "local_key": "role_id",
+        "fillable": [ "name" ]
+    },
+    "user_groups": {
+        "table": "UserGroups",
+        "primary_key": "id",
+        "local_key": "group_id",
+        "fillable": [ "name" ]
+    },
+    "products": {
+      "table": "Products",
+      "primary_key": "id",
+      "local_key": "product_id",
+      "fillable": [ "name", "description", "price", "barcode" ]
+    },
+    "categories": {
+        "table": "Categories",
+        "primary_key": "id",
+        "local_key": "category_id",
+        "fillable": [ "name", "description" ]
+    },
+    "stocks": {
+      "table": "Stocks",
+      "primary_key": "id",
+      "local_key": "stock_id",
+      "fillable": [ "quantity" ]
+    },
+    "sales": {
+      "table": "Sales",
+      "primary_key": "id",
+      "local_key": "sale_id",
+      "fillable": [ "number", "amount" ]
+    },
+    "sale_items": {
+      "table": "SaleItems",
+      "primary_key": "id",
+      "local_key": "item_id",
+      "fillable": [ "quantity" ]
+    }
+  }
+}

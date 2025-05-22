@@ -1,7 +1,7 @@
 #ifndef RELATIONTEST_H
 #define RELATIONTEST_H
 
-#include "sqllog.h"
+#include "sqltest.h"
 
 #include <gtest/gtest.h>
 
@@ -13,12 +13,10 @@ using namespace RestLink::Sql;
 
 void resetDatabase();
 
-class RelationTest : public testing::Test
+class RelationTest : public SqlTest
 {
 protected:
     RelationTest(const QString &resource);
-
-    void initializeTest();
 
     void SetUp() override;
 
@@ -28,10 +26,7 @@ protected:
     QString updateTimestamp() const;
     QString updateTimestamp(const QString &relation) const;
 
-    bool ready = false;
-    Api *api;
     Model root;
-    SqlLog log;
 };
 
 #endif // RELATIONTEST_H

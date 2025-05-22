@@ -2,8 +2,6 @@
 
 TEST_F(HasOneRelationTest, getTest)
 {
-    initializeTest();
-
     ASSERT_TRUE(root.load({ "stock" }));
     const QJsonObject product = root.jsonObject();
 

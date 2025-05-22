@@ -101,8 +101,8 @@ TEST_F(ModelTest, getTest)
 {
     ASSERT_TRUE(model.get(1));
 
-    ASSERT_EQ(sqlLog.count(), 1);
-    ASSERT_EQ(sqlLog.at(0).toStdString(), R"(SELECT * FROM "Products" WHERE "id" = 1 LIMIT 1)");
+    ASSERT_EQ(log.count(), 1);
+    ASSERT_EQ(log.at(0).toStdString(), R"(SELECT * FROM "Products" WHERE "id" = 1 LIMIT 1)");
 
     const QJsonObject product = model.jsonObject();
 

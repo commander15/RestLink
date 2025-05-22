@@ -1,63 +1,24 @@
 #include "sqllog.h"
 
+#include <gtest/gtest.h>
+
 #include <QtCore/qcoreapplication.h>
 #include <QtCore/qloggingcategory.h>
 #include <QtCore/qfile.h>
-#include <QtCore/qdir.h>
+#include <QtCore/qjsonarray.h>
 
 #include <api.h>
-#include <utils/querybuilder.h>
-#include <utils/queryrunner.h>
 #include <utils/jsonutils.h>
-
-#include <gtest/gtest.h>
 
 using namespace RestLink::Sql;
 
-void installMessageHandler();
-void resetDatabase();
-void runScript(const QString &fileName, Api *api);
+void generateConfigurationFile();
 
 void init(QCoreApplication &)
 {
-    installMessageHandler();
-
-    QDir dir(DB_DIR);
-    if (dir.exists())
-        dir.removeRecursively();
-    dir.mkpath(".");
-
-    const QUrl url(DB_URL);
-    Api *api = Api::api(url);
-
-    if (!api || !api->database().isOpen()) {
-        qFatal() << "Can't open database file !";
-        ASSERT_TRUE(false);
-    }
-
-    resetDatabase();
-
-    QFile configuration(QStringLiteral(DATA_DIR) + "/store/configuration.json");
-    if (!configuration.open(QIODevice::ReadOnly)) {
-        qFatal() << "Can't open configuration file !";
-        ASSERT_TRUE(false);
-    }
-
-    const QJsonObject configurationObject = JsonUtils::objectFromRawData(configuration.readAll());
-    api->configure(configurationObject);
-}
-
-void cleanup(QCoreApplication &)
-{
-    // Even in tests, we need to release memory
-    Api::cleanupApis();
-}
-
-void installMessageHandler()
-{
     static const char *categoryName = "restlink.sql";
 
-    QLoggingCategory::setFilterRules(QStringLiteral("%1.info=true").arg(categoryName));
+    QLoggingCategory::setFilterRules(QStringLiteral("%1.info=true\n%1.warning=true").arg(categoryName));
 
     static QtMessageHandler defaultMessageHandler = nullptr;
 
@@ -67,36 +28,83 @@ void installMessageHandler()
         else
             defaultMessageHandler(type, context, msg);
     });
+
+    generateConfigurationFile();
 }
 
-void resetDatabase()
+void cleanup(QCoreApplication &)
 {
-    Api *api = Api::api(QUrl(DB_URL));
-    SqlLog::disableLogging();
-    runScript("store/destroy.sql", api);
-    runScript("store/structure.sql", api);
-    runScript("store/data.sql", api);
-    SqlLog::enableLogging();
+    // Even in tests, we need to release memory
+    Api::cleanupApis();
 }
 
-void runScript(const QString &fileName, Api *api)
+QJsonObject mergeObjects(const QJsonObject &c1, const QJsonObject &c2)
 {
-    QFile script(QStringLiteral(DATA_DIR) + '/' + fileName);
-    if (!script.open(QIODevice::ReadOnly|QIODevice::Text)) {
-        qFatal() << "Can't open database creation script file !";
-        ASSERT_TRUE(false);
+    QJsonObject result = c1;  // Start with all from c1
+
+    for (const QString &key : c2.keys()) {
+        const QJsonValue v2 = c2.value(key);
+
+        if (!result.contains(key)) {
+            // If c1 doesn't have this key, just take from c2
+            result.insert(key, v2);
+            continue;
+        }
+
+        const QJsonValue v1 = result.value(key);
+
+        if (v1.isObject() && v2.isObject()) {
+            // Recursively merge nested objects
+            result.insert(key, mergeObjects(v1.toObject(), v2.toObject()));
+        } else if (v1.isArray() && v2.isArray()) {
+            // Merge arrays without duplicates
+            QJsonArray mergedArray = v1.toArray();
+            QSet<QJsonValue> seen;
+
+            for (const QJsonValue &val : mergedArray)
+                seen.insert(val);
+
+            for (const QJsonValue &val : v2.toArray()) {
+                if (!seen.contains(val)) {
+                    mergedArray.append(val);
+                    seen.insert(val);
+                }
+            }
+
+            result.insert(key, mergedArray);
+        } else {
+            // For primitives or mismatched types, overwrite with c2
+            result.insert(key, v2);
+        }
     }
 
-    const QStringList statements = QueryBuilder::statementsFromScript(script.readAll());
-    for (const QString &statement : statements) {
-        Query query;
-        query.statement = statement;
-        bool success = false;
+    return result;
+}
 
-        QueryRunner::exec(query, api, &success);
-        if (!success) {
-            qFatal() << "Error during database creation !";
-            ASSERT_TRUE(false);
+void generateConfigurationFile()
+{
+    static const auto readConfigObject = [](int index) {
+        QFile file(QStringLiteral(DATA_DIR) + "/store/configuration_" + QString::number(index) + ".json");
+        if (!file.open(QIODevice::ReadOnly)) {
+            qWarning() << "Failed to open file:" << file.fileName();
+            return QJsonObject();
         }
+        return JsonUtils::objectFromRawData(file.readAll());
+    };
+
+    QJsonObject configuration;
+    auto loadConfig = [&configuration](int index) {
+        const QJsonObject object = readConfigObject(index);
+        configuration = mergeObjects(configuration, object);
+    };
+
+    for (int i(0); i <= 2; ++i)
+        loadConfig(i);
+
+    QFile file(QStringLiteral(DATA_DIR) + "/store/configuration.json");
+    if (file.open(QIODevice::WriteOnly)) {
+        file.write(QJsonDocument(configuration).toJson(QJsonDocument::Indented));
+        file.flush();
+        file.close();
     }
 }

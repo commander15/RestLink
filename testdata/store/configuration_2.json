@@ -1,0 +1,61 @@
+{
+  "resources": {
+    "users": {
+        "relations": {
+            "groups": {
+                "table": "UserGroups",
+                "pivot": "UserGroupMembers",
+                "primary_key": "user_id",
+                "foreign_key": "group_id",
+                "type": "BelongsToMany"
+            },
+            "sales": {
+                "table": "Sales",
+                "primary_key": "id",
+                "foreign_key": "user_id",
+                "type": "HasMany"
+            }
+        }
+    },
+    "user_roles": {
+        "relations": {
+            "users": {
+                "table": "Users",
+                "primary_key": "id",
+                "foreign_key": "role_id",
+                "type": "HasMany"
+            }
+        }
+    },
+    "categories": {
+        "relations": {
+            "products": {
+                "table": "Products",
+                "primary_key": "id",
+                "foreign_key": "category_id",
+                "type": "HasMany"
+            }
+        }
+    },
+    "sales": {
+      "relations": {
+        "items": {
+            "table": "SaleItems",
+            "primary_key": "id",
+            "foreign_key": "sale_id",
+            "type": "HasMany"
+        }
+      }
+    },
+    "sale_items": {
+      "relations": {
+        "sale": {
+            "table": "Sales",
+            "pivot": "SaleItems",
+            "foreign_key": "sale_id",
+            "type": "BelongsToMany"
+        }
+      }
+    }
+  }
+}
