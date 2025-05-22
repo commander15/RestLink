@@ -49,6 +49,8 @@ public:
 
     QString relationName() const;
 
+    QStringList loadableRelations() const;
+
     QString modelName() const;
     bool isOwnedModel() const;
 
@@ -72,7 +74,7 @@ public:
     bool update() override;
     bool deleteData() override;
 
-    void prepareOperations(OperationMode mode);
+    void prepareOperations(Model *model, OperationMode mode);
 
     static Relation::Type typeFromString(const QString &str);
     static QString stringFromType(Relation::Type type);

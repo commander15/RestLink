@@ -21,6 +21,8 @@ public:
 
     bool exists() const override;
 
+    bool get() override;
+
 protected:
     Model m_relatedModel;
 };
@@ -39,12 +41,15 @@ public:
 
     bool exists() const override;
 
+    bool get() override;
     bool save() override;
     bool insert() override;
     bool update() override;
     bool deleteData() override;
 
 protected:
+    QStringList formatedRelatedIds() const;
+
     QList<Model> m_relatedModels;
 };
 

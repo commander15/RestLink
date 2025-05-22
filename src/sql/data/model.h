@@ -92,7 +92,7 @@ private:
     QSqlQuery exec(const QString &statement);
 
 private:
-    QSharedDataPointer<ModelData> d_ptr;
+    QExplicitlySharedDataPointer<ModelData> d_ptr;
 
     friend class Relation;
     friend class RelationImpl;

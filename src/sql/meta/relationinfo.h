@@ -31,6 +31,8 @@ public:
     QString localKey() const;
     QString foreignKey() const;
 
+    QStringList loadableRelations() const;
+
     bool owned() const;
     bool autoLoadable() const;
     bool nestLoadable() const;

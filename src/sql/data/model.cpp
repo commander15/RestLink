@@ -32,7 +32,7 @@ public:
 };
 
 Model::Model()
-    : d_ptr(new ModelData)
+    : d_ptr(new ModelData())
 {
 }
 
@@ -42,7 +42,7 @@ Model::Model(const QString &resource, Api *api)
 }
 
 Model::Model(const ResourceInfo &resource, Api *api)
-    : d_ptr(new ModelData)
+    : d_ptr(new ModelData())
 {
     d_ptr->resource = resource;
     d_ptr->api = api;
@@ -148,7 +148,7 @@ QJsonObject Model::jsonObject() const
         object.remove(field);
 
     // Next, we add relations
-    for (const Relation &relation : d_ptr->relations)
+    for (const Relation &relation : std::as_const(d_ptr->relations))
         object.insert(relation.relationName(), relation.jsonValue());
 
     return object;
@@ -210,7 +210,7 @@ bool Model::insert()
         d_ptr->data.insert(timestampField, QDateTime::currentDateTime());
 
     for (Relation &relation : d_ptr->relations) {
-        relation.prepareOperations(Relation::PreProcessing);
+        relation.prepareOperations(this, Relation::PreProcessing);
         if (!relation.insert())
             return false;
     }
@@ -224,7 +224,7 @@ bool Model::insert()
     setPrimary(id);
 
     for (Relation &relation : d_ptr->relations) {
-        relation.prepareOperations(Relation::PostProcessing);
+        relation.prepareOperations(this, Relation::PostProcessing);
         if (!relation.insert())
             return false;
     }
@@ -242,7 +242,7 @@ bool Model::update()
         d_ptr->data.insert(timestampField, QDateTime::currentDateTime());
 
     for (Relation &relation : d_ptr->relations) {
-        relation.prepareOperations(Relation::PreProcessing);
+        relation.prepareOperations(this, Relation::PreProcessing);
         if (!relation.update())
             return false;
     }
@@ -255,7 +255,7 @@ bool Model::update()
         return false;
 
     for (Relation &relation : d_ptr->relations) {
-        relation.prepareOperations(Relation::PostProcessing);
+        relation.prepareOperations(this, Relation::PostProcessing);
         if (!relation.update())
             return false;
     }
@@ -269,7 +269,7 @@ bool Model::deleteData()
         return false;
 
     for (Relation &relation : d_ptr->relations) {
-        relation.prepareOperations(Relation::PreProcessing);
+        relation.prepareOperations(this, Relation::PreProcessing);
         if (!relation.deleteData())
             return false;
     }
@@ -282,7 +282,7 @@ bool Model::deleteData()
         return false;
 
     for (Relation &relation : d_ptr->relations) {
-        relation.prepareOperations(Relation::PostProcessing);
+        relation.prepareOperations(this, Relation::PostProcessing);
         if (!relation.deleteData())
             return false;
     }

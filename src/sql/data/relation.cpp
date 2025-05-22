@@ -36,7 +36,7 @@ Relation::Relation(const QString &name, Model *model)
         break;
 
     case Type::BelongsToMany:
-        m_impl.reset(new BelongsToManyThroughImpl(this));
+        m_impl.reset(new BelongsToManyImpl(this));
         break;
 
     default:
@@ -70,6 +70,11 @@ Relation &Relation::operator=(const Relation &other)
 QString Relation::relationName() const
 {
     return m_info.name();
+}
+
+QStringList Relation::loadableRelations() const
+{
+    return m_info.loadableRelations();
 }
 
 QString Relation::modelName() const
@@ -165,8 +170,10 @@ bool Relation::deleteData()
         return true;
 }
 
-void Relation::prepareOperations(OperationMode mode)
+void Relation::prepareOperations(Model *model, OperationMode mode)
 {
+    m_model = model;
+    m_impl->root = model;
     m_operationMode = mode;
 }
 

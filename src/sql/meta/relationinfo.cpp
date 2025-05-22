@@ -22,6 +22,7 @@ public:
     QString localKey;
     QString foreignKey;
     QSqlRecord intermediateRecord;
+    QStringList loadableRelations;
     bool owned = false;
     bool autoLoadable = false;
     bool nestedLoadable = false;
@@ -62,6 +63,11 @@ QString RelationInfo::localKey() const
 QString RelationInfo::foreignKey() const
 {
     return d->foreignKey;
+}
+
+QStringList RelationInfo::loadableRelations() const
+{
+    return d->loadableRelations;
 }
 
 bool RelationInfo::owned() const
@@ -150,6 +156,7 @@ void RelationInfo::load(const QString &name, const QJsonObject &object, const Re
     beginParsing(object);
     attribute("table", &d->table);
     attribute("intermediate", &d->intermediate);
+    attribute("with", &d->loadableRelations);
     attribute("pivot", &d->pivot);
     attribute("local_key", Callback<QString>(generateLocalKey), &d->localKey);
     attribute("foreign_key", Callback<QString>(generateForeignKey), &d->foreignKey);
@@ -166,6 +173,7 @@ void RelationInfo::save(QJsonObject *object) const
 {
     object->insert("table", d->table);
     object->insert("intermediate", d->intermediate);
+    object->insert("with", QJsonValue::fromVariant(d->loadableRelations));
     object->insert("pivot", d->pivot);
     object->insert("local_key", d->localKey);
     object->insert("foreign_key", d->foreignKey);

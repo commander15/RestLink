@@ -222,7 +222,9 @@ void ModelController::processRequest(const ServerRequest &request, ServerRespons
         return;
     }
 
-    bool transactionStarted = db.transaction();
+    bool transactionStarted = false;
+    if (request.method() != AbstractRequestHandler::GetMethod)
+        transactionStarted = db.transaction();
 
     AbstractResourceController::processRequest(request, response);
 

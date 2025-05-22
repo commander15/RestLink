@@ -49,15 +49,15 @@ public:
     bool update() override;
     bool deleteData() override;
 
-    Relation::OperationMode operationMode() const override { return Relation::OperationMode::PreProcessing; }
+    Relation::OperationMode operationMode() const override { return Relation::OperationMode::PostProcessing; }
     Relation::Type relationType() const override { return Relation::Type::HasMany; }
     RelationImpl *clone() const override { return new HasManyImpl(relation); }
 };
 
-class BelongsToManyThroughImpl : public RestLink::Sql::MultipleRelationImpl
+class BelongsToManyImpl : public RestLink::Sql::MultipleRelationImpl
 {
 public:
-    BelongsToManyThroughImpl(Relation *relation) : MultipleRelationImpl(relation) {}
+    BelongsToManyImpl(Relation *relation) : MultipleRelationImpl(relation) {}
 
     bool get() override;
     bool save() override;
@@ -67,7 +67,7 @@ public:
 
     Relation::OperationMode operationMode() const override { return Relation::OperationMode::PostProcessing; }
     Relation::Type relationType() const override { return Relation::Type::BelongsToManyThrough; }
-    RelationImpl *clone() const override { return new BelongsToManyThroughImpl(relation); }
+    RelationImpl *clone() const override { return new BelongsToManyImpl(relation); }
 };
 
 } // namespace Sql
