@@ -10,7 +10,7 @@
             "relations": {
                 "products": {
                     "foreign_key": "category_id",
-                    "primary_key": "id",
+                    "local_key": "id",
                     "table": "Products",
                     "type": "HasMany"
                 }
@@ -28,20 +28,27 @@
             "primary_key": "id",
             "relations": {
                 "category": {
-                    "foreign_key": "category_id",
+                    "foreign_key": "id",
                     "load": {
                         "auto": true
                     },
-                    "primary_key": "id",
+                    "local_key": "category_id",
                     "table": "Categories",
                     "type": "BelongsToOne"
                 },
+                "sales": {
+                    "foreign_key": "sale_id",
+                    "local_key": "product_id",
+                    "pivot": "SaleItems",
+                    "table": "Sales",
+                    "type": "BelongsToMany"
+                },
                 "stock": {
-                    "foreign_key": "stock_id",
+                    "foreign_key": "product_id",
                     "load": {
                         "auto": true
                     },
-                    "primary_key": "id",
+                    "local_key": "id",
                     "table": "Stocks",
                     "type": "HasOne"
                 }
@@ -56,15 +63,21 @@
             "primary_key": "id",
             "ralations": {
                 "product": {
-                    "foreign_key": "product_id",
-                    "primary_key": "id",
+                    "foreign_key": "id",
+                    "local_key": "product_id",
                     "table": "Products",
                     "type": "BelongsToOne"
                 }
             },
             "relations": {
+                "product": {
+                    "load": {
+                        "auto": true
+                    }
+                },
                 "sale": {
                     "foreign_key": "sale_id",
+                    "local_key": "item_id",
                     "pivot": "SaleItems",
                     "table": "Sales",
                     "type": "BelongsToMany"
@@ -82,16 +95,13 @@
             "relations": {
                 "items": {
                     "foreign_key": "sale_id",
-                    "primary_key": "id",
+                    "local_key": "id",
                     "table": "SaleItems",
                     "type": "HasMany"
                 },
                 "seller": {
-                    "foreign_key": "seller_id",
-                    "load": {
-                        "auto": true
-                    },
-                    "primary_key": "id",
+                    "foreign_key": "id",
+                    "local_key": "seller_id",
                     "table": "Users",
                     "type": "BelongsToOne"
                 }
@@ -107,7 +117,7 @@
             "relations": {
                 "product": {
                     "foreign_key": "product_id",
-                    "primary_key": "id",
+                    "local_key": "id",
                     "table": "Products",
                     "type": "BelongsToOne"
                 }
@@ -131,7 +141,7 @@
             "relations": {
                 "users": {
                     "foreign_key": "role_id",
-                    "primary_key": "id",
+                    "local_key": "id",
                     "table": "Users",
                     "type": "HasMany"
                 }
@@ -149,20 +159,20 @@
             "relations": {
                 "groups": {
                     "foreign_key": "group_id",
+                    "local_key": "user_id",
                     "pivot": "UserGroupMembers",
-                    "primary_key": "user_id",
                     "table": "UserGroups",
                     "type": "BelongsToMany"
                 },
                 "role": {
-                    "foreign_key": "role_id",
-                    "primary_key": "id",
+                    "foreign_key": "id",
+                    "local_key": "role_id",
                     "table": "UserRoles",
                     "type": "BelongsToOne"
                 },
                 "sales": {
                     "foreign_key": "user_id",
-                    "primary_key": "id",
+                    "local_key": "id",
                     "table": "Sales",
                     "type": "HasMany"
                 }

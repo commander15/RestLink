@@ -1,4 +1,5 @@
 #include "sqllog.h"
+#include "sqltest.h"
 
 #include <gtest/gtest.h>
 
@@ -23,9 +24,12 @@ void init(QCoreApplication &)
     static QtMessageHandler defaultMessageHandler = nullptr;
 
     defaultMessageHandler = qInstallMessageHandler([](QtMsgType type, const QMessageLogContext &context, const QString &msg) {
-        if (strcmp(context.category, categoryName) == 0 && type == QtMsgType::QtInfoMsg)
-            SqlLog::log(msg);
-        else
+        if (strcmp(context.category, categoryName) == 0) {
+            if (type == QtMsgType::QtInfoMsg)
+                SqlLog::log(msg);
+            else if (type == QtWarningMsg)
+                SqlLog::logError(msg);
+        } else
             defaultMessageHandler(type, context, msg);
     });
 
@@ -95,11 +99,14 @@ void generateConfigurationFile()
     QJsonObject configuration;
     auto loadConfig = [&configuration](int index) {
         const QJsonObject object = readConfigObject(index);
+        SqlTest::s_configurations.insert(index, object);
         configuration = mergeObjects(configuration, object);
     };
 
-    for (int i(0); i <= 2; ++i)
+    for (int i(0); i <= 4; ++i)
         loadConfig(i);
+
+    SqlTest::s_configurations.insert(-1, configuration);
 
     QFile file(QStringLiteral(DATA_DIR) + "/store/configuration.json");
     if (file.open(QIODevice::WriteOnly)) {

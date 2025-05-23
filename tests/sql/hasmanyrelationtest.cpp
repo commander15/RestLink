@@ -4,116 +4,162 @@
 
 TEST_F(HasManyRelationTest, getTest)
 {
-    ASSERT_TRUE(root.load({ "items" }));
+    ASSERT_TRUE(root.load({ "products" }));
 
-    const QJsonObject sale = root.jsonObject();
+    const QJsonObject category = root.jsonObject();
 
-    const QJsonArray items = sale.value("items").toArray();
-    ASSERT_EQ(items.count(), 2);
+    const QJsonArray products = category.value("products").toArray();
+    ASSERT_EQ(products.count(), 2);
 
-    QJsonObject item;
+    QJsonObject product;
 
-    item = items.at(0).toObject();
-    ASSERT_EQ(item.value("id").toInt(), 1);
-    ASSERT_EQ(item.value("quantity").toInt(), 2);
+    product = products.at(0).toObject();
+    ASSERT_EQ(product.value("id").toInt(), 1);
+    ASSERT_EQ(product.value("name").toString().toStdString(), "Apple");
 
-    item = items.at(1).toObject();
-    ASSERT_EQ(item.value("id").toInt(), 2);
-    ASSERT_EQ(item.value("quantity").toInt(), 1);
+    product = products.at(1).toObject();
+    ASSERT_EQ(product.value("id").toInt(), 2);
+    ASSERT_EQ(product.value("name").toString().toStdString(), "Banana");
 
-    ASSERT_EQ(log.count(), 4);
+    ASSERT_EQ(log.count(), 2);
 
-    QString saleQuery = R"(SELECT * FROM "Sales" WHERE "id" = 1 LIMIT 1)";
+    QString saleQuery = R"(SELECT * FROM "Categories" WHERE "id" = 1 LIMIT 1)";
     ASSERT_EQ(log.at(0).toStdString(), saleQuery.toStdString());
 
-    QString itemsQuery = R"(SELECT * FROM "SaleItems" WHERE "sale_id" = 1)";
+    QString itemsQuery = R"(SELECT * FROM "Products" WHERE "category_id" = 1)";
     ASSERT_EQ(log.at(1).toStdString(), itemsQuery.toStdString());
 }
 
 TEST_F(HasManyRelationTest, updateTest)
 {
-    ASSERT_TRUE(root.load({ "items" }));
+    ASSERT_TRUE(root.load({ "products" }));
 
-    QJsonObject sale = root.jsonObject();
+    QJsonObject category = root.jsonObject();
 
-    QJsonArray items = sale.value("items").toArray();
-    items.removeLast();
+    QJsonArray productsArray = category.value("products").toArray();
+    productsArray.removeLast();
 
-    QJsonObject item;
+    QJsonObject productObject;
 
-    item = items.at(0).toObject();
-    QJsonObject product;
-    product.insert("id", 2);
-    item.insert("product", product);
-    item.insert("quantity", 4);
-    items.replace(0, item);
+    productObject = productsArray.at(0).toObject();
+    productsArray.replace(0, productObject);
 
-    item = QJsonObject();
-    product.insert("id", 3);
-    item.insert("product", product);
-    item.insert("quantity", 10);
-    items.append(item);
+    productObject = QJsonObject();
+    productObject.insert("id", 3);
+    productsArray.append(productObject);
 
-    sale.insert("items", items);
+    category.insert("items", productsArray);
 
-    root.fill(sale);
+    root.fill(category);
     ASSERT_TRUE(root.update());
 
-    ASSERT_EQ(log.count(), 8);
+    QList<Model> products = root.relation("products").models();
+    ASSERT_EQ(products.count(), 2);
 
-    QString saleQuery = R"(UPDATE "Sales" SET "number" = 1, "amount" = 3, "created_at" = '%1', "updated_at" = '%2' WHERE "id" = 1)";
-    ASSERT_EQ(log.at(4).toStdString(), saleQuery.arg(root.field("created_at").toString(), root.field("updated_at").toString()).toStdString());
+    ASSERT_EQ(log.count(), 6);
 
-    QString itemQuery = R"(UPDATE "SaleItems" SET "quantity" = %1, "sale_id" = 1, "product_id" = 2 WHERE "id" = %2)";
-    ASSERT_EQ(log.at(5).toStdString(), itemQuery.arg(4).arg(1).toStdString());
+    QString saleQuery = R"(UPDATE "Categories" SET "name" = 'Fruits', "description" = 'Natural meals', "created_at" = '%1', "updated_at" = '%2' WHERE "id" = 1)";
+    ASSERT_EQ(log.at(2).toStdString(), saleQuery.arg(root.field("created_at").toString(), root.field("updated_at").toString()).toStdString());
 
-    QString insertQuery = R"(INSERT INTO "SaleItems" ("quantity", "sale_id", "product_id") VALUES (%1, 1, 3))";
-    ASSERT_EQ(log.at(6).toStdString(), insertQuery.arg(10).toStdString());
+    {
+        int id;
+        QString name;
+        QString description;
+        double price;
+        QString barcode;
+        QString createdAt;
+        QString updatedAt;
 
-    QString deleteQuery = R"(DELETE FROM "SaleItems" WHERE "id" NOT IN (%1))";
-    ASSERT_EQ(log.at(7).toStdString(), deleteQuery.arg("1, 4").toStdString());
+        auto switchToProduct = [&](int index, int outputIndex = -1) {
+            const QJsonObject product = productsArray.at(index).toObject();
+            id = product.value("id").toInt();
+            name = product.value("name").toString();
+            description = product.value("description").toString();
+            price = product.value("price").toDouble();
+            barcode = product.value("barcode").toString();
+
+            if (outputIndex == -1) {
+                createdAt = product.value("created_at").toString();
+                updatedAt = product.value("updated_at").toString();
+            } else {
+                const Model product = products.at(outputIndex);
+                createdAt = product.field("created_at").toString();
+                updatedAt = product.field("updated_at").toString();
+            }
+        };
+
+        QString itemQuery = R"(UPDATE "Products" SET "name" = '%2', "description" = '%3', "price" = %4, "barcode" = '%5', "category_id" = 1, "created_at" = '%6', "updated_at" = '%7' WHERE "id" = %1)";
+
+        switchToProduct(0, 0);
+        ASSERT_EQ(log.at(3).toStdString(), itemQuery.arg(id).arg(name, description).arg(price).arg(barcode, createdAt, updatedAt).toStdString());
+
+        switchToProduct(1, 1);
+        id = 2;
+        name = "Banana";
+        description = "Organic banana";
+        price = 0.3;
+        barcode = "2234567890123";
+        ASSERT_EQ(log.at(4).toStdString(), itemQuery.arg(id).arg(name, description).arg(price).arg(barcode, createdAt, updatedAt).toStdString());
+    }
+
+    QString deleteQuery = R"(DELETE FROM "Products" WHERE "id" NOT IN (%1))";
+    ASSERT_EQ(log.at(5).toStdString(), deleteQuery.arg("1, 2").toStdString());
 }
 
 TEST_F(HasManyRelationTest, insertTest)
 {
     root = Model(root.resourceInfo().name(), api);
 
-    QJsonObject sale;
-    sale.insert("number", 4);
-    sale.insert("amount", 200.5);
+    QJsonObject category;
+    category.insert("name", "Juice");
+    category.insert("description", "Sugar liquids");
 
-    QJsonObject item;
-    item.insert("quantity", 4);
-
+    QJsonArray products;
     QJsonObject product;
-    product.insert("id", 1);
-    item.insert("product", product);
 
-    sale.insert("items", QJsonArray() << item);
+    product.insert("name", "Top Orange");
+    product.insert("description", "Orange savour - artificial thing");
+    product.insert("price", 19.90);
+    product.insert("barcode", "335453576345");
+    products.append(product);
 
-    root.fill(sale);
+    product.insert("name", "Top Grenadine");
+    product.insert("description", "Strange red savour - artificial thing");
+    product.insert("price", 39.90);
+    product.insert("barcode", "587463576345");
+    products.append(product);
 
+    category.insert("products", products);
+
+    root.fill(category);
     ASSERT_TRUE(root.insert());
 
-    ASSERT_EQ(log.count(), 3);
+    const QList<Model> models = root.relation("products").models();
+    ASSERT_EQ(models.count(), 2);
 
-    QString saleQuery = R"(INSERT INTO "Sales" ("number", "amount", "created_at") VALUES (4, 200.5, '%1'))";
+    ASSERT_EQ(log.count(), 4);
+
+    QString saleQuery = R"(INSERT INTO "Categories" ("name", "description", "created_at") VALUES ('Juice', 'Sugar liquids', '%1'))";
     ASSERT_EQ(log.at(1).toStdString(), saleQuery.arg(root.field("created_at").toString()).toStdString());
+
+    QString productQuery = R"(INSERT INTO "Products" ("name", "description", "price", "barcode", "category_id", "created_at") VALUES ('%1', '%2', %3, '%4', 3, '%5'))";
+    ASSERT_EQ(log.at(2).toStdString(), productQuery.arg("Top Orange", "Orange savour - artificial thing").arg(19.90).arg("335453576345", models.at(0).field("created_at").toString()).toStdString());
+    ASSERT_EQ(log.at(3).toStdString(), productQuery.arg("Top Grenadine", "Strange red savour - artificial thing").arg(39.90).arg("587463576345", models.at(1).field("created_at").toString()).toStdString());
 }
 
 TEST_F(HasManyRelationTest, deleteTest)
 {
-    ASSERT_TRUE(root.load({ "items" }));
+    ASSERT_TRUE(root.load({ "products" }));
     ASSERT_TRUE(root.deleteData());
 
-    ASSERT_EQ(log.count(), 7);
+    ASSERT_EQ(log.count(), 5);
 
-    QString saleQuery = R"(DELETE FROM "Sales" WHERE "id" = 1)";
-    ASSERT_EQ(log.at(4).toStdString(), saleQuery.toStdString());
+    QString saleQuery = R"(DELETE FROM "Products" WHERE "id" = %1)";
+    ASSERT_EQ(log.at(2).toStdString(), saleQuery.arg(1).toStdString());
+    ASSERT_EQ(log.at(3).toStdString(), saleQuery.arg(2).toStdString());
 
-    QString itemsQuery = R"(DELETE FROM "SaleItems" WHERE "id" = %1)";
-    ASSERT_EQ(log.at(5).toStdString(), itemsQuery.arg(1).toStdString());
-    ASSERT_EQ(log.at(6).toStdString(), itemsQuery.arg(2).toStdString());
+    QString itemsQuery = R"(DELETE FROM "Categories" WHERE "id" = 1)";
+    ASSERT_EQ(log.at(4).toStdString(), itemsQuery.toStdString());
 }
 
 

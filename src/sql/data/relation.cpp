@@ -140,7 +140,7 @@ bool Relation::get()
 
 bool Relation::save()
 {
-    if (m_operationMode == m_impl->operationMode())
+    if (m_operationMode == m_impl->operationMode(SaveOperation))
         return m_impl->save();
     else
         return true;
@@ -148,7 +148,7 @@ bool Relation::save()
 
 bool Relation::insert()
 {
-    if (m_operationMode == m_impl->operationMode())
+    if (m_operationMode == m_impl->operationMode(InsertOperation))
         return m_impl->insert();
     else
         return true;
@@ -156,7 +156,7 @@ bool Relation::insert()
 
 bool Relation::update()
 {
-    if (m_operationMode == m_impl->operationMode())
+    if (m_operationMode == m_impl->operationMode(UpdateOperation))
         return m_impl->update();
     else
         return true;
@@ -164,7 +164,7 @@ bool Relation::update()
 
 bool Relation::deleteData()
 {
-    if (m_operationMode == m_impl->operationMode())
+    if (m_operationMode == m_impl->operationMode(DeleteOperation))
         return m_impl->deleteData();
     else
         return true;

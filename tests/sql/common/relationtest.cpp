@@ -1,7 +1,8 @@
 #include "relationtest.h"
 
-RelationTest::RelationTest(const QString &resource)
-    : root(resource, api)
+RelationTest::RelationTest(const QString &resource, int configIndex)
+    :SqlTest(configIndex)
+    , root(resource, api)
 {
     if (!root.isValid())
         assert("Invalid resouce !");

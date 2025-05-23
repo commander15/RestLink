@@ -42,7 +42,7 @@ public:
     int type() const;
 
     void load(const QString &name, const QJsonObject &object, const ResourceInfo &resource, Api *api);
-    void save(QJsonObject *object) const;
+    void save(QJsonObject *object) const override;
 
 private:
     QExplicitlySharedDataPointer<RelationInfoData> d;

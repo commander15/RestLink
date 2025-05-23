@@ -16,7 +16,7 @@ void resetDatabase();
 class RelationTest : public SqlTest
 {
 protected:
-    RelationTest(const QString &resource);
+    RelationTest(const QString &resource, int configIndex);
 
     void SetUp() override;
 

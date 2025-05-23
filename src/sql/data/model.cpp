@@ -78,7 +78,7 @@ QDateTime Model::createdAt() const
 
 QDateTime Model::updatedAt() const
 {
-    const QString field = d_ptr->resource.updateTimestamp();
+    const QString field = d_ptr->resource.updateTimestampField();
     return this->field(field).toDateTime();
 }
 
@@ -102,9 +102,24 @@ Relation Model::relation(const QString &name) const
 
 void Model::fill(const QJsonObject &data, FillMode mode)
 {
-    QStringList fieldNames = d_ptr->resource.fillableFields();
-    if (mode == FullFill)
-        fieldNames.prepend(d_ptr->resource.primaryKey());
+    const ResourceInfo resource = d_ptr->resource;
+
+    QStringList fieldNames = resource.fillableFields();
+    switch (mode) {
+    case FullFill:
+        fieldNames.prepend(resource.primaryKey());
+
+    case ExtendedFill:
+        if (resource.hasHiddenFields())
+            fieldNames.append(resource.hiddenFields());
+        if (resource.hasCreationTimestamp())
+            fieldNames.append(resource.creationTimestampField());
+        if (resource.hasUpdateTimestamp())
+            fieldNames.append(resource.updateTimestampField());
+
+    default:
+        break;
+    }
 
     const QStringList relationNames = d_ptr->resource.relationNames();
     const QStringList inputs = data.keys();
@@ -161,7 +176,11 @@ bool Model::exists() const
 
 bool Model::get()
 {
-    return get(primary());
+    const QString primaryKey = d_ptr->resource.primaryKey();
+
+    QueryFilters filters;
+    filters.andWhere(primaryKey, field(primaryKey));
+    return getByFilters(filters);
 }
 
 bool Model::get(const QVariant &id)
@@ -182,12 +201,21 @@ bool Model::getByFilters(const QueryFilters &filters)
         return false;
 
     d_ptr->data = JsonUtils::objectFromRecord(query.record(), d_ptr->resource).toVariantHash();
-    return true;
+    return loadDefault();
 }
 
 bool Model::loadAll()
 {
     return load(d_ptr->resource.relationNames());
+}
+
+bool Model::loadDefault()
+{
+    QStringList names = d_ptr->resource.relationNames();
+    for (const QString &name : std::as_const(names))
+        if (!d_ptr->resource.relation(name).autoLoadable())
+            names.removeOne(name);
+    return load(names);
 }
 
 bool Model::load(const QStringList &relations)
@@ -237,7 +265,7 @@ bool Model::update()
     if (!exists())
         return false;
 
-    const QString timestampField = d_ptr->resource.updateTimestamp();
+    const QString timestampField = d_ptr->resource.updateTimestampField();
     if (!timestampField.isEmpty())
         d_ptr->data.insert(timestampField, QDateTime::currentDateTime());
 

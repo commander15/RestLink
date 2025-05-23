@@ -23,6 +23,10 @@ protected:
 
 private:
     static Api *createApi(int configIndex);
+
+    static QHash<int, QJsonObject> s_configurations;
+
+    friend void generateConfigurationFile();
 };
 
 #endif // SQLTEST_H

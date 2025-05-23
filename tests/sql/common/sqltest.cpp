@@ -4,7 +4,8 @@
 
 #include <utils/querybuilder.h>
 #include <utils/queryrunner.h>
-#include <utils/jsonutils.h>
+
+QJsonObject mergeObjects(const QJsonObject &c1, const QJsonObject &c2);
 
 SqlTest::SqlTest(int configIndex)
 {
@@ -35,7 +36,7 @@ Api *SqlTest::createApi(int configIndex)
 
     static QStringList databaseCreationScript;
     if (databaseCreationScript.isEmpty()) {
-        const QStringList files = { "structure.sql", "data.sql" };
+        const QStringList files = { "structure.sql", "content.sql" };
 
         for (const QString &fileName : files) {
             QFile script(QStringLiteral(DATA_DIR) + "/store/" + fileName);
@@ -60,14 +61,9 @@ Api *SqlTest::createApi(int configIndex)
         }
     }
 
-    static QHash<int, QJsonObject> configurations;
-    if (!configurations.contains(configIndex)) {
-        const QString fileName = QStringLiteral(DATA_DIR) + "/store/configuration%1.json";
-        QFile configurationFile(fileName.arg(configIndex >= 0 ? '_' + QString::number(configIndex) : ""));
-        if (configurationFile.open(QIODevice::ReadOnly))
-            configurations.insert(configIndex, JsonUtils::objectFromRawData(configurationFile.readAll()));
-    }
-
-    api->configure(configurations.value(configIndex));
+    QJsonObject configuration = mergeObjects(s_configurations.value(0), s_configurations.value(configIndex));
+    api->configure(configuration);
     return api;
 }
+
+QHash<int, QJsonObject> SqlTest::s_configurations;

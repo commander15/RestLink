@@ -9,8 +9,10 @@ INSERT INTO UserGroups (name) VALUES
 
 -- Insert Users
 INSERT INTO Users (name, email, password, role_id) VALUES
-('Amadou Benjamain', 'amadoubenjamain@store.com', 'loki_lock', 1), -- Pass: loki_lock
-('John Doe', 'johndoe@store.com', 'mad-max', 1); -- Pass: mad-max
+-- Pass: loki_lock
+('Amadou Benjamain', 'amadoubenjamain@store.com', 'loki_lock', 1),
+-- Pass: mad-max
+('John Doe', 'johndoe@store.com', 'mad-max', 1);
 
 -- Linking users to groups
 INSERT INTO UserGroupMembers (group_id, user_id) VALUES

@@ -4,8 +4,8 @@
         "relations": {
             "role": {
                 "table": "UserRoles",
-                "primary_key": "id",
-                "foreign_key": "role_id",
+                "local_key": "role_id",
+                "foreign_key": "id",
                 "type": "BelongsToOne"
             }
         }
@@ -14,21 +14,15 @@
       "relations": {
         "category": {
             "table": "Categories",
-            "primary_key": "id",
-            "foreign_key": "category_id",
-            "type": "BelongsToOne",
-            "load": {
-                "auto": true
-            }
+            "local_key": "category_id",
+            "foreign_key": "id",
+            "type": "BelongsToOne"
         },
         "stock": {
             "table": "Stocks",
-            "primary_key": "id",
-            "foreign_key": "stock_id",
-            "type": "HasOne",
-            "load": {
-                "auto": true
-            }
+            "local_key": "id",
+            "foreign_key": "product_id",
+            "type": "HasOne"
         }
       }
     },
@@ -36,7 +30,7 @@
       "relations": {
         "product": {
             "table": "Products",
-            "primary_key": "id",
+            "local_key": "id",
             "foreign_key": "product_id",
             "type": "BelongsToOne"
         }
@@ -46,12 +40,9 @@
         "relations": {
             "seller": {
                 "table": "Users",
-            "primary_key": "id",
-                "foreign_key": "seller_id",
-                "type": "BelongsToOne",
-                "load": {
-                    "auto": true
-                }
+                "local_key": "seller_id",
+                "foreign_key": "id",
+                "type": "BelongsToOne"
             }
         }
     },
@@ -59,8 +50,8 @@
         "ralations": {
             "product": {
                 "table": "Products",
-            "primary_key": "id",
-                "foreign_key": "product_id",
+                "local_key": "product_id",
+                "foreign_key": "id",
                 "type": "BelongsToOne"
             }
         }

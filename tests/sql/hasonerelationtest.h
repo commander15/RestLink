@@ -1,12 +1,12 @@
 #ifndef HASONERELATIONTEST_H
 #define HASONERELATIONTEST_H
 
-#include "relationtest.h"
+#include "common/relationtest.h"
 
 class HasOneRelationTest : public RelationTest
 {
 protected:
-    HasOneRelationTest() : RelationTest("products") {}
+    HasOneRelationTest() : RelationTest("products", 1) {}
 };
 
 #endif // HASONERELATIONTEST_H

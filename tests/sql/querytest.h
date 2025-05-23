@@ -1,7 +1,7 @@
 #ifndef QUERYTEST_H
 #define QUERYTEST_H
 
-#include "sqltest.h"
+#include "common/sqltest.h"
 
 class QueryRunnerTest : public SqlTest
 {

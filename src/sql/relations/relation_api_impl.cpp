@@ -44,7 +44,7 @@ bool HasOneImpl::deleteData()
 bool BelongsToOneImpl::get()
 {
     QueryFilters filters;
-    filters.andWhere(info.foreignKey(), root->field(info.foreignKey()));
+    filters.andWhere(info.foreignKey(), root->field(info.localKey()));
 
     m_relatedModel = createModel();
 
@@ -140,9 +140,9 @@ bool BelongsToManyImpl::get()
     const QString pivot = info.pivot();
 
     QString statement = QStringLiteral("SELECT %1 FROM %2 WHERE %3 = %4")
-                            .arg(QueryBuilder::formatFieldName(foreignResource.localKey(), api),
+                            .arg(QueryBuilder::formatFieldName(info.foreignKey(), api),
                                  QueryBuilder::formatTableName(pivot, api),
-                                 QueryBuilder::formatFieldName(foreignResource.localKey(), api),
+                                 QueryBuilder::formatFieldName(info.localKey(), api),
                                  QueryBuilder::formatValue(root->primary(), api));
 
     QSqlQuery query = exec(statement);

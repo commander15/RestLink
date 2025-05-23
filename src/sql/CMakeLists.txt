@@ -26,6 +26,7 @@ install(TARGETS RestLinkSql
 set(UTILS_SOURCES
   utils/jsonutils.h utils/jsonutils.cpp
   utils/sqlutils.h utils/sqlutils.cpp
+  utils/databaseutils.h utils/databaseutils.cpp
   utils/querybuilder.h utils/querybuilder.cpp
   utils/queryrunner.h utils/queryrunner.cpp
 )

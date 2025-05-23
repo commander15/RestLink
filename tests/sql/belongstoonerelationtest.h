@@ -1,12 +1,12 @@
 #ifndef BELONGSTOONERELATIONTEST_H
 #define BELONGSTOONERELATIONTEST_H
 
-#include "relationtest.h"
+#include "common/relationtest.h"
 
 class BelongsToOneRelationTest : public RelationTest
 {
 protected:
-    BelongsToOneRelationTest() : RelationTest("stocks") {}
+    BelongsToOneRelationTest() : RelationTest("products", 1) {}
 };
 
 #endif // BELONGSTOONERELATIONTEST_H

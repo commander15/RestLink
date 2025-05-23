@@ -1,6 +1,7 @@
 #include "relationinfo.h"
 
 #include "resourceinfo.h"
+#include "utils/databaseutils.h"
 
 #include <api.h>
 #include <data/relation.h>
@@ -103,11 +104,8 @@ void RelationInfo::load(const QString &name, const QJsonObject &object, const Re
     d->name = name;
     d->type = Relation::typeFromString(object.value("type").toString());
 
-    auto generateLocalKey = [&resource](const QJsonObject &relation) -> QString {
-        QString table = relation.value("table").toString();
-        table = table.toLower();
-        if (table.endsWith('s'))
-            table.removeLast();
+    auto generateLocalKey = [&resource, &api](const QJsonObject &relation) -> QString {
+        const QString table = relation.value("table").toString();
 
         switch (Relation::typeFromString(relation.value("type").toString())) {
         case Relation::HasOne:
@@ -115,13 +113,11 @@ void RelationInfo::load(const QString &name, const QJsonObject &object, const Re
             return resource.primaryKey();
 
         case Relation::HasManyThrough:
-            return "id";
-
         case Relation::BelongsToOne:
-        case Relation::BelongsToManyThrough:
-            return table + "_id";
+            return DatabaseUtils::foreignKeyFor(table, api);
 
         case Relation::BelongsToMany:
+        case Relation::BelongsToManyThrough:
             return resource.localKey();
 
         default:
@@ -129,24 +125,23 @@ void RelationInfo::load(const QString &name, const QJsonObject &object, const Re
         }
     };
 
-    auto generateForeignKey = [&resource](const QJsonObject &relation) -> QString {
-        QString table = relation.value("table").toString();
-        table = table.toLower();
-        if (table.endsWith('s'))
-            table.removeLast();
+    auto generateForeignKey = [&resource, &api](const QJsonObject &relation) -> QString {
+        const QString table = relation.value("table").toString();
 
         switch (Relation::typeFromString(relation.value("type").toString())) {
         case Relation::HasOne:
         case Relation::HasMany:
-        case Relation::HasManyThrough:
-        case Relation::BelongsToManyThrough:
             return resource.localKey();
 
+        case Relation::HasManyThrough:
+            return DatabaseUtils::foreignKeyFor(table, api);
+
         case Relation::BelongsToOne:
-            return "id";
+            return DatabaseUtils::primaryKeyOn(table, api);
 
         case Relation::BelongsToMany:
-            return table + "_id";
+        case Relation::BelongsToManyThrough:
+            return DatabaseUtils::foreignKeyFor(table, api);
 
         default:
             return QString();
@@ -154,15 +149,19 @@ void RelationInfo::load(const QString &name, const QJsonObject &object, const Re
     };
 
     beginParsing(object);
+
     attribute("table", &d->table);
     attribute("intermediate", &d->intermediate);
-    attribute("with", &d->loadableRelations);
     attribute("pivot", &d->pivot);
     attribute("local_key", Callback<QString>(generateLocalKey), &d->localKey);
     attribute("foreign_key", Callback<QString>(generateForeignKey), &d->foreignKey);
-    attribute("owned", false, &d->owned);
-    attribute("auto_load", false, &d->autoLoadable);
-    attribute("nested_load", false, &d->nestedLoadable);
+    attribute("with", &d->loadableRelations);
+
+    beginParsing(object.value("load").toObject());
+    attribute("auto", false, &d->autoLoadable);
+    attribute("nest", false, &d->nestedLoadable);
+    endParsing();
+
     endParsing();
 
     if (!d->intermediate.isEmpty())
@@ -178,8 +177,12 @@ void RelationInfo::save(QJsonObject *object) const
     object->insert("local_key", d->localKey);
     object->insert("foreign_key", d->foreignKey);
     object->insert("owned", d->owned);
-    object->insert("auto_load", d->autoLoadable);
-    object->insert("nested_load", d->nestedLoadable);
+
+    QJsonObject load;
+    load.insert("auto", d->autoLoadable);
+    load.insert("nest", d->nestedLoadable);
+    object->insert("load", load);
+
     object->insert("type", Relation::stringFromType(d->type));
 }
 

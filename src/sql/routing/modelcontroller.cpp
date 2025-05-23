@@ -239,12 +239,7 @@ void ModelController::processRequest(const ServerRequest &request, ServerRespons
 Model ModelController::requestModel(const ServerRequest &request) const
 {
     Model model(request.resource(), m_api);
-
-    QVariant id = request.identifier();
-    if (id.canConvert<qint64>())
-        id.convert(QMetaType::fromType<qint64>());
-
-    model.setPrimary(id);
+    model.setPrimary(request.identifier());
     return model;
 }
 

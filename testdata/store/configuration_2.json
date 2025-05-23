@@ -5,13 +5,13 @@
             "groups": {
                 "table": "UserGroups",
                 "pivot": "UserGroupMembers",
-                "primary_key": "user_id",
+                "local_key": "user_id",
                 "foreign_key": "group_id",
                 "type": "BelongsToMany"
             },
             "sales": {
                 "table": "Sales",
-                "primary_key": "id",
+                "local_key": "id",
                 "foreign_key": "user_id",
                 "type": "HasMany"
             }
@@ -21,9 +21,20 @@
         "relations": {
             "users": {
                 "table": "Users",
-                "primary_key": "id",
+                "local_key": "id",
                 "foreign_key": "role_id",
                 "type": "HasMany"
+            }
+        }
+    },
+    "products": {
+        "relations": {
+            "sales": {
+                "table": "Sales",
+                "pivot": "SaleItems",
+                "local_key": "product_id",
+                "foreign_key": "sale_id",
+                "type": "BelongsToMany"
             }
         }
     },
@@ -31,7 +42,7 @@
         "relations": {
             "products": {
                 "table": "Products",
-                "primary_key": "id",
+                "local_key": "id",
                 "foreign_key": "category_id",
                 "type": "HasMany"
             }
@@ -41,7 +52,7 @@
       "relations": {
         "items": {
             "table": "SaleItems",
-            "primary_key": "id",
+            "local_key": "id",
             "foreign_key": "sale_id",
             "type": "HasMany"
         }
@@ -52,6 +63,7 @@
         "sale": {
             "table": "Sales",
             "pivot": "SaleItems",
+            "local_key": "item_id",
             "foreign_key": "sale_id",
             "type": "BelongsToMany"
         }

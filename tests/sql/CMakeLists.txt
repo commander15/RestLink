@@ -1,13 +1,14 @@
 add_executable(RestLinkSqlTest
-    main.cpp sqllog.h sqllog.cpp
-    querytest.cpp
+    common/main.cpp
+    common/sqllog.h common/sqllog.cpp
+    common/sqltest.h common/sqltest.cpp
+    common/relationtest.h common/relationtest.cpp
+    querytest.h querytest.cpp
+    metadatatest.h metadatatest.cpp
     modeltest.h modeltest.cpp
-    relationtest.h relationtest.cpp
     hasonerelationtest.h hasonerelationtest.cpp
     belongstoonerelationtest.h belongstoonerelationtest.cpp
     hasmanyrelationtest.h hasmanyrelationtest.cpp
-    sqltest.h sqltest.cpp
-    querytest.h
 )
 
 set(DATABASE_DIR  "${PROJECT_BINARY_DIR}/testdata/store")

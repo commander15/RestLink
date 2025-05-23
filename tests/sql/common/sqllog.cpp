@@ -39,5 +39,11 @@ void SqlLog::log(const QString &statement)
     out << statement << Qt::endl;
 }
 
+void SqlLog::logError(const QString &str)
+{
+    static QTextStream out(stdout);
+    out << "-> " << str << Qt::endl;
+}
+
 bool SqlLog::s_enabled(true);
 QList<SqlLog *> SqlLog::s_logs;
