@@ -31,7 +31,7 @@ class RESTLINK_EXPORT Response : public ResponseBase
     Q_PROPERTY(bool hasHttpStatusCode READ hasHttpStatusCode NOTIFY finished FINAL)
     Q_PROPERTY(int httpStatusCode READ httpStatusCode NOTIFY finished FINAL)
     Q_PROPERTY(QString httpReasonPhrase READ httpReasonPhrase NOTIFY finished FINAL)
-    Q_PROPERTY(QByteArrayList headerList READ headerList NOTIFY finished FINAL)
+    Q_PROPERTY(QStringList headerList READ headerList NOTIFY finished FINAL)
     Q_PROPERTY(bool hasNetworkError READ hasNetworkError NOTIFY finished FINAL)
     Q_PROPERTY(int networkError READ networkError NOTIFY networkErrorOccured FINAL)
     Q_PROPERTY(QString networkErrorString READ networkErrorString NOTIFY networkErrorOccured FINAL)
@@ -61,9 +61,9 @@ public:
     virtual int httpStatusCode() const = 0;
     virtual QString httpReasonPhrase() const;
 
-    virtual bool hasHeader(const QByteArray &name) const;
-    Q_INVOKABLE virtual QByteArray header(const QByteArray &name) const = 0;
-    virtual QByteArrayList headerList() const = 0;
+    virtual bool hasHeader(const QString &name) const;
+    Q_INVOKABLE virtual QString header(const QString &name) const = 0;
+    virtual QStringList headerList() const = 0;
 
     inline bool hasNetworkError() const { return networkError() != 0; }
     virtual int networkError() const;

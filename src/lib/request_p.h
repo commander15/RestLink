@@ -19,11 +19,13 @@ public:
     RequestPrivate(const RequestPrivate &other) = default;
     virtual ~RequestPrivate() = default;
 
+    QString generateUrlPath(Request::UrlType type) const;
+    QVariant parameterValue(const Parameter &parameter) const;
+
     virtual RequestPrivate *clone() const
     { return new RequestPrivate(*this); }
 
     static QString validateEndpoint(const QString &input);
-
     static bool canUseUrlParameter(const Parameter &parameter, Request::UrlType type);
 
     QString endpoint;

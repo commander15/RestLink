@@ -19,6 +19,8 @@ class ServerResponsePrivate final : public ResponsePrivate
 public:
     ServerResponsePrivate(ServerResponse *q);
 
+    Body readBody();
+
     AbstractRequestHandler::Method method;
 
     int httpStatusCode;
@@ -26,6 +28,7 @@ public:
     HeaderList headers;
 
     bool finished;
+    bool atEnd;
 
     QNetworkRequest networkRequest;
 

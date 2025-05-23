@@ -23,9 +23,9 @@ public:
     int httpStatusCode() const override;
     void setHttpStatusCode(int code);
 
-    bool hasHeader(const QByteArray &name) const override;
-    QByteArray header(const QByteArray &name) const override;
-    QByteArrayList headerList() const override;
+    bool hasHeader(const QString &name) const override;
+    QString header(const QString &name) const override;
+    QStringList headerList() const override;
     void setHeaders(const QList<Header> &headers);
 
     QJsonObject readJsonObject(QJsonParseError *error) override;

@@ -20,6 +20,7 @@ public:
     QVariant value(const QString &name) const;
     QVariantList values(const QString &name) const;
     P parameter(const QString &name) const;
+    QStringList parameterNames() const;
 
     void setParameter(const QString &name, const QVariant &value);
     void setParameter(const QString &name, const QVariantList &values);
@@ -83,6 +84,16 @@ P ParameterList<P>::parameter(const QString &name) const
     bool found = false;
     auto it = find(name, &found);
     return (found ? *it : P());
+}
+
+template<typename P>
+QStringList ParameterList<P>::parameterNames() const
+{
+    QStringList names;
+    std::transform(this->begin(), this->end(), std::back_inserter(names), [](const P &parameter) {
+        return parameter.name();
+    });
+    return names;
 }
 
 template<typename P>
@@ -168,7 +179,7 @@ template<typename P>
 typename QList<P>::Iterator ParameterList<P>::find(const QString &name, bool *found)
 {
     auto it = std::find_if(this->begin(), this->end(), [&name](const Parameter &param) {
-        return param.name() == name;
+        return param.name().compare(name, Qt::CaseInsensitive) == 0;
     });
 
     *found = (it != this->end() ? true : false);
@@ -179,7 +190,7 @@ template<typename P>
 typename QList<P>::ConstIterator ParameterList<P>::find(const QString &name, bool *found) const
 {
     auto it = std::find_if(this->begin(), this->end(), [&name](const Parameter &param) {
-        return param.name() == name;
+        return param.name().compare(name, Qt::CaseInsensitive) == 0;
     });
 
     *found = (it != this->end() ? true : false);

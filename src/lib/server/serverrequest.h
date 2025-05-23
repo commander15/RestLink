@@ -24,7 +24,7 @@ public:
     AbstractRequestHandler::Method method() const;
 
     QString resource() const;
-    QString identifier() const;
+    QVariant identifier() const;
 
     Body body() const;
 };

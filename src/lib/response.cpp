@@ -204,7 +204,7 @@ QString Response::httpReasonPhrase() const
  * \param name The name of the header to check.
  * \return \c true if the header is present, otherwise \c false.
  */
-bool Response::hasHeader(const QByteArray &name) const
+bool Response::hasHeader(const QString &name) const
 {
     return headerList().contains(name);
 }
@@ -213,13 +213,13 @@ bool Response::hasHeader(const QByteArray &name) const
  * \fn Response::header
  * \brief Retrieves the value of a specific header.
  * \param header The name of the header to retrieve.
- * \return The header value as a QByteArray.
+ * \return The header value as a QString.
  */
 
 /*!
  * \fn Response::headerList
  * \brief Retrieves a list of all headers in the response.
- * \return A QByteArrayList containing the header names.
+ * \return A QStringList containing the header names.
  */
 
 /*!

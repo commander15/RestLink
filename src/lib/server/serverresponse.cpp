@@ -52,53 +52,32 @@ void ServerResponse::setHttpStatusCode(int code)
     d->httpStatusCode = code;
 }
 
-bool ServerResponse::hasHeader(const QByteArray &name) const
+bool ServerResponse::hasHeader(const QString &name) const
 {
-    if (name.compare(QByteArrayLiteral("Content-Type"), Qt::CaseInsensitive) == 0)
-        return true;
-
     RESTLINK_D(const ServerResponse);
-
-    auto it = std::find_if(d->headers.begin(), d->headers.end(), [name](const Header &header) {
-        return header.name() == name;
-    });
-
-    return (it != d->headers.end());
+    return d->headers.contains(name) || d->body.headers().contains(name);
 }
 
-QByteArray ServerResponse::header(const QByteArray &name) const
+QString ServerResponse::header(const QString &name) const
 {
     RESTLINK_D(const ServerResponse);
 
-    auto it = std::find_if(d->headers.begin(), d->headers.end(), [name](const Header &header) {
-        return header.name() == name;
-    });
+    if (d->headers.contains(name))
+        return d->headers.parameter(name).value().toByteArray();
 
-    if (it != d->headers.end())
-        return it->value().toByteArray();
-
-    const HeaderList headers = d->body.headers();
-    it = std::find_if(headers.begin(), headers.end(), [name](const Header &header) {
-        return header.name() == name;
-    });
-
-    if (it != d->headers.end())
-        return it->value().toByteArray();
+    const HeaderList bodyHeaders = d->body.headers();
+    if (bodyHeaders.contains(name))
+        return bodyHeaders.value(name).toByteArray();
 
     return QByteArray();
 }
 
-QByteArrayList ServerResponse::headerList() const
+QStringList ServerResponse::headerList() const
 {
     RESTLINK_D(const ServerResponse);
-
-    const HeaderList headers = d->headers + d->body.headers();
-    QByteArrayList names(headers.size());
-    std::transform(headers.begin(), headers.end(), names.begin(), [](const Header &header) {
-        return header.name().toUtf8();
-    });
-
-    return names;
+    QStringList parameterNames = d->headers.parameterNames() + d->body.headers().parameterNames();
+    parameterNames.removeDuplicates();
+    return parameterNames;
 }
 
 void ServerResponse::setHeaders(const QList<Header> &headers)
@@ -112,14 +91,14 @@ QJsonObject ServerResponse::readJsonObject(QJsonParseError *error)
 {
     RESTLINK_D(ServerResponse);
     QMutexLocker locker(&d->mutex);
-    return (d->body.hasJsonObject() ? d->body.jsonObject() : QJsonObject());
+    return (d->body.hasJsonObject() ? d->readBody().jsonObject() : QJsonObject());
 }
 
 QJsonArray ServerResponse::readJsonArray(QJsonParseError *error)
 {
     RESTLINK_D(ServerResponse);
     QMutexLocker locker(&d->mutex);
-    return (d->body.hasJsonArray() ? d->body.jsonArray() : QJsonArray());
+    return (d->body.hasJsonArray() ? d->readBody().jsonArray() : QJsonArray());
 }
 
 QJsonValue ServerResponse::readJson(QJsonParseError *error)
@@ -128,10 +107,10 @@ QJsonValue ServerResponse::readJson(QJsonParseError *error)
     QMutexLocker locker(&d->mutex);
 
     if (d->body.hasJsonObject())
-        return d->body.jsonObject();
+        return d->readBody().jsonObject();
 
     if (d->body.hasJsonArray())
-        return d->body.jsonArray();
+        return d->readBody().jsonArray();
 
     return QJsonValue();
 }
@@ -140,14 +119,14 @@ QString ServerResponse::readString()
 {
     RESTLINK_D(ServerResponse);
     QMutexLocker locker(&d->mutex);
-    return d->body.toString();
+    return d->readBody().toString();
 }
 
 QByteArray ServerResponse::readBody()
 {
     RESTLINK_D(ServerResponse);
     QMutexLocker locker(&d->mutex);
-    return d->body.toByteArray();
+    return d->readBody().toByteArray();
 }
 
 void ServerResponse::setBody(const Body &body)
@@ -216,8 +195,19 @@ ServerResponsePrivate::ServerResponsePrivate(ServerResponse *q)
     , method(AbstractRequestHandler::UnknownMethod)
     , httpStatusCode(200)
     , finished(false)
+    , atEnd(false)
     , server(nullptr)
 {
+}
+
+Body ServerResponsePrivate::readBody()
+{
+    if (atEnd) {
+        return Body();
+    } else {
+        atEnd = true;
+        return body;
+    }
 }
 
 } // namespace RestLink

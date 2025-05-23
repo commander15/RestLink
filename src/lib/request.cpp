@@ -248,21 +248,11 @@ QUrl Request::url(UrlType type) const
         return RequestPrivate::canUseUrlParameter(param, type);
     };
 
-    auto parameterValue = [&api](const Parameter &param) {
-        return (api ? param.specialValue(api) : param.value());
-    };
-
     auto parameterValues = [&api](const Parameter &param) {
         return (api ? param.specialValues(api) : param.values());
     };
 
-    QString path = d_ptr->endpoint;
-    const PathParameterList apiPathParameters = (api ? api->pathParameters() : PathParameterList());
-    const PathParameterList pathParameters = d_ptr->pathParameters + apiPathParameters;
-    for (const PathParameter &parameter : pathParameters)
-        if (canUseParameter(parameter))
-            path.replace('{' + parameter.name() + '}', parameterValue(parameter).toString());
-    url.setPath(url.path() + path);
+    url.setPath(url.path() + d_ptr->generateUrlPath(type));
 
     QUrlQuery query(url.query());
     const QueryParameterList apiQueryParameters = (api ? api->queryParameters() : QueryParameterList());
@@ -551,6 +541,22 @@ const QList<Header> *Request::constHeaders() const
 QList<Header> *Request::mutableHeaders()
 {
     return &d_ptr->headers;
+}
+
+QString RequestPrivate::generateUrlPath(Request::UrlType type) const
+{
+    QString path = endpoint;
+    const PathParameterList apiPathParameters = (api ? api->pathParameters() : PathParameterList());
+    const PathParameterList pathParameters = this->pathParameters + apiPathParameters;
+    for (const PathParameter &parameter : pathParameters)
+        if (canUseUrlParameter(parameter, type))
+            path.replace('{' + parameter.name() + '}', parameterValue(parameter).toString());
+    return path;
+}
+
+QVariant RequestPrivate::parameterValue(const Parameter &parameter) const
+{
+    return (api ? parameter.specialValue(api) : parameter.value());
 }
 
 QString RequestPrivate::validateEndpoint(const QString &input)
