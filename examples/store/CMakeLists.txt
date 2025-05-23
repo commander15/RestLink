@@ -14,6 +14,10 @@ qt_add_qml_module(Store
     QML_FILES ConfigurationPage.qml
     QML_FILES CategoryItemDelegate.qml
     QML_FILES ProductDetailsPage.qml
+    QML_FILES ResponseViewer.qml
+    QML_FILES AppBar.qml
 )
 
 target_link_libraries(Store PRIVATE Qt::Quick Qt::Sql)
+
+target_compile_definitions(Store PRIVATE TEST_DATA_DIR="${PROJECT_SOURCE_DIR}/testdata/store")

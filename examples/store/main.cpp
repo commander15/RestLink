@@ -1,3 +1,5 @@
+#include <QtCore/qdir.h>
+
 #include <QtGui/qguiapplication.h>
 
 #include <QtQml/qqmlapplicationengine.h>
@@ -8,6 +10,8 @@ int main(int argc, char *argv[])
     app.setApplicationName("Store");
     app.setOrganizationName("RestLink");
     app.addLibraryPath(app.applicationDirPath() + "/../plugins");
+
+    QDir::setCurrent(TEST_DATA_DIR);
 
     QQmlApplicationEngine engine;
     engine.addImportPath(app.applicationDirPath() + "/../qml");

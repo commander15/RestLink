@@ -13,20 +13,9 @@ ApplicationWindow {
     height: 800
     visible:  true
 
-    header: ToolBar {
-        height: 64
-
-        Label {
-            text: "Store"
-
-            font.pointSize: 25
-            font.bold: true
-
-            verticalAlignment: Text.AlignVCenter
-
-            anchors.fill: parent
-            anchors.leftMargin: 12
-        }
+    header: AppBar {
+        id: appBar
+        title: "Store"
     }
 
     footer: TabBar {
@@ -70,9 +59,10 @@ ApplicationWindow {
 
     StoreApi {
         id: store
+        firstRun: false
     }
 
     Settings {
-        property alias firstRun: store.firstRun
+        //property alias firstRun: store.firstRun
     }
 }

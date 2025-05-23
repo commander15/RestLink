@@ -10,6 +10,7 @@ MouseArea {
 
     property var product
 
+    implicitWidth: mainLayout.implicitWidth
     implicitHeight: 64
 
     Rectangle {
@@ -19,6 +20,8 @@ MouseArea {
         anchors.fill: parent
 
         RowLayout {
+            id: mainLayout
+
             anchors.fill: parent
             anchors.margins: 6
 

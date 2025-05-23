@@ -3,16 +3,16 @@ import RestLink 2.0
 Api {
     id: store
 
-    property bool firstRun: false
+    property bool firstRun: true
     
     name: "Store"
     version: "1.0"
-    url: "sqlite:///home/commander/Projects/RestLink/build/Desktop_Qt_6_9_0-Debug/testdata/store/database.sqlite"
+    url: "sqlite:database.sqlite"
 
     readonly property Request initializationRequest: Request {
         method: Request.Post
         endpoint: "/query"
-        body.file: "../testdata/store/structure.sql"
+        body.file: "structure.sql"
         api: store
         autoRun: store.firstRun
 
@@ -22,7 +22,7 @@ Api {
     readonly property Request fillingRequest: Request {
         method: Request.Post
         endpoint: "/query"
-        body.file: "../testdata/store/data.sql"
+        body.file: "content.sql"
         api: store
         autoRun: store.firstRun
 
@@ -32,7 +32,7 @@ Api {
     readonly property Request configurationRequest: Request {
         method: Request.Post
         endpoint: "/configuration"
-        body.file: "../testdata/store/configuration.json"
+        body.file: "configuration.json"
         api: store
 
         onFinished: console.log(response.success ? "API configured !" : "API configuration failed !")
