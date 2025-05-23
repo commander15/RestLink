@@ -15,8 +15,12 @@ Request::Request(QObject *parent)
     , m_autoRun(true)
     , m_response(nullptr)
     , m_api(nullptr)
-    , m_parametersProperty(this, &m_parameters)
 {
+}
+
+QQmlListProperty<RequestParameter> Request::parameters()
+{
+    return QQmlListProperty<RequestParameter>(this, &m_parameters);
 }
 
 Body *Request::body() const

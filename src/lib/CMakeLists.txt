@@ -1,11 +1,15 @@
-add_library(RestLink ${RestLink_LIBRARY_TYPE})
+qt_add_library(RestLink ${RestLink_LIBRARY_TYPE})
 
 set_target_properties(RestLink PROPERTIES
     OUTPUT_NAME RestLink
     VERSION     ${RestLink_VERSION}
 )
 
-target_include_directories(RestLink PUBLIC $<INSTALL_INTERFACE:include>)
+target_include_directories(RestLink
+    PUBLIC
+        $<INSTALL_INTERFACE:include>
+        $<INSTALL_INTERFACE:include/RestLink>
+)
 
 target_compile_definitions(RestLink
     PUBLIC

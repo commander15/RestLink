@@ -8,7 +8,6 @@ namespace Qml {
 Api::Api(QObject *parent)
     : RestLink::Api(parent)
     , m_ready(false)
-    , m_parametersProperty(this, &m_parameters)
 {
 }
 
@@ -29,6 +28,11 @@ void Api::setConfigurationUrl(const QUrl &url)
 
     m_configUrl = url;
     emit configurationUrlChanged();
+}
+
+QQmlListProperty<RequestParameter> Api::parameters()
+{
+    return QQmlListProperty<RequestParameter>(this, &m_parameters);
 }
 
 void Api::classBegin()
