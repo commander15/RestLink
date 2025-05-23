@@ -33,7 +33,7 @@ class Request : public QObject, public QQmlParserStatus
     Q_PROPERTY(bool finished READ isFinished NOTIFY finished FINAL)
     Q_PROPERTY(RestLink::Response *response READ response NOTIFY started FINAL)
     Q_PROPERTY(RestLink::Qml::Api *api MEMBER m_api NOTIFY apiChanged FINAL)
-    Q_PROPERTY(QQmlListProperty<RestLink::Qml::RequestParameter> parameters MEMBER m_parametersProperty NOTIFY parametersChanged FINAL)
+    Q_PROPERTY(QQmlListProperty<RestLink::Qml::RequestParameter> parameters READ parameters FINAL)
 
     Q_CLASSINFO("DefaultProperty", "parameters")
 
@@ -51,6 +51,7 @@ public:
 
     explicit Request(QObject *parent = nullptr);
 
+    QQmlListProperty<RequestParameter> parameters();
     Body *body() const;
 
     bool isRunning() const;
@@ -85,7 +86,6 @@ private:
     Api *m_api;
 
     QList<RequestParameter *> m_parameters;
-    QQmlListProperty<RequestParameter> m_parametersProperty;
 };
 
 class Body : public QObject
