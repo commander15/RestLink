@@ -7,13 +7,7 @@ namespace Qml {
 
 Api::Api(QObject *parent)
     : RestLink::Api(parent)
-    , m_ready(false)
 {
-}
-
-bool Api::isReady() const
-{
-    return m_ready;
 }
 
 QUrl Api::configurationUrl() const

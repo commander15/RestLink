@@ -22,7 +22,7 @@ target_sources(RestLinkQml PRIVATE ${CORE_SOURCES})
 
 target_link_libraries(RestLinkQml PUBLIC Qt::Qml RestLink)
 
-install(TARGETS ${TARGET}
+install(TARGETS RestLinkQml
     ARCHIVE DESTINATION qml/RestLink
     LIBRARY DESTINATION qml/RestLink
     RUNTIME DESTINATION qml/RestLink
