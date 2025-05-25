@@ -406,8 +406,8 @@ QList<Model> Model::getMulti(const ResourceInfo &resource, const QueryOptions &o
     while (sqlQuery.next()) {
         Model model(resource, api);
         model.fill(sqlQuery.record());
-        if (options.withRelations)
-            model.loadAll();
+        if (!options.withRelations.isEmpty())
+            model.load(options.withRelations);
         models.append(model);
     }
     return models;

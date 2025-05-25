@@ -29,7 +29,7 @@ public:
     bool isConfigured() const;
     bool isAutoConfigured() const;
     QJsonObject configuration() const;
-    void configure(const QJsonObject &configuration);
+    void configure(const QJsonObject &configuration, const QHash<QString, QString> &options = {});
     void reset();
 
     EndpointInfo endpointInfo(const QString &name) const;

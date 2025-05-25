@@ -11,6 +11,7 @@ class ResponsePrivate
 {
 public:
     ResponsePrivate(Response *q);
+    virtual ~ResponsePrivate() = default;
 
     Response *q_ptr;
 

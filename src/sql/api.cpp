@@ -19,6 +19,7 @@ Api::Api(const QUrl &url)
     : m_url(url)
     , m_connectionClosable(true)
     , m_autoConfigured(true)
+    , m_activeModels(0)
 {
     static unsigned int connectionId = 0;
 
@@ -98,10 +99,22 @@ QJsonObject Api::configuration() const
     return configuration;
 }
 
-void Api::configure(const QJsonObject &configuration)
+void Api::configure(const QJsonObject &configuration, const QHash<QString, QString> &options)
 {
     m_endpoints.clear();
     m_resources.clear();
+
+    if (!options.isEmpty()) {
+        QSqlDatabase db = QSqlDatabase::database(m_dbConnectionName, false);
+        if (db.isOpen())
+            db.close();
+
+        if (options.contains("DATABASE_NAME"))
+            db.setDatabaseName(options.value("DATABASE_NAME"));
+
+        if (options.contains("CONNECT_OPTIONS"))
+            db.setConnectOptions(options.value("CONNECT_OPTIONS"));
+    }
 
     // Loading resources
     const QJsonObject resources = configuration.value("resources").toObject();

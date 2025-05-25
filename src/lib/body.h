@@ -26,7 +26,7 @@ class BodyData;
 class RESTLINK_EXPORT Body
 {
 public:
-    enum class Type {
+    enum Type {
         PlainText,
         JsonData,
         RawData,

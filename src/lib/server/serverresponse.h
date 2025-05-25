@@ -14,6 +14,7 @@ class RESTLINK_EXPORT ServerResponse : public RestLink::Response
 
 public:
     explicit ServerResponse(Server *server);
+    ~ServerResponse();
 
     AbstractRequestHandler::Method method() const override;
     void setMethod(AbstractRequestHandler::Method method);

@@ -30,8 +30,10 @@ QString ModelController::endpoint() const
     return m_endpoint;
 }
 
-void ModelController::init(Api *api)
+void ModelController::init(const ServerRequest &request, Api *api)
 {
+    m_endpoint = request.endpoint();
+    m_resource = api->resourceInfo(request.resource());
     m_api = api;
 }
 
@@ -39,8 +41,7 @@ void ModelController::index(const ServerRequest &request, ServerResponse *respon
 {
     QueryOptions options;
 
-    if (request.hasQueryParameter(PARAM_WITH_RELATIONS))
-        options.withRelations = request.queryParameterValues(PARAM_WITH_RELATIONS).constFirst().toBool();
+    options.withRelations = requestedRelations(request, requestedResource(request));
 
     if (request.hasQueryParameter(PARAM_LIMIT))
         options.limit = request.queryParameterValues(PARAM_LIMIT).constFirst().toInt();
@@ -103,8 +104,8 @@ void ModelController::show(const ServerRequest &request, ServerResponse *respons
     if (!model.get())
         goto error;
 
-    if (request.hasQueryParameter(PARAM_WITH_RELATIONS) && request.queryParameterValues(PARAM_WITH_RELATIONS).constFirst().toBool())
-        model.loadAll();
+    if (!model.load(requestedRelations(request, requestedResource(request))))
+        goto error;
 
     goto success;
 
@@ -131,8 +132,8 @@ void ModelController::update(const ServerRequest &request, ServerResponse *respo
         goto error;
 
 success:
-    response->setBody(model.jsonObject());
     response->setHttpStatusCode(200);
+    response->setBody(model.jsonObject());
     response->complete();
     return;
 
@@ -187,7 +188,7 @@ void ModelController::destroy(const ServerRequest &request, ServerResponse *resp
 
 bool ModelController::canProcessRequest(const ServerRequest &request) const
 {
-    if (!m_api)
+    if (!m_resource.isValid())
         return false;
 
     switch (request.method()) {
@@ -201,15 +202,11 @@ bool ModelController::canProcessRequest(const ServerRequest &request) const
         return false;
     }
 
-    const ResourceInfo info = m_api->resourceInfo(request.resource());
-    return info.isValid();
+    return true;
 }
 
 void ModelController::processRequest(const ServerRequest &request, ServerResponse *response)
 {
-    m_endpoint = request.endpoint();
-    m_resource = request.resource();
-
     QSqlDatabase db = m_api->database();
 
     if (!db.isOpen()) {
@@ -241,6 +238,29 @@ Model ModelController::requestModel(const ServerRequest &request) const
     Model model(request.resource(), m_api);
     model.setPrimary(request.identifier());
     return model;
+}
+
+ResourceInfo ModelController::requestedResource(const ServerRequest &request) const
+{
+    Q_UNUSED(request);
+    return m_resource;
+}
+
+QStringList ModelController::requestedRelations(const ServerRequest &request, const ResourceInfo &resource) const
+{
+    QStringList relations = resource.relationNames();
+
+    if (request.hasQueryParameter(PARAM_WITH_RELATIONS) && request.queryParameterValues(PARAM_WITH_RELATIONS).constFirst().toBool())
+        return relations;
+
+    relations.removeIf([&request](const QString &relation) {
+        if (!request.hasQueryParameter("with_" + relation))
+            return true;
+        else
+            return !request.queryParameterValues("with_" + relation).constFirst().toBool();
+    });
+
+    return relations;
 }
 
 int ModelController::httpStatusCodeFromSqlError(const QJsonObject &error)

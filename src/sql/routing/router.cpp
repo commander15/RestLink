@@ -12,6 +12,8 @@
 #include <QtSql/qsqlerror.h>
 #include <QtSql/qsqlquery.h>
 
+#include <RestLink/serverrequest.h>
+#include <RestLink/serverresponse.h>
 #include <RestLink/queryparameter.h>
 #include <RestLink/httputils.h>
 
@@ -19,30 +21,12 @@ namespace RestLink {
 namespace Sql {
 
 Router::Router(QObject *parent)
-    : RestLink::Server(Synchronous, parent)
+    : RestLink::AbstractServerWorker(Synchronous, parent)
 {
 }
 
 Router::~Router()
 {
-    Api::cleanupApis();
-}
-
-QString Router::handlerName() const
-{
-    return QStringLiteral("SQL");
-}
-
-QStringList Router::supportedSchemes() const
-{
-    static QStringList schemes;
-    if (schemes.isEmpty()) {
-        schemes = QSqlDatabase::drivers();
-        std::transform(schemes.begin(), schemes.end(), schemes.begin(), [](const QString &driver) {
-            return driver.mid(1).toLower();
-        });
-    }
-    return schemes;
 }
 
 bool Router::init()
@@ -52,7 +36,7 @@ bool Router::init()
 
 void Router::cleanup()
 {
-    // No-op
+    Api::cleanupApis();
 }
 
 bool Router::maintain()
@@ -89,6 +73,11 @@ void Router::processStandardRequest(const ServerRequest &request, ServerResponse
         return;
     }
 
+    if (request.endpoint() == "/db-tables") {
+        processDatabaseTablesRequest(request, response, api);
+        return;
+    }
+
     if (request.endpoint() == "/query") {
         processQueryRequest(request, response, api);
         return;
@@ -111,7 +100,7 @@ void Router::processStandardRequest(const ServerRequest &request, ServerResponse
         return;
     }
 
-    m_defaultController.init(api);
+    m_defaultController.init(request, api);
     if (m_defaultController.canProcessRequest(request)) {
         m_defaultController.processRequest(request, response);
         return;
@@ -120,23 +109,37 @@ void Router::processStandardRequest(const ServerRequest &request, ServerResponse
     processUnsupportedRequest(request, response);
 }
 
-void Router::processConfigurationRequest(const ServerRequest &request, ServerResponse *response, Api *manager)
+void *Router::requestDataSource(const ServerRequest &request)
+{
+    Api *api = Api::api(request.baseUrl());
+    return (api ? new QSqlDatabase(api->database()) : nullptr);
+}
+
+void Router::clearDataSource(const ServerRequest &request, void *source)
+{
+    Q_UNUSED(request);
+
+    if (source)
+        delete static_cast<QSqlDatabase *>(source);
+}
+
+void Router::processConfigurationRequest(const ServerRequest &request, ServerResponse *response, Api *api)
 {
     switch (request.method()) {
-    case PostMethod:
-    case PutMethod:
-        manager->configure(JsonUtils::objectFromRawData(request.body().toByteArray()));
+    case AbstractRequestHandler::PostMethod:
+    case AbstractRequestHandler::PutMethod:
+        api->configure(JsonUtils::objectFromRawData(request.body().toByteArray()));
         if (request.hasHeader("Connection"))
-            manager->setConnectionClosable(request.headerValues("Connection").constFirst() == "keep-alive");
+            api->setConnectionClosable(request.headerValues("Connection").constFirst() == "keep-alive");
 
-    case GetMethod:
+    case AbstractRequestHandler::GetMethod:
         response->setHttpStatusCode(200);
-        response->setBody(manager->configuration());
+        response->setBody(api->configuration());
         response->complete();
         break;
 
-    case DeleteMethod:
-        manager->reset();
+    case AbstractRequestHandler::DeleteMethod:
+        api->reset();
         response->setHttpStatusCode(200);
         response->setBody(QJsonObject({ { "message", "configuration reseted successfully" } }));
         response->complete();
@@ -148,21 +151,35 @@ void Router::processConfigurationRequest(const ServerRequest &request, ServerRes
     }
 }
 
-void Router::processQueryRequest(const ServerRequest &request, ServerResponse *response, Api *manager)
+void Router::processDatabaseTablesRequest(const ServerRequest &request, ServerResponse *response, Api *api)
+{
+    if (request.method() != AbstractRequestHandler::GetMethod) {
+        processUnsupportedRequest(request, response);
+        return;
+    }
+
+    QJsonArray tables = QJsonArray::fromStringList(api->database().tables());
+
+    response->setHttpStatusCode(200);
+    response->setBody(tables);
+    response->complete();
+}
+
+void Router::processQueryRequest(const ServerRequest &request, ServerResponse *response, Api *api)
 {
     if (request.method() != AbstractRequestHandler::PostMethod) {
         processUnsupportedRequest(request, response);
         return;
     }
 
-    QSqlQuery query(manager->database());
+    QSqlQuery query(api->database());
     query.setForwardOnly(true);
 
-    auto process = [&query, manager](const QString &statement, bool singleResult, bool *success) -> QJsonObject {
+    auto process = [&query, api](const QString &statement, bool singleResult, bool *success) -> QJsonObject {
         Query query;
         query.statement = statement;
         query.array = !singleResult;
-        return QueryRunner::exec(query, manager, success);
+        return QueryRunner::exec(query, api, success);
     };
 
     const QString input = request.body().toString().trimmed();
