@@ -1,5 +1,9 @@
 #include "app.h"
 
+#include <QtCore/qjsondocument.h>
+#include <QtCore/qjsonobject.h>
+#include <QtCore/qjsonarray.h>
+
 #include <RestLink/api.h>
 #include <RestLink/request.h>
 #include <RestLink/body.h>
@@ -339,8 +343,8 @@ void App::monitorResponse(Response *response)
 
         if (!m_parser.isSet(BODYONLY_OPTION) && response->hasHttpStatusCode()) {
             m_out << "HTTP " << response->httpStatusCode() << ' ' << response->httpReasonPhrase() << Qt::endl;
-            const QByteArrayList headers = response->headerList();
-            for (const QByteArray &header : headers) {
+            const QStringList headers = response->headerList();
+            for (const QString &header : headers) {
                 m_out << header.toUpper() << ": " << response->header(header) << Qt::endl;
             }
             m_out << Qt::endl;
