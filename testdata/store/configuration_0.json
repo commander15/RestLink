@@ -1,5 +1,10 @@
 {
   "resources": {
+    "database_versions": {
+        "table": "DatabaseVersions",
+        "primary_key": "id",
+        "fillable": [ "major", "minor", "patch" ]
+    },
     "users": {
         "table": "Users",
         "primary_key": "id",

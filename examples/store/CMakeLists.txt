@@ -16,6 +16,7 @@ qt_add_qml_module(Store
     QML_FILES ProductDetailsPage.qml
     QML_FILES ResponseViewer.qml
     QML_FILES AppBar.qml
+    QML_FILES CategoryEditDialog.qml
 )
 
 target_link_libraries(Store PRIVATE Qt::Quick Qt::Sql)

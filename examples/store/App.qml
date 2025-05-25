@@ -59,7 +59,6 @@ ApplicationWindow {
 
     StoreApi {
         id: store
-        firstRun: false
     }
 
     Settings {

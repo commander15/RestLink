@@ -14,12 +14,21 @@ Page {
         delegate: CategoryItemDelegate {
             product: modelData
             width: ListView.view.width
+            onClicked: nameDialog.change(modelData)
         }
 
         spacing: 6
 
         anchors.fill: parent
         anchors.margins: 9
+
+        CategoryEditDialog {
+            id: nameDialog
+            api: page.api
+            width:  page.width * (parent.width > parent.height && parent.width >= 400 ? 0.6 : 0.9)
+            anchors.centerIn: parent
+            onSuccess: request.run()
+        }
     }
 
     BusyIndicator {

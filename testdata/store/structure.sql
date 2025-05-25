@@ -1,3 +1,16 @@
+-- System internals
+
+CREATE TABLE DatabaseVersions (
+    id    INTEGER PRIMARY KEY AUTOINCREMENT,
+    major INTEGER NOT NULL,
+    minor INTEGER NOT NULL,
+    patch INTEGER DEFAULT 0,
+    installed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO DatabaseVersions (major, minor, patch) VALUES
+(1, 0, 0);
+
 -- User management
 
 CREATE TABLE UserRoles (

@@ -34,6 +34,11 @@ Page {
 
             spacing: 6
 
+            onVerticalOvershootChanged: function() {
+                if (verticalOvershoot > -20 && !request.running)
+                    request.run();
+            }
+
             BusyIndicator {
                 running: request.running
                 anchors.centerIn: parent

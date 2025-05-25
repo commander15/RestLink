@@ -8,6 +8,7 @@ int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
     app.setApplicationName("Store");
+    app.setApplicationVersion("1.0.0");
     app.setOrganizationName("RestLink");
     app.addLibraryPath(app.applicationDirPath() + "/../plugins");
 
