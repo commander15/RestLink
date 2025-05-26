@@ -99,6 +99,7 @@ endif()
 
 include(cmake/Utils.cmake)
 
+add_subdirectory(3rdparty)
 add_subdirectory(src)
 
 if (RESTLINK_BUILD_DOCS)

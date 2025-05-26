@@ -18,7 +18,7 @@ target_compile_definitions(RestLink
         RESTLINK_BUILD
 )
 
-target_link_libraries(RestLink PUBLIC Qt::Core Qt::Network)
+target_link_libraries(RestLink PUBLIC Qt::Core Qt::Network Bcrypt)
 
 if (ZLIB_FOUND)
     target_compile_definitions(RestLink PUBLIC ZLIB_LIB)
@@ -62,6 +62,7 @@ target_sources(RestLink
 add_subdirectory(network)
 add_subdirectory(plugin)
 add_subdirectory(server)
+add_subdirectory(utils)
 
 install(TARGETS RestLink
     EXPORT RestLinkTargets
