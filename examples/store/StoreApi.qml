@@ -2,19 +2,12 @@ import RestLink 2.0
 
 Api {
     id: store
-
-    property bool firstRun: false
     
     name: "Store"
     version: "1.0"
     url: "sqlite:database.sqlite"
 
     readonly property Request versionCheckRequest: Request {
-        function initialize() {
-            store.initializationRequest.run();
-            store.fillingRequest.run();
-        }
-
         method: Request.Post
         endpoint: "/query"
         body.data: "SELECT * FROM DatabaseVersions"
@@ -22,9 +15,12 @@ Api {
 
         onFinished: {
             if (!response.success) {
-                initialize();
-                store.initialized();
+                store.initializationRequest.run();
+                store.fillingRequest.run();
+                store.configurationRequest.run();
                 return;
+            } else {
+                store.configurationRequest.run();
             }
 
             var version;
@@ -35,6 +31,8 @@ Api {
             version = JSON.parse(response.body).data;
             var dbVersion = [ version.major, version.minor, version.patch ];
 
+            console.log("database version: " + dbVersion[0] + '.' + dbVersion[1] + '.' + dbVersion[2]);
+
             var sameVersion = true;
             var olderVersion = false;
             for (var i = 0; i < 3; ++i) {
@@ -43,10 +41,6 @@ Api {
                 else if (appVersion[i] < dbVersion[i] && !olderVersion)
                     olderVersion = true;
             }
-
-            console.log(sameVersion ? "Same !" : "Not same !");
-
-            store.initialized();
         }
 
         RequestParameter {
@@ -80,8 +74,9 @@ Api {
         endpoint: "/configuration"
         body.file: "configuration.json"
         api: store
+        autoRun: false
 
-        onFinished: console.log(response.success ? "API configured !" : "API configuration failed !")
+        onFinished: console.log(response.success ? store.initialized() : "API configuration failed !")
     }
 
     signal initialized()

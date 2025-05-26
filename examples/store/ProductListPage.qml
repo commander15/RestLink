@@ -8,6 +8,9 @@ Page {
 
     required property Api api
 
+    signal loaded()
+    signal tabHideRequested()
+
     StackView {
         id: stack
 
@@ -20,7 +23,10 @@ Page {
             delegate: ProductItemDelegate {
                 product: modelData
                 width: ListView.view.width
-                onClicked: stack.push(detailsPage)
+                onClicked: function() {
+                    stack.push(detailsPage);
+                    page.tabHideRequested();
+                }
 
                 Component {
                     id: detailsPage
@@ -54,12 +60,14 @@ Page {
 
         onFinished: function () {
             if (response.success) {
-                var body = JSON.parse(response.body)
-                listView.model = body.data
+                var body = JSON.parse(response.body);
+                listView.model = body.data;
             } else {
-                console.log("HTTP " + response.httpStatusCode)
-                console.log(response.body)
+                console.log("HTTP " + response.httpStatusCode);
+                console.log(response.body);
             }
+
+            page.loaded();
         }
 
         RequestParameter {

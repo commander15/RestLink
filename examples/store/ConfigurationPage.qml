@@ -71,7 +71,7 @@ Page {
         onFinished: function() {
             if (response.success) {
                 page.configuration = JSON.parse(response.body);
-                console.log(page.configuration);
+                console.log(response.body);
             }
         }
     }

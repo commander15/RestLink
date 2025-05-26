@@ -33,7 +33,7 @@ Dialog {
     
     TextField {
         id: nameInput
-        text: dialog.category.name
+        text: (dialog.category ? dialog.category.name : "")
         placeholderText: "New name"
         anchors.fill: parent
     }
@@ -57,7 +57,7 @@ Dialog {
         
         RequestParameter {
             name: "id"
-            value: dialog.category.id
+            value: (dialog.category ? dialog.category.id : 0)
             type: RequestParameter.UrlPath
         }
     }

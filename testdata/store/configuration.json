@@ -1,10 +1,37 @@
 {
-    "resources": {
-        "database_versions": {
-            "table": "DatabaseVersions",
-            "primary_key": "id",
-            "fillable": [ "major", "minor", "patch" ]
+    "authentication": {
+        "identifier_field": "email",
+        "identifier_type": "email",
+        "password_field": "password",
+        "password_type": "hashed",
+        "resource": "users"
+    },
+    "endpoints": {
+        "/products-categories": {
+            "get_query": {
+                "array": true,
+                "object": false,
+                "parameters": {
+                    "page": 1
+                },
+                "statements": [
+                    "SELECT * FROM Products LIMIT 10 OFFSET ({{page}} - 1) * 10",
+                    "SELECT * FROM Categories LIMIT 10 OFFSET ({{page}} - 1) * 10"
+                ]
+            }
         },
+        "/statistics": {
+            "get_query": {
+                "array": true,
+                "object": false,
+                "parameters": {
+                    "page": 1
+                },
+                "statement": "SELECT Products.id as product_id, Products.name as product_name, SUM(SaleItems.quantity) AS sell_count FROM Products INNER JOIN SaleItems ON(SaleItems.product_id = Products.id) LIMIT 100 OFFSET ({{page}} - 1) * 100"
+            }
+        }
+    },
+    "resources": {
         "categories": {
             "fillable": [
                 "name",

@@ -1,10 +1,12 @@
 {
+  "authentication": {
+    "identifier_field": "email",
+    "identifier_type": "email",
+    "password_field": "password",
+    "password_type": "hashed",
+    "resource": "users"
+  },
   "resources": {
-    "database_versions": {
-        "table": "DatabaseVersions",
-        "primary_key": "id",
-        "fillable": [ "major", "minor", "patch" ]
-    },
     "users": {
         "table": "Users",
         "primary_key": "id",

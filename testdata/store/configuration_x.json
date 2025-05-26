@@ -1,12 +1,14 @@
 {
   "endpoints": {
     "/statistics": {
-      "query": "SELECT Products.id as product_id, Products.name as product_name, SUM(SaleItems.quantity) AS sell_count FROM Products INNER JOIN SaleItems ON(SaleItems.product_id = Products.id) LIMIT 100 OFFSET ({page} - 1) * 100",
-      "parameters": {
-        "page": 1
-      },
-      "object": false,
-      "array": true
+        "get_query": {
+          "query": "SELECT Products.id as product_id, Products.name as product_name, SUM(SaleItems.quantity) AS sell_count FROM Products INNER JOIN SaleItems ON(SaleItems.product_id = Products.id) LIMIT 100 OFFSET ({{page}} - 1) * 100",
+          "parameters": {
+            "page": 1
+          },
+          "object": false,
+          "array": true
+        }
     }
   },
   "resources": {

@@ -103,7 +103,7 @@ void generateConfigurationFile()
         configuration = mergeObjects(configuration, object);
     };
 
-    for (int i(0); i <= 4; ++i)
+    for (int i(0); i <= 5; ++i)
         loadConfig(i);
 
     SqlTest::s_configurations.insert(-1, configuration);
