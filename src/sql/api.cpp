@@ -47,7 +47,8 @@ Api::Api(const QUrl &url)
 
 Api::~Api()
 {
-    QSqlDatabase::removeDatabase(m_dbConnectionName);
+    if (!s_shutingDown && QSqlDatabase::contains(m_dbConnectionName))
+        QSqlDatabase::removeDatabase(m_dbConnectionName);
     s_apis.remove(m_url);
 }
 
@@ -289,6 +290,7 @@ void Api::purgeApis(int atLeast, bool remove)
 
 void Api::cleanupApis()
 {
+    s_shutingDown = true;
     const QList<QUrl> urls = s_apis.keys();
     for (const QUrl &url : urls)
         delete s_apis.take(url);
@@ -307,6 +309,7 @@ void Api::unrefModel(const Model *model)
 }
 
 QHash<QUrl, Api *> Api::s_apis;
+bool Api::s_shutingDown(false);
 
 } // namespace Sql
 } // namespace RestLink

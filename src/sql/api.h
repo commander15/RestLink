@@ -68,6 +68,7 @@ private:
     QAtomicInt m_activeModels;
 
     static QHash<QUrl, Api *> s_apis;
+    static bool s_shutingDown;
 
     friend class Model;
 };
