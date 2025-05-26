@@ -2,6 +2,19 @@
 
 #include <meta/resourceinfo.h>
 
+#include <QtCore/qfile.h>
+
+TEST_F(MetadataTest, configurationSavingTest)
+{
+    const QJsonDocument config(api->configuration());
+
+    QFile file(QStringLiteral(DATA_DIR) + "/store/configuration_x.json");
+    ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+    ASSERT_GE(file.write(config.toJson(QJsonDocument::Indented)), 1);
+    ASSERT_TRUE(file.flush());
+    file.close();
+}
+
 TEST_F(MetadataTest, resourceInfoAreValid)
 {
     const ResourceInfo resource = model.resourceInfo();
