@@ -61,7 +61,7 @@ Api *SqlTest::createApi(int configIndex)
         }
     }
 
-    QJsonObject configuration = mergeObjects(s_configurations.value(0), s_configurations.value(configIndex));
+    QJsonObject configuration = mergeObjects(s_configurations.value(1), s_configurations.value(configIndex));
     api->configure(configuration);
     return api;
 }

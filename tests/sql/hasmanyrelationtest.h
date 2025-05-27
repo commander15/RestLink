@@ -5,8 +5,8 @@
 
 class HasManyRelationTest : public RelationTest
 {
-public:
-    HasManyRelationTest() : RelationTest("categories", 2) {}
+protected:
+    HasManyRelationTest() : RelationTest("categories", 3) {}
 };
 
 #endif // HASMANYRELATIONTEST_H

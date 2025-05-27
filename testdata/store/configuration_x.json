@@ -7,6 +7,16 @@
             "resource": "products"
         },
         "/products-categories": {
+            "get_query": {
+                "object": false,
+                "parameters": {
+                    "page": 1
+                },
+                "statements": [
+                    "SELECT * FROM Products LIMIT 10 OFFSET ({{page}} - 1) * 10",
+                    "SELECT * FROM Categories LIMIT 10 OFFSET ({{page}} - 1) * 10"
+                ]
+            }
         },
         "/sale_items": {
             "resource": "sale_items"
@@ -15,6 +25,15 @@
             "resource": "sales"
         },
         "/statistics": {
+            "get_query": {
+                "object": false,
+                "parameters": {
+                    "page": 1
+                },
+                "statements": [
+                    "SELECT Products.id as product_id, Products.name as product_name, SUM(SaleItems.quantity) AS sell_count FROM Products INNER JOIN SaleItems ON(SaleItems.product_id = Products.id) LIMIT 100 OFFSET ({{page}} - 1) * 100"
+                ]
+            }
         },
         "/stocks": {
             "resource": "stocks"

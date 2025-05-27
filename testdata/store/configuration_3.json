@@ -1,3 +1,73 @@
 {
-    "resources": {}
+  "resources": {
+    "users": {
+        "relations": {
+            "groups": {
+                "table": "UserGroups",
+                "pivot": "UserGroupMembers",
+                "local_key": "user_id",
+                "foreign_key": "group_id",
+                "type": "BelongsToMany"
+            },
+            "sales": {
+                "table": "Sales",
+                "local_key": "id",
+                "foreign_key": "user_id",
+                "type": "HasMany"
+            }
+        }
+    },
+    "user_roles": {
+        "relations": {
+            "users": {
+                "table": "Users",
+                "local_key": "id",
+                "foreign_key": "role_id",
+                "type": "HasMany"
+            }
+        }
+    },
+    "products": {
+        "relations": {
+            "sales": {
+                "table": "Sales",
+                "pivot": "SaleItems",
+                "local_key": "product_id",
+                "foreign_key": "sale_id",
+                "type": "BelongsToMany"
+            }
+        }
+    },
+    "categories": {
+        "relations": {
+            "products": {
+                "table": "Products",
+                "local_key": "id",
+                "foreign_key": "category_id",
+                "type": "HasMany"
+            }
+        }
+    },
+    "sales": {
+      "relations": {
+        "items": {
+            "table": "SaleItems",
+            "local_key": "id",
+            "foreign_key": "sale_id",
+            "type": "HasMany"
+        }
+      }
+    },
+    "sale_items": {
+      "relations": {
+        "sale": {
+            "table": "Sales",
+            "pivot": "SaleItems",
+            "local_key": "item_id",
+            "foreign_key": "sale_id",
+            "type": "BelongsToMany"
+        }
+      }
+    }
+  }
 }

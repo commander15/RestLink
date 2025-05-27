@@ -6,7 +6,7 @@
 class HasOneRelationTest : public RelationTest
 {
 protected:
-    HasOneRelationTest() : RelationTest("products", 1) {}
+    HasOneRelationTest() : RelationTest("products", 2) {}
 };
 
 #endif // HASONERELATIONTEST_H

@@ -10,7 +10,7 @@ using namespace RestLink::Sql;
 class ModelTest : public SqlTest
 {
 protected:
-    ModelTest() : SqlTest(0) {}
+    ModelTest() : SqlTest(1) {}
 
     Model model = Model("products", api);
 };

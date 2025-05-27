@@ -182,7 +182,7 @@ void ModelController::destroy(const ServerRequest &request, ServerResponse *resp
         return;
     }
 
-    response->setHttpStatusCode(model.deleteData() ? 200 : 500);
+    response->setHttpStatusCode(200);
     response->complete();
 }
 

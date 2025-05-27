@@ -1,4 +1,4 @@
-#include "querytest.h"
+#include "queryrunnertest.h"
 
 #include <utils/queryrunner.h>
 
@@ -7,7 +7,7 @@
 using namespace RestLink;
 using namespace RestLink::Sql;
 
-TEST_F(QueryRunnerTest, queryRunnerReturnDataObject)
+TEST_F(QueryRunnerTest, ReturnsDataObjectWhenArrayIsFalse)
 {
     Query query;
     query.statement = R"(SELECT * FROM Products WHERE name="Apple")";
@@ -17,20 +17,23 @@ TEST_F(QueryRunnerTest, queryRunnerReturnDataObject)
 
     const QJsonObject data = object.value("data").toObject();
 
+    const int id = data.value("id").toInt();
+    EXPECT_EQ(id, 1);
+
     const QString name = data.value("name").toString();
-    ASSERT_EQ(name.toStdString(), "Apple");
+    EXPECT_EQ(name.toStdString(), "Apple");
 
     const QString description = data.value("description").toString();
-    ASSERT_EQ(description.toStdString(), "Fresh red apple");
+    EXPECT_EQ(description.toStdString(), "Fresh red apple");
 
     const double price = data.value("price").toDouble();
-    ASSERT_EQ(price, 0.5);
+    EXPECT_EQ(price, 0.5);
 
     const QString barcode = data.value("barcode").toString();
-    ASSERT_EQ(barcode.toStdString(), "1234567890123");
+    EXPECT_EQ(barcode.toStdString(), "1234567890123");
 }
 
-TEST_F(QueryRunnerTest, queryRunnerReturnDataArray)
+TEST_F(QueryRunnerTest, ReturnsDataArrayWhenArrayIsTrue)
 {
     Query query;
     query.statement = R"(SELECT * FROM Products WHERE name="Apple")";
@@ -41,15 +44,18 @@ TEST_F(QueryRunnerTest, queryRunnerReturnDataArray)
     const QJsonArray dataArray = object.value("data").toArray();
     const QJsonObject data = dataArray.first().toObject();
 
+    const int id = data.value("id").toInt();
+    EXPECT_EQ(id, 1);
+
     const QString name = data.value("name").toString();
-    ASSERT_EQ(name.toStdString(), "Apple");
+    EXPECT_EQ(name.toStdString(), "Apple");
 
     const QString description = data.value("description").toString();
-    ASSERT_EQ(description.toStdString(), "Fresh red apple");
+    EXPECT_EQ(description.toStdString(), "Fresh red apple");
 
     const double price = data.value("price").toDouble();
-    ASSERT_EQ(price, 0.5);
+    EXPECT_EQ(price, 0.5);
 
     const QString barcode = data.value("barcode").toString();
-    ASSERT_EQ(barcode.toStdString(), "1234567890123");
+    EXPECT_EQ(barcode.toStdString(), "1234567890123");
 }

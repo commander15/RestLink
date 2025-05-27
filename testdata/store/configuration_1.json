@@ -1,60 +1,59 @@
 {
+  "authentication": {
+    "identifier_field": "email",
+    "identifier_type": "email",
+    "password_field": "password",
+    "password_type": "hashed",
+    "resource": "users"
+  },
   "resources": {
     "users": {
-        "relations": {
-            "role": {
-                "table": "UserRoles",
-                "local_key": "role_id",
-                "foreign_key": "id",
-                "type": "BelongsToOne"
-            }
-        }
+        "table": "Users",
+        "primary_key": "id",
+        "local_key": "user_id",
+        "fillable": [ "name", "email", "password" ]
+    },
+    "user_roles": {
+        "table": "UserRoles",
+        "primary_key": "id",
+        "local_key": "role_id",
+        "fillable": [ "name" ]
+    },
+    "user_groups": {
+        "table": "UserGroups",
+        "primary_key": "id",
+        "local_key": "group_id",
+        "fillable": [ "name" ]
     },
     "products": {
-      "relations": {
-        "category": {
-            "table": "Categories",
-            "local_key": "category_id",
-            "foreign_key": "id",
-            "type": "BelongsToOne"
-        },
-        "stock": {
-            "table": "Stocks",
-            "local_key": "id",
-            "foreign_key": "product_id",
-            "type": "HasOne"
-        }
-      }
+      "table": "Products",
+      "primary_key": "id",
+      "local_key": "product_id",
+      "fillable": [ "name", "description", "price", "barcode" ]
+    },
+    "categories": {
+        "table": "Categories",
+        "primary_key": "id",
+        "local_key": "category_id",
+        "fillable": [ "name", "description" ]
     },
     "stocks": {
-      "relations": {
-        "product": {
-            "table": "Products",
-            "local_key": "id",
-            "foreign_key": "product_id",
-            "type": "BelongsToOne"
-        }
-      }
+      "table": "Stocks",
+      "primary_key": "id",
+      "local_key": "stock_id",
+      "fillable": [ "quantity" ]
     },
     "sales": {
-        "relations": {
-            "seller": {
-                "table": "Users",
-                "local_key": "seller_id",
-                "foreign_key": "id",
-                "type": "BelongsToOne"
-            }
-        }
+      "table": "Sales",
+      "primary_key": "id",
+      "local_key": "sale_id",
+      "fillable": [ "number", "amount" ]
     },
     "sale_items": {
-        "ralations": {
-            "product": {
-                "table": "Products",
-                "local_key": "product_id",
-                "foreign_key": "id",
-                "type": "BelongsToOne"
-            }
-        }
+      "table": "SaleItems",
+      "primary_key": "id",
+      "local_key": "item_id",
+      "fillable": [ "quantity" ]
     }
   }
 }

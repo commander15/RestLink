@@ -1,27 +1,3 @@
 {
-    "resources": {
-        "products": {
-            "relations": {
-                "category": {
-                    "load": {
-                        "auto": true
-                    }
-                },
-                "stock": {
-                    "load": {
-                        "auto": true
-                    }
-                }
-            }
-        },
-        "sale_items": {
-            "relations": {
-                "product": {
-                    "load": {
-                        "auto": true
-                    }
-                }
-            }
-        }
-    }
+    "resources": {}
 }

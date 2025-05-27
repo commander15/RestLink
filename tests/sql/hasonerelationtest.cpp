@@ -1,24 +1,6 @@
 #include "hasonerelationtest.h"
 
-TEST_F(HasOneRelationTest, getTest)
-{
-    ASSERT_TRUE(root.load({ "stock" }));
-    const QJsonObject product = root.jsonObject();
-
-    const QJsonObject stock = product.value("stock").toObject();
-
-    const int id = stock.value("id").toInt();
-    ASSERT_EQ(id, 1);
-
-    const int quantity = stock.value("quantity").toInt();
-    ASSERT_EQ(quantity, 100);
-
-    ASSERT_EQ(log.count(), 2);
-    // ASSERT_EQ(log.at(0).toStdString(), R"(SELECT * FROM "Products" WHERE "id" = 1 LIMIT 1)");
-    ASSERT_EQ(log.at(1).toStdString(), R"(SELECT * FROM "Stocks" WHERE "product_id" = 1 LIMIT 1)");
-}
-
-TEST_F(HasOneRelationTest, insertTest)
+TEST_F(HasOneRelationTest, SuccessfulCreate)
 {
     QJsonObject product;
     product.insert("name", "Paw paw");
@@ -47,7 +29,25 @@ TEST_F(HasOneRelationTest, insertTest)
     ASSERT_EQ(log.at(2).toStdString(), stockQuery.arg(creationTimestamp("stock")).toStdString());
 }
 
-TEST_F(HasOneRelationTest, updateTest)
+TEST_F(HasOneRelationTest, SuccessfulRead)
+{
+    ASSERT_TRUE(root.load({ "stock" }));
+    const QJsonObject product = root.jsonObject();
+
+    const QJsonObject stock = product.value("stock").toObject();
+
+    const int id = stock.value("id").toInt();
+    ASSERT_EQ(id, 1);
+
+    const int quantity = stock.value("quantity").toInt();
+    ASSERT_EQ(quantity, 100);
+
+    ASSERT_EQ(log.count(), 2);
+    // ASSERT_EQ(log.at(0).toStdString(), R"(SELECT * FROM "Products" WHERE "id" = 1 LIMIT 1)");
+    ASSERT_EQ(log.at(1).toStdString(), R"(SELECT * FROM "Stocks" WHERE "product_id" = 1 LIMIT 1)");
+}
+
+TEST_F(HasOneRelationTest, SuccessfulUpdate)
 {
     ASSERT_TRUE(root.load({ "stock" }));
     QJsonObject product = root.jsonObject();
@@ -82,7 +82,7 @@ TEST_F(HasOneRelationTest, updateTest)
     ASSERT_EQ(quantity, 50);
 }
 
-TEST_F(HasOneRelationTest, deleteTest)
+TEST_F(HasOneRelationTest, SuccessfulDelete)
 {
     ASSERT_TRUE(root.load({ "stock" }));
     ASSERT_TRUE(root.deleteData());

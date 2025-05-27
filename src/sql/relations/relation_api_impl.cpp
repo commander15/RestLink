@@ -16,12 +16,7 @@ bool HasOneImpl::get()
 
     m_relatedModel = createModel();
 
-    if (!m_relatedModel.getByFilters(filters)) {
-        const QStringList relations = relation->loadableRelations();
-        return (!relations.isEmpty() ? m_relatedModel.load(relations) : true);
-    }
-
-    return SingleRelationImpl::get();
+    return m_relatedModel.getByFilters(filters);
 }
 
 bool HasOneImpl::insert()

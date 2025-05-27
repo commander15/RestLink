@@ -1,14 +1,17 @@
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
 add_executable(RestLinkSqlTest
     common/main.cpp
     common/sqllog.h common/sqllog.cpp
     common/sqltest.h common/sqltest.cpp
     common/relationtest.h common/relationtest.cpp
-    querytest.h querytest.cpp
+    queryrunnertest.h queryrunnertest.cpp
     metadatatest.h metadatatest.cpp
     modeltest.h modeltest.cpp
     hasonerelationtest.h hasonerelationtest.cpp
     belongstoonerelationtest.h belongstoonerelationtest.cpp
     hasmanyrelationtest.h hasmanyrelationtest.cpp
+    belongstomanytest.h belongstomanytest.cpp
 )
 
 set(DATABASE_DIR  "${PROJECT_BINARY_DIR}/testdata/store")
