@@ -22,8 +22,8 @@ public:
 
     QString name() const;
 
-    bool hasQuery() const;
-    SqlQueryInfo query() const;
+    bool hasGetQuery() const;
+    SqlQueryInfo getQuery() const;
 
     bool hasResource() const;
     ResourceInfo resource() const;

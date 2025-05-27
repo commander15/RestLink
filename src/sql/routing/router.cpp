@@ -73,24 +73,24 @@ void Router::processStandardRequest(const ServerRequest &request, ServerResponse
         return;
     }
 
-    if (request.endpoint() == "/db-tables") {
-        processDatabaseTablesRequest(request, response, api);
-        return;
-    }
-
     if (request.endpoint() == "/query") {
         processQueryRequest(request, response, api);
         return;
     }
 
+    if (request.endpoint() == "/db-tables") {
+        processDatabaseTablesRequest(request, response, api);
+        return;
+    }
+
     const EndpointInfo endpoint = api->endpointInfo(request.endpoint());
-    if (endpoint.hasQuery()) {
+    if (request.method() == AbstractRequestHandler::GetMethod && endpoint.hasGetQuery()) {
         QVariantHash parameters;
         const QList<QueryParameter> queryParameters = request.queryParameters();
         for (const QueryParameter &parameter : queryParameters)
             parameters.insert(parameter.name(), parameter.value());
 
-        const SqlQueryInfo query = endpoint.query();
+        const SqlQueryInfo query = endpoint.getQuery();
         const QStringList queries = query.allFormated(parameters);
 
         ServerRequest queryRequest(AbstractRequestHandler::PostMethod, request, queries.join(";\n"));
