@@ -276,5 +276,32 @@ void ResourceInfo::save(QJsonObject *object) const
         object->insert("relations", relations);
 }
 
+ResourceInfo ResourceInfo::pivotResourceInfo(const QString &name, const QString table, const ResourceInfo &main, const ResourceInfo &foreign, Api *api)
+{
+    QJsonObject object;
+    object.insert("table", table);
+    object.insert("primary_key", "id");
+
+    QJsonObject relations;
+
+    QJsonObject first;
+    first.insert("table", main.table());
+    first.insert("local_key", main.localKey());
+    first.insert("foreign_key", main.primaryKey());
+    relations.insert("first", first);
+
+    QJsonObject second;
+    second.insert("table", foreign.table());
+    second.insert("local_key", foreign.localKey());
+    second.insert("foreign_key", foreign.primaryKey());
+    relations.insert("second", second);
+
+    object.insert("relations", relations);
+
+    ResourceInfo resource;
+    resource.load(name, object, api);
+    return resource;
+}
+
 } // namespace Sql
 } // namespace RestLink

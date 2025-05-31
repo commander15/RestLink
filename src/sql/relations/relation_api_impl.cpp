@@ -183,12 +183,12 @@ bool BelongsToManyImpl::save()
 
 bool BelongsToManyImpl::insert()
 {
-    return false;
+    return save();
 }
 
 bool BelongsToManyImpl::update()
 {
-    return false;
+    return save();
 }
 
 bool BelongsToManyImpl::deleteData()

@@ -188,5 +188,35 @@ void MultipleThroughRelationImpl::setJsonValue(const QJsonValue &value)
     }
 }
 
+QJsonValue PivotBasedMultipleRelationImpl::jsonValue() const
+{
+    QJsonArray data;
+
+    for (int i(0); i < m_relatedModels.size(); ++i) {
+        QJsonObject object = m_relatedModels.at(i).jsonObject();
+        if (i < m_pivots.size())
+            object.insert("pivot", m_pivots.at(i).jsonObject());
+        data.append(object);
+    }
+
+    return data;
+}
+
+void PivotBasedMultipleRelationImpl::setJsonValue(const QJsonValue &value)
+{
+    const QJsonArray data = value.toArray();
+
+    for (int i(0); i < data.size(); ++i) {
+        const QJsonObject object = data.at(i).toObject();
+
+    }
+}
+
+ResourceInfo PivotBasedMultipleRelationImpl::pivotResource() const
+{
+    const QString table = info.pivot();
+    return ResourceInfo::pivotResourceInfo("pivot", table, rootResource, foreignResource, root->api());
+}
+
 } // namespace Sql
 } // namespace RestLink

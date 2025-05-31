@@ -17,6 +17,12 @@ TEST_F(BelongsToManyTest, SuccessfulCreate)
     EXPECT_TRUE(root.insert());
 
 
+    ASSERT_GE(log.count(), 2);
+
+    QString query = R"(INSERT INTO "Products" ("name", "description", "price", "barcode", "category_id", "created_at") VALUES ('%1', '%2', 500.5, '%3', '%4'))";
+    EXPECT_EQ(log.at(1).toStdString(), query.arg("Tomato", "red thing", "877565456654", root.field("created_at").toString()).toStdString());
+
+    ASSERT_EQ(log.count(), 2);
 }
 
 TEST_F(BelongsToManyTest, SuccessfulRead)

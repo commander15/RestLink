@@ -134,3 +134,30 @@ TEST_F(MetadataTest, RetrievesValidRelationInfo)
     EXPECT_EQ(relation.nestLoadable(), false);
     EXPECT_EQ(relation.type(), Relation::BelongsToMany);
 }
+
+TEST_F(MetadataTest, RetrievesValidPivotResource)
+{
+    const ResourceInfo main = api->resourceInfo("sales");
+    const ResourceInfo foreign = api->resourceInfo("items");
+    const ResourceInfo info = ResourceInfo::pivotResourceInfo("pivot", "SaleItems", main, foreign, api);
+
+    EXPECT_TRUE(info.isValid());
+    EXPECT_EQ(info.name().toStdString(), "pivot");
+    EXPECT_EQ(info.table().toStdString(), "SaleItems");
+
+    const QStringList hiddens = info.hiddenFields();
+    ASSERT_GE(hiddens.count(), 2);
+    EXPECT_EQ(hiddens.at(0).toStdString(), "sale_id");
+    EXPECT_EQ(hiddens.at(1).toStdString(), "item_id");
+    EXPECT_EQ(hiddens.count(), 2);
+
+    const QStringList fillable = info.fillableFields();
+    ASSERT_GE(fillable.count(), 1);
+    EXPECT_EQ(fillable.count(), 1);
+
+    const QStringList fields = info.fieldNames();
+    ASSERT_GE(fields.count(), 5);
+    EXPECT_EQ(fields.at(0).toStdString(), "id");
+    EXPECT_EQ(fields.at(1).toStdString(), "sale_id");
+    EXPECT_EQ(fields.count(), 5);
+}

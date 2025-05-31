@@ -62,6 +62,8 @@ public:
     void load(const QString &name, const QJsonObject &object, Api *api);
     void save(QJsonObject *object) const override;
 
+    static ResourceInfo pivotResourceInfo(const QString &name, const QString table, const ResourceInfo &main, const ResourceInfo &foreign, Api *api);
+
 private:
     QSharedDataPointer<ResourceInfoData> d;
 };
