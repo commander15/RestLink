@@ -91,11 +91,7 @@ qt_policy(SET QTP0002 NEW)
 qt_policy(SET QTP0003 NEW)
 
 # Other dependencies
-find_package(ZLIB)
-
-if (RESTLINK_SUPPORT_EXCEL)
-    find_package(QXlsxQt6 REQUIRED)
-endif()
+include(cmake/Dependencies.cmake)
 
 include(cmake/Utils.cmake)
 
