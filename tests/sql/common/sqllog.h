@@ -13,6 +13,7 @@ public:
     static void enableLogging();
     static void disableLogging();
     static void log(const QString &statement);
+    static void logError(const QString &str);
 
 private:
     static bool s_enabled;

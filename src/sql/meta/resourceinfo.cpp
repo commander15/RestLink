@@ -1,4 +1,5 @@
 #include "resourceinfo.h"
+#include "utils/databaseutils.h"
 
 #include <api.h>
 #include <meta/relationinfo.h>
@@ -99,7 +100,7 @@ bool ResourceInfo::hasUpdateTimestamp() const
     return !d->updatedAtField.isEmpty();
 }
 
-QString ResourceInfo::updateTimestamp() const
+QString ResourceInfo::updateTimestampField() const
 {
     return d->updatedAtField;
 }
@@ -175,30 +176,16 @@ void ResourceInfo::load(const QString &name, const QJsonObject &object, Api *api
     d->name = name;
 
     const QString table = object.value("table").toString();
-    const QSqlIndex primaryIndex = api->database().primaryIndex(table);
     const QSqlRecord record = api->database().record(table);
 
-    int recordFieldCount = record.count();
     d->record = record;
 
-    auto findPrimaryKey = [&primaryIndex](const QJsonObject &) -> QString {
-        if (primaryIndex.count() == 1)
-            return primaryIndex.fieldName(0);
-        return "id";
+    auto findPrimaryKey = [&table, &api](const QJsonObject &) -> QString {
+        return DatabaseUtils::primaryKeyOn(table, api);
     };
 
-    auto generateLocalKey = [&table, &primaryIndex](const QJsonObject &) -> QString {
-        QString tableName = table;
-        if (tableName.endsWith('s'))
-            tableName.removeLast();
-
-        QString primary;
-        if (primaryIndex.count() == 1)
-            primary = primaryIndex.fieldName(0);
-        else
-            primary = "id";
-
-        return tableName.toLower() + '_' + primary;
+    auto generateLocalKey = [&table, &api](const QJsonObject &) -> QString {
+        return DatabaseUtils::foreignKeyFor(table, api);
     };
 
     auto generateCreationTimestamp = [&record](const QJsonObject &) {
@@ -228,14 +215,8 @@ void ResourceInfo::load(const QString &name, const QJsonObject &object, Api *api
         return fields;
     };
 
-    auto generateHiddenFields = [&record](const QJsonObject &) -> QStringList {
-        QStringList fields;
-        for (int i(0); i < record.count(); ++i) {
-            const QString fieldName = record.fieldName(i);
-            if (fieldName.endsWith("_id"))
-                fields.append(fieldName);
-        }
-        return fields;
+    auto generateHiddenFields = [&table, &api](const QJsonObject &) -> QStringList {
+        return DatabaseUtils::foreignKeysOn(table, api);
     };
 
     beginParsing(object);
@@ -244,10 +225,14 @@ void ResourceInfo::load(const QString &name, const QJsonObject &object, Api *api
     attribute("primary_key", Callback<QString>(findPrimaryKey), &d->primaryKey);
     attribute("local_key", Callback<QString>(generateLocalKey), &d->localKey);
 
-    const QJsonObject timestamps = object.value("timestamps").toObject();
-    beginParsing(timestamps);
+    attribute("fillable", Callback<QStringList>(generateFillable), &d->fillableProperties);
+    attribute("hidden", Callback<QStringList>(generateHiddenFields), &d->hiddenFields);
+
+    beginParsing(object.value("timestamps").toObject());
     attribute("created_at", Callback<QString>(generateCreationTimestamp), &d->createdAtField);
     attribute("updated_at", Callback<QString>(generateUpdateTimestamp), &d->updatedAtField);
+    endParsing();
+
     endParsing();
 
     const QJsonObject relations = object.value("relations").toObject();
@@ -258,12 +243,6 @@ void ResourceInfo::load(const QString &name, const QJsonObject &object, Api *api
         if (true)
             d->relations.insert(name, info);
     }
-
-    attribute("fillable", Callback<QStringList>(generateFillable), &d->fillableProperties);
-    attribute("hidden", Callback<QStringList>(generateHiddenFields), &d->hiddenFields);
-    attribute("load_relations", false, &d->loadRelations);
-
-    endParsing();
 }
 
 void ResourceInfo::save(QJsonObject *object) const
@@ -295,6 +274,33 @@ void ResourceInfo::save(QJsonObject *object) const
 
     if (!relations.isEmpty())
         object->insert("relations", relations);
+}
+
+ResourceInfo ResourceInfo::pivotResourceInfo(const QString &name, const QString table, const ResourceInfo &main, const ResourceInfo &foreign, Api *api)
+{
+    QJsonObject object;
+    object.insert("table", table);
+    object.insert("primary_key", "id");
+
+    QJsonObject relations;
+
+    QJsonObject first;
+    first.insert("table", main.table());
+    first.insert("local_key", main.localKey());
+    first.insert("foreign_key", main.primaryKey());
+    relations.insert("first", first);
+
+    QJsonObject second;
+    second.insert("table", foreign.table());
+    second.insert("local_key", foreign.localKey());
+    second.insert("foreign_key", foreign.primaryKey());
+    relations.insert("second", second);
+
+    object.insert("relations", relations);
+
+    ResourceInfo resource;
+    resource.load(name, object, api);
+    return resource;
 }
 
 } // namespace Sql

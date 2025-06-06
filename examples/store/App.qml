@@ -11,27 +11,17 @@ ApplicationWindow {
 
     width: 400
     height: 800
-    visible:  true
+    visible: true
 
-    header: ToolBar {
-        height: 64
-
-        Label {
-            text: "Store"
-
-            font.pointSize: 25
-            font.bold: true
-
-            verticalAlignment: Text.AlignVCenter
-
-            anchors.fill: parent
-            anchors.leftMargin: 12
-        }
+    header: AppBar {
+        id: appBar
+        title: "Store"
     }
 
     footer: TabBar {
-        currentIndex: swipe.currentIndex
-        onCurrentIndexChanged: swipe.currentIndex = currentIndex
+        id: tabBar
+
+        height: 0
 
         TabButton {
             text: "Products"
@@ -48,31 +38,75 @@ ApplicationWindow {
             display: TabButton.TextUnderIcon
             height: 64
         }
+
+        PropertyAnimation on height {
+            id: showTabBarAnimation
+            to: 64
+            duration: 300
+            running: false
+        }
+
+        PropertyAnimation on height {
+            id: hideTabBarAnimation
+            to: 0
+            duration: 300
+            running: false
+        }
     }
 
-    SwipeView {
-        id: swipe
+    Component {
+        id: ui
+
+        SwipeView {
+            id: swipe
+
+            Component.onCompleted: function () {
+                tabBar.currentIndex = currentIndex
+            }
+
+            ProductListPage {
+                api: store
+                onLoaded: showTabBarAnimation.start()
+                onTabHideRequested: hideTabBarAnimation.start()
+            }
+
+            CategoryListPage {
+                api: store
+            }
+
+            ConfigurationPage {
+                api: store
+            }
+
+            Connections {
+                target: tabBar
+
+                function onCurrentIndexChanged() {
+                    swipe.currentIndex = tabBar.currentIndex
+                }
+            }
+        }
+    }
+
+    StackView {
+        id: stack
+
+        BusyIndicator {
+            running: parent.depth === 0
+            width: 100
+            height: 100
+            anchors.centerIn: parent
+        }
 
         anchors.fill: parent
-
-        ProductListPage {
-            api: store
-        }
-
-        CategoryListPage {
-            api: store
-        }
-
-        ConfigurationPage {
-            api: store
-        }
     }
 
     StoreApi {
         id: store
+        onInitialized: stack.push(ui)
     }
 
     Settings {
-        property alias firstRun: store.firstRun
+        //property alias firstRun: store.firstRun
     }
 }

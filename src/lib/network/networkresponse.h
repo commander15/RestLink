@@ -23,9 +23,9 @@ public:
     int httpStatusCode() const override;
     QString httpReasonPhrase() const override;
 
-    bool hasHeader(const QByteArray &name) const override;
-    QByteArray header(const QByteArray &name) const override;
-    QByteArrayList headerList() const override;
+    bool hasHeader(const QString &name) const override;
+    QString header(const QString &name) const override;
+    QStringList headerList() const override;
 
     QByteArray readBody() override;
 

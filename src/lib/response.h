@@ -22,8 +22,8 @@ class NetworkResponsePrivate;
 class RESTLINK_EXPORT Response : public ResponseBase
 {
     Q_OBJECT
-    Q_PROPERTY(QString endpoint READ endpoint CONSTANT FINAL)
     Q_PROPERTY(int method READ method CONSTANT FINAL)
+    Q_PROPERTY(QString endpoint READ endpoint CONSTANT FINAL)
     Q_PROPERTY(QUrl url READ url CONSTANT FINAL)
     Q_PROPERTY(bool running READ isRunning NOTIFY finished FINAL)
     Q_PROPERTY(bool finished READ isFinished NOTIFY finished FINAL)
@@ -31,7 +31,7 @@ class RESTLINK_EXPORT Response : public ResponseBase
     Q_PROPERTY(bool hasHttpStatusCode READ hasHttpStatusCode NOTIFY finished FINAL)
     Q_PROPERTY(int httpStatusCode READ httpStatusCode NOTIFY finished FINAL)
     Q_PROPERTY(QString httpReasonPhrase READ httpReasonPhrase NOTIFY finished FINAL)
-    Q_PROPERTY(QByteArrayList headerList READ headerList NOTIFY finished FINAL)
+    Q_PROPERTY(QStringList headerList READ headerList NOTIFY finished FINAL)
     Q_PROPERTY(bool hasNetworkError READ hasNetworkError NOTIFY finished FINAL)
     Q_PROPERTY(int networkError READ networkError NOTIFY networkErrorOccured FINAL)
     Q_PROPERTY(QString networkErrorString READ networkErrorString NOTIFY networkErrorOccured FINAL)
@@ -40,14 +40,11 @@ class RESTLINK_EXPORT Response : public ResponseBase
 public:
     virtual ~Response();
 
-    QString endpoint() const;
-    Request request() const;
-
     virtual AbstractRequestHandler::Method method() const = 0;
-    Api *api() const;
-
+    QString endpoint() const;
     QUrl url() const;
-    virtual QNetworkRequest networkRequest() const = 0;
+    Request request() const;
+    Api *api() const;
 
     inline bool isRunning() const
     { return !isFinished(); }
@@ -61,14 +58,15 @@ public:
     virtual int httpStatusCode() const = 0;
     virtual QString httpReasonPhrase() const;
 
-    virtual bool hasHeader(const QByteArray &name) const;
-    Q_INVOKABLE virtual QByteArray header(const QByteArray &name) const = 0;
-    virtual QByteArrayList headerList() const = 0;
+    virtual bool hasHeader(const QString &name) const;
+    Q_INVOKABLE virtual QString header(const QString &name) const = 0;
+    virtual QStringList headerList() const = 0;
 
     inline bool hasNetworkError() const { return networkError() != 0; }
     virtual int networkError() const;
     virtual QString networkErrorString() const;
 
+    virtual QNetworkRequest networkRequest() const = 0;
     virtual QNetworkReply *networkReply() const = 0;
 
 protected:

@@ -39,7 +39,7 @@ public:
     QString creationTimestampField() const;
 
     bool hasUpdateTimestamp() const;
-    QString updateTimestamp() const;
+    QString updateTimestampField() const;
 
     QStringList fillableFields() const;
 
@@ -60,7 +60,9 @@ public:
     bool isValid() const override;
 
     void load(const QString &name, const QJsonObject &object, Api *api);
-    void save(QJsonObject *object) const;
+    void save(QJsonObject *object) const override;
+
+    static ResourceInfo pivotResourceInfo(const QString &name, const QString table, const ResourceInfo &main, const ResourceInfo &foreign, Api *api);
 
 private:
     QSharedDataPointer<ResourceInfoData> d;

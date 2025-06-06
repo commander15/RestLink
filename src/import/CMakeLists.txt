@@ -6,32 +6,31 @@ qt_add_qml_module(RestLinkQml
     QML_FILES
         ApiParameter.qml
         RequestParameter.qml
-        SOURCES core/utils.h core/utils.cpp
 )
 
 target_include_directories(RestLinkQml PRIVATE core ..)
 
 set(CORE_SOURCES
+    core/types.h core/types.cpp
     core/api.h core/api.cpp
     core/request.h core/request.cpp
     core/requestparameter.h core/requestparameter.cpp
-    core/types.h core/types.cpp
+    core/utils.h core/utils.cpp
 )
 
-set(LIB_HEADERS
-    ../lib/api.h ../lib/apibase.h
-    ../lib/response.h ../lib/responsebase.h
-    ../lib/network/networkmanager.h
-    ../lib/network/cookiejar.h
-    ../lib/network/cache.h
-)
-
-source_group(lib FILES ${LIB_HEADERS})
-
-target_sources(RestLinkQml PRIVATE ${CORE_SOURCES} ${LIB_HEADERS})
+target_sources(RestLinkQml PRIVATE ${CORE_SOURCES})
 
 target_link_libraries(RestLinkQml PUBLIC Qt::Qml RestLink)
 
+install(TARGETS RestLinkQml
+    ARCHIVE DESTINATION qml/RestLink
+    LIBRARY DESTINATION qml/RestLink
+    RUNTIME DESTINATION qml/RestLink
+)
+
+install(FILES RestLinkQml.cmake DESTINATION lib/cmake/RestLink)
+
+# There is a bug with qt_query_qml_module in WASM
 if (EMSCRIPTEN)
     return()
 endif()
@@ -44,11 +43,3 @@ qt_query_qml_module(RestLinkQml
 )
 
 install(FILES ${DIR} ${FILES} ${TYPES} DESTINATION qml/RestLink)
-
-install(TARGETS ${TARGET}
-    ARCHIVE DESTINATION qml/RestLink
-    LIBRARY DESTINATION qml/RestLink
-    RUNTIME DESTINATION qml/RestLink
-)
-
-install(FILES RestLinkQml.cmake DESTINATION lib/cmake/RestLink)

@@ -1,8 +1,8 @@
 #include "app.h"
 
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
+#include <QtCore/qjsondocument.h>
+#include <QtCore/qjsonobject.h>
+#include <QtCore/qjsonarray.h>
 
 #include <RestLink/api.h>
 #include <RestLink/request.h>
@@ -283,7 +283,7 @@ Body App::makeBody()
     }
 
     if (m_parser.isSet(JSON_OPTION)) {
-        return Body(m_parser.value(JSON_OPTION), QByteArrayLiteral("application/json"));
+        return Body(m_parser.value(JSON_OPTION), RESTLINK_MIME_JSON);
     }
 
     if (m_parser.isSet(FILE_OPTION))
@@ -343,8 +343,8 @@ void App::monitorResponse(Response *response)
 
         if (!m_parser.isSet(BODYONLY_OPTION) && response->hasHttpStatusCode()) {
             m_out << "HTTP " << response->httpStatusCode() << ' ' << response->httpReasonPhrase() << Qt::endl;
-            const QByteArrayList headers = response->headerList();
-            for (const QByteArray &header : headers) {
+            const QStringList headers = response->headerList();
+            for (const QString &header : headers) {
                 m_out << header.toUpper() << ": " << response->header(header) << Qt::endl;
             }
             m_out << Qt::endl;

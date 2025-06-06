@@ -11,5 +11,28 @@ bool CRUDInterface::save()
         return insert();
 }
 
+bool CRUDInterface::exec(Operation op)
+{
+    switch (op) {
+    case GetOperation:
+        return get();
+
+    case SaveOperation:
+        return (exists() ? update() : insert());
+
+    case InsertOperation:
+        return insert();
+
+    case UpdateOperation:
+        return update();
+
+    case DeleteOperation:
+        return deleteData();
+
+    default:
+        return false;
+    }
+}
+
 } // namespace Sql
 } // namespace RestLink

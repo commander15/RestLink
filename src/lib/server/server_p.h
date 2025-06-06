@@ -3,55 +3,41 @@
 
 #include "server.h"
 
-#include <RestLink/request.h>
-#include <RestLink/body.h>
-
-#include <QtCore/qthread.h>
-#include <QtCore/qqueue.h>
-#include <QtCore/qmutex.h>
-#include <QtCore/qjsonobject.h>
-
 namespace RestLink {
 
-class RESTLINK_EXPORT ServerPrivate : public QThread
+class RESTLINK_EXPORT ServerPrivate
+{
+public:
+    ServerPrivate(AbstractServerWorker *worker, Server *q);
+    virtual ~ServerPrivate();
+
+    Server *q_ptr;
+
+    AbstractServerWorker *worker;
+
+    friend class Server;
+};
+
+class DefaultServer : public Server
 {
     Q_OBJECT
 
 public:
-    struct PendingRequest {
-        AbstractRequestHandler::Method method;
-        Request request;
-        Body body;
-        ServerResponse *response = nullptr;
-    };
+    DefaultServer(const QString &name, const QStringList &schemes, AbstractServerWorker *worker, QObject *parent = nullptr)
+        : Server(worker, parent)
+        , m_name(name)
+        , m_schemes(schemes)
+    {}
 
-    ServerPrivate(Server::ServerType type, Server *q);
+    QString handlerName() const override
+    { return m_name; }
 
-    bool processNext();
+    QStringList supportedSchemes() const override
+    { return m_schemes; }
 
-    Server *q_ptr;
-
-    bool listening;
-
-    int errorCode;
-    QString errorString;
-
-    bool autoStart;
-
-    const Server::ServerType type;
-    QQueue<PendingRequest> pendingRequests;
-    bool bypassCleanup;
-
-    QList<class AbstractController *> controllers;
-
-    QJsonObject configuration;
-
-    mutable QMutex mutex;
-
-protected:
-    void run() override;
-
-    friend class Server;
+private:
+    const QString m_name;
+    const QStringList m_schemes;
 };
 
 } // namespace RestLink

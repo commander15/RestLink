@@ -15,8 +15,12 @@ Request::Request(QObject *parent)
     , m_autoRun(true)
     , m_response(nullptr)
     , m_api(nullptr)
-    , m_parametersProperty(this, &m_parameters)
 {
+}
+
+QQmlListProperty<RequestParameter> Request::parameters()
+{
+    return QQmlListProperty<RequestParameter>(this, &m_parameters);
 }
 
 Body *Request::body() const
@@ -75,6 +79,7 @@ void Request::run()
 Body::Body(QObject *parent)
     : QObject(parent)
     , m_contentType(Data)
+    , m_dataType(RestLink::Body::RawData)
 {
 }
 
@@ -94,6 +99,16 @@ void Body::setData(const QVariant &data)
     m_content = data;
     m_contentType = Data;
     emit contentChanged();
+}
+
+bool Body::hasJson() const
+{
+    return m_dataType == RestLink::Body::JsonData;
+}
+
+void Body::setJson(bool on)
+{
+    setDataType(RestLink::Body::JsonData);
 }
 
 QString Body::fileName() const
@@ -116,12 +131,22 @@ void Body::setFileName(const QString &fileName)
 
 RestLink::Body Body::body() const
 {
-    switch (m_contentType) {
-    case File:
+    if (m_contentType == File)
         return RestLink::Body(RestLink::File(m_content.toString()));
 
-    default:
-        return RestLink::Body(m_content.toByteArray());
+    switch (m_dataType) {
+    case RestLink::Body::JsonData:
+        return RestLink::Body(QJsonDocument::fromJson(m_content.toByteArray()));
+    }
+
+    return RestLink::Body(m_content.toByteArray());
+}
+
+void Body::setDataType(int type)
+{
+    if (m_dataType != type) {
+        m_dataType = type;
+        emit dataTypeChanged();
     }
 }
 

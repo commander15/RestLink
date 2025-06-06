@@ -11,7 +11,7 @@ class EndpointInfoData : public QSharedData
 {
 public:
     QString name;
-    SqlQueryInfo query;
+    SqlQueryInfo getQuery;
     ResourceInfo resource;
 };
 
@@ -41,14 +41,14 @@ QString EndpointInfo::name() const
     return d_ptr->name;
 }
 
-bool EndpointInfo::hasQuery() const
+bool EndpointInfo::hasGetQuery() const
 {
-    return d_ptr->query.isValid();
+    return d_ptr->getQuery.isValid();
 }
 
-SqlQueryInfo EndpointInfo::query() const
+SqlQueryInfo EndpointInfo::getQuery() const
 {
-    return d_ptr->query;
+    return d_ptr->getQuery;
 }
 
 bool EndpointInfo::hasResource() const
@@ -65,8 +65,8 @@ void EndpointInfo::load(const QString &name, const QJsonObject &object, Api *api
 {
     d_ptr->name = name;
 
-    if (object.contains("query"))
-        d_ptr->query.load(object);
+    if (object.contains("get_query"))
+        d_ptr->getQuery.load(object.value("get_query").toObject());
 
     if (object.contains("resource")) {
         const QString resourceName = object.value("resource").toString();
@@ -76,8 +76,11 @@ void EndpointInfo::load(const QString &name, const QJsonObject &object, Api *api
 
 void EndpointInfo::save(QJsonObject *object) const
 {
-    if (d_ptr->query.isValid())
-        d_ptr->query.save(object);
+    if (d_ptr->getQuery.isValid()) {
+        QJsonObject getQuery;
+        d_ptr->getQuery.save(&getQuery);
+        object->insert("get_query", getQuery);
+    }
 
     if (d_ptr->resource.isValid())
         object->insert("resource", d_ptr->resource.name());

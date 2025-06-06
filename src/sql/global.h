@@ -3,6 +3,10 @@
 
 #include <RestLink/global.h>
 
-#define SQL_EXPORT
+#ifndef RESTLINK_DEBUG
+#   define SQL_EXPORT Q_DECL_HIDDEN
+#else
+#   define SQL_EXPORT
+#endif
 
 #endif // GLOBAL_H

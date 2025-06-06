@@ -17,121 +17,107 @@ ServerResponse::ServerResponse(Server *server)
     d->server = server;
 }
 
+ServerResponse::~ServerResponse()
+{
+}
+
 AbstractRequestHandler::Method ServerResponse::method() const
 {
     RESTLINK_D(const ServerResponse);
-    QMutexLocker locker(&d->mutex);
+    QReadLocker locker(&d->lock);
     return d->method;
 }
 
 void ServerResponse::setMethod(AbstractRequestHandler::Method method)
 {
     RESTLINK_D(ServerResponse);
-    QMutexLocker locker(&d->mutex);
+    QWriteLocker locker(&d->lock);
     d->method = method;
 }
 
 bool ServerResponse::isFinished() const
 {
     RESTLINK_D(const ServerResponse);
-    QMutexLocker locker(&d->mutex);
+    QReadLocker locker(&d->lock);
     return d->finished;
 }
 
 int ServerResponse::httpStatusCode() const
 {
     RESTLINK_D(const ServerResponse);
-    QMutexLocker locker(&d->mutex);
+    QReadLocker locker(&d->lock);
     return d->httpStatusCode;
 }
 
 void ServerResponse::setHttpStatusCode(int code)
 {
     RESTLINK_D(ServerResponse);
-    QMutexLocker locker(&d->mutex);
+    QWriteLocker locker(&d->lock);
     d->httpStatusCode = code;
 }
 
-bool ServerResponse::hasHeader(const QByteArray &name) const
+bool ServerResponse::hasHeader(const QString &name) const
 {
-    if (name.compare(QByteArrayLiteral("Content-Type"), Qt::CaseInsensitive) == 0)
-        return true;
-
     RESTLINK_D(const ServerResponse);
-
-    auto it = std::find_if(d->headers.begin(), d->headers.end(), [name](const Header &header) {
-        return header.name() == name;
-    });
-
-    return (it != d->headers.end());
+    QReadLocker locker(&d->lock);
+    return d->headers.contains(name) || d->body.headers().contains(name);
 }
 
-QByteArray ServerResponse::header(const QByteArray &name) const
+QString ServerResponse::header(const QString &name) const
 {
     RESTLINK_D(const ServerResponse);
+    QReadLocker locker(&d->lock);
 
-    auto it = std::find_if(d->headers.begin(), d->headers.end(), [name](const Header &header) {
-        return header.name() == name;
-    });
+    if (d->headers.contains(name))
+        return d->headers.parameter(name).value().toByteArray();
 
-    if (it != d->headers.end())
-        return it->value().toByteArray();
-
-    const HeaderList headers = d->body.headers();
-    it = std::find_if(headers.begin(), headers.end(), [name](const Header &header) {
-        return header.name() == name;
-    });
-
-    if (it != d->headers.end())
-        return it->value().toByteArray();
+    const HeaderList bodyHeaders = d->body.headers();
+    if (bodyHeaders.contains(name))
+        return bodyHeaders.value(name).toByteArray();
 
     return QByteArray();
 }
 
-QByteArrayList ServerResponse::headerList() const
+QStringList ServerResponse::headerList() const
 {
     RESTLINK_D(const ServerResponse);
-
-    const HeaderList headers = d->headers + d->body.headers();
-    QByteArrayList names(headers.size());
-    std::transform(headers.begin(), headers.end(), names.begin(), [](const Header &header) {
-        return header.name().toUtf8();
-    });
-
-    return names;
+    QReadLocker locker(&d->lock);
+    QStringList parameterNames = d->headers.parameterNames() + d->body.headers().parameterNames();
+    parameterNames.removeDuplicates();
+    return parameterNames;
 }
 
 void ServerResponse::setHeaders(const QList<Header> &headers)
 {
     RESTLINK_D(ServerResponse);
-    QMutexLocker locker(&d->mutex);
+    QWriteLocker locker(&d->lock);
     d->headers = headers.toVector();
 }
 
 QJsonObject ServerResponse::readJsonObject(QJsonParseError *error)
 {
     RESTLINK_D(ServerResponse);
-    QMutexLocker locker(&d->mutex);
-    return (d->body.hasJsonObject() ? d->body.jsonObject() : QJsonObject());
+    QWriteLocker locker(&d->lock);
+    return (d->body.hasJsonObject() ? d->readBody().jsonObject() : QJsonObject());
 }
 
 QJsonArray ServerResponse::readJsonArray(QJsonParseError *error)
 {
     RESTLINK_D(ServerResponse);
-    QMutexLocker locker(&d->mutex);
-    return (d->body.hasJsonArray() ? d->body.jsonArray() : QJsonArray());
+    QWriteLocker locker(&d->lock);
+    return (d->body.hasJsonArray() ? d->readBody().jsonArray() : QJsonArray());
 }
 
 QJsonValue ServerResponse::readJson(QJsonParseError *error)
 {
     RESTLINK_D(ServerResponse);
-    QMutexLocker locker(&d->mutex);
+    QWriteLocker locker(&d->lock);
 
     if (d->body.hasJsonObject())
-        return d->body.jsonObject();
+        return d->readBody().jsonObject();
 
     if (d->body.hasJsonArray())
-        return d->body.jsonArray();
+        return d->readBody().jsonArray();
 
     return QJsonValue();
 }
@@ -139,34 +125,35 @@ QJsonValue ServerResponse::readJson(QJsonParseError *error)
 QString ServerResponse::readString()
 {
     RESTLINK_D(ServerResponse);
-    QMutexLocker locker(&d->mutex);
-    return d->body.toString();
+    QWriteLocker locker(&d->lock);
+    return d->readBody().toString();
 }
 
 QByteArray ServerResponse::readBody()
 {
     RESTLINK_D(ServerResponse);
-    QMutexLocker locker(&d->mutex);
-    return d->body.toByteArray();
+    QWriteLocker locker(&d->lock);
+    return d->readBody().toByteArray();
 }
 
 void ServerResponse::setBody(const Body &body)
 {
     RESTLINK_D(ServerResponse);
-    QMutexLocker locker(&d->mutex);
+    QWriteLocker locker(&d->lock);
     d->body = body;
 }
 
 QNetworkRequest ServerResponse::networkRequest() const
 {
     RESTLINK_D(const ServerResponse);
+    QReadLocker locker(&d->lock);
     return d->networkRequest;
 }
 
 void ServerResponse::setNetworkRequest(const QNetworkRequest &request)
 {
     RESTLINK_D(ServerResponse);
-    QMutexLocker locker(&d->mutex);
+    QWriteLocker locker(&d->lock);
     d->networkRequest = request;
 }
 
@@ -194,9 +181,9 @@ void ServerResponse::updateUploadProgress(qint64 bytesSent, qint64 bytesTotal)
 void ServerResponse::complete()
 {
     RESTLINK_D(ServerResponse);
-    d->mutex.lock();
+    d->lock.lockForWrite();
     d->finished = true;
-    d->mutex.unlock();
+    d->lock.unlock();
 
     emit finished();
 }
@@ -216,8 +203,23 @@ ServerResponsePrivate::ServerResponsePrivate(ServerResponse *q)
     , method(AbstractRequestHandler::UnknownMethod)
     , httpStatusCode(200)
     , finished(false)
+    , atEnd(false)
     , server(nullptr)
 {
+}
+
+ServerResponsePrivate::~ServerResponsePrivate()
+{
+}
+
+Body ServerResponsePrivate::readBody()
+{
+    if (atEnd) {
+        return Body();
+    } else {
+        atEnd = true;
+        return body;
+    }
 }
 
 } // namespace RestLink

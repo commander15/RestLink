@@ -85,7 +85,7 @@ public:
     int limit = 0;
     int offset = 0;
 
-    bool withRelations = false;
+    QStringList withRelations;
 };
 
 } // namespace Sql

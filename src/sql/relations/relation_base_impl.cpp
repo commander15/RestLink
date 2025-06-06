@@ -1,4 +1,5 @@
 #include "relation_base_impl.h"
+#include "utils/queryrunner.h"
 
 #include <utils/querybuilder.h>
 
@@ -37,6 +38,12 @@ void SingleRelationImpl::setJsonValue(const QJsonValue &value)
 bool SingleRelationImpl::exists() const
 {
     return m_relatedModel.exists();
+}
+
+bool SingleRelationImpl::get()
+{
+    const QStringList relations = relation->loadableRelations();
+    return (relations.isEmpty() ? true : m_relatedModel.load(relations));
 }
 
 MultipleRelationImpl::MultipleRelationImpl(Relation *relation)
@@ -81,6 +88,19 @@ bool MultipleRelationImpl::exists() const
     return false;
 }
 
+bool MultipleRelationImpl::get()
+{
+    const QStringList relations = relation->loadableRelations();
+    if (relations.isEmpty())
+        return true;
+
+    for (Model &model : m_relatedModels)
+        if (!model.load(relations))
+            return false;
+
+    return true;
+}
+
 bool MultipleRelationImpl::save()
 {
     for (Model &model : m_relatedModels)
@@ -99,10 +119,7 @@ bool MultipleRelationImpl::insert()
 
 bool MultipleRelationImpl::update()
 {
-    for (Model &model : m_relatedModels)
-        if (!model.update())
-            return false;
-    return true;
+    return save();
 }
 
 bool MultipleRelationImpl::deleteData()
@@ -111,6 +128,16 @@ bool MultipleRelationImpl::deleteData()
         if (!model.deleteData())
             return false;
     return true;
+}
+
+QStringList MultipleRelationImpl::formatedRelatedIds() const
+{
+    QStringList ids;
+    ids.resize(m_relatedModels.size());
+    std::transform(m_relatedModels.begin(), m_relatedModels.end(), ids.begin(), [](const Model &model) {
+        return QueryBuilder::formatValue(model.primary(), model.api());
+    });
+    return ids;
 }
 
 QVariant MultipleThroughRelationImpl::field(const QString &name, int index) const
@@ -159,6 +186,36 @@ void MultipleThroughRelationImpl::setJsonValue(const QJsonValue &value)
         model.fill(object);
         m_relatedModels.append(model);
     }
+}
+
+QJsonValue PivotBasedMultipleRelationImpl::jsonValue() const
+{
+    QJsonArray data;
+
+    for (int i(0); i < m_relatedModels.size(); ++i) {
+        QJsonObject object = m_relatedModels.at(i).jsonObject();
+        if (i < m_pivots.size())
+            object.insert("pivot", m_pivots.at(i).jsonObject());
+        data.append(object);
+    }
+
+    return data;
+}
+
+void PivotBasedMultipleRelationImpl::setJsonValue(const QJsonValue &value)
+{
+    const QJsonArray data = value.toArray();
+
+    for (int i(0); i < data.size(); ++i) {
+        const QJsonObject object = data.at(i).toObject();
+
+    }
+}
+
+ResourceInfo PivotBasedMultipleRelationImpl::pivotResource() const
+{
+    const QString table = info.pivot();
+    return ResourceInfo::pivotResourceInfo("pivot", table, rootResource, foreignResource, root->api());
 }
 
 } // namespace Sql

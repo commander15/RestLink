@@ -13,8 +13,8 @@ class RESTLINK_EXPORT Header : public Parameter
 public:
     Header();
     Header(const QString &name, const QVariant &value);
-    Header(const Header &other) = default;
-    Header(Header &&other) = default;
+    Header(const Header &other);
+    Header(Header &&other);
 
     Header &operator=(const Header &other);
 

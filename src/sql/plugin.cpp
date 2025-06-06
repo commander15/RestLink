@@ -1,6 +1,11 @@
 #include <RestLink/plugin.h>
+#include <RestLink/server.h>
 
 #include <routing/router.h>
+
+#include <QtCore/qcoreapplication.h>
+
+#include <QtSql/qsqldatabase.h>
 
 namespace RestLink {
 namespace Sql {
@@ -16,7 +21,16 @@ public:
         : RestLink::Plugin(parent) {}
 
     AbstractRequestHandler *createHandler() override
-    { return new Router; }
+    {
+        const QStringList drivers = QSqlDatabase::drivers();
+
+        QStringList schemes;
+        std::transform(drivers.begin(), drivers.end(), std::back_inserter(schemes), [](const QString &name) {
+            return name.mid(1).toLower();
+        });
+
+        return Server::create<Router>(QStringLiteral("SQL"), schemes, qApp);
+    }
 };
 
 } // namespace Sql

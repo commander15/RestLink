@@ -66,6 +66,9 @@ AbstractRequestHandler::Method ServerRequest::method() const
 QString ServerRequest::resource() const
 {
     QStringList endpoint = d_ptr->endpoint.split('/', Qt::SkipEmptyParts);
+    endpoint.removeIf([](const QString &part) {
+        return part.startsWith('{') || part.endsWith('}');
+    });
 
     if (endpoint.isEmpty())
         return QString();
@@ -73,27 +76,42 @@ QString ServerRequest::resource() const
     if (endpoint.size() == 1)
         return endpoint.first();
 
-    const QString identifier = this->identifier();
-    if (!identifier.isEmpty())
-        endpoint.removeOne(identifier);
+    const QVariant identifier = this->identifier();
+    if (identifier.isValid())
+        endpoint.removeOne(identifier.toString());
 
     return endpoint.join('.');
 }
 
-QString ServerRequest::identifier() const
+QVariant ServerRequest::identifier() const
 {
-    static const QRegularExpression exp(R"(^\d+$|^[a-fA-F0-9]{8}-([a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}$)");
+    QStringList endpoint = d_ptr->generateUrlPath(SecretUrl).split('/', Qt::SkipEmptyParts);
 
-    QStringList endpoint = d_ptr->endpoint.split('/', Qt::SkipEmptyParts);
-    std::reverse(endpoint.begin(), endpoint.end());
+    if (endpoint.size() > 1)
+        std::reverse(endpoint.begin(), endpoint.end());
+    else
+        return QVariant();
+
+    static const QHash<QMetaType, QRegularExpression> expressions = {
+        { QMetaType::fromType<qint64>(), QRegularExpression(R"(^(\d+$))") },
+        { QMetaType::fromType<QString>(), QRegularExpression(R"(^([a-fA-F0-9]{8}-([a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12})$)") }
+    };
+
+    const QList<QMetaType> types = expressions.keys();
 
     for (const QString &part : std::as_const(endpoint)) {
-        const QRegularExpressionMatch match = exp.match(part);
-        if (match.hasMatch())
-            return part;
+        for (const QMetaType &type : types) {
+            const QRegularExpressionMatch match = expressions.value(type).match(part);
+            if (!match.hasMatch())
+                continue;
+
+            QVariant value(part);
+            value.convert(type);
+            return value;
+        }
     }
 
-    return QString();
+    return QVariant();
 }
 
 Body ServerRequest::body() const

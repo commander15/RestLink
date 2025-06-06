@@ -1,11 +1,15 @@
-add_library(RestLink ${RestLink_LIBRARY_TYPE})
+qt_add_library(RestLink ${RestLink_LIBRARY_TYPE})
 
 set_target_properties(RestLink PROPERTIES
     OUTPUT_NAME RestLink
     VERSION     ${RestLink_VERSION}
 )
 
-target_include_directories(RestLink PUBLIC $<INSTALL_INTERFACE:include>)
+target_include_directories(RestLink
+    PUBLIC
+        $<INSTALL_INTERFACE:include>
+        $<INSTALL_INTERFACE:include/RestLink>
+)
 
 target_compile_definitions(RestLink
     PUBLIC
@@ -14,7 +18,7 @@ target_compile_definitions(RestLink
         RESTLINK_BUILD
 )
 
-target_link_libraries(RestLink PUBLIC Qt::Core Qt::Network)
+target_link_libraries(RestLink PUBLIC Qt::Core Qt::Network Bcrypt)
 
 if (ZLIB_FOUND)
     target_compile_definitions(RestLink PUBLIC ZLIB_LIB)
@@ -58,6 +62,7 @@ target_sources(RestLink
 add_subdirectory(network)
 add_subdirectory(plugin)
 add_subdirectory(server)
+add_subdirectory(utils)
 
 install(TARGETS RestLink
     EXPORT RestLinkTargets

@@ -8,7 +8,7 @@
 #include <RestLink/private/response_p.h>
 
 #include <QtCore/qjsonvalue.h>
-#include <QtCore/qmutex.h>
+#include <QtCore/qreadwritelock.h>
 
 #include <QtNetwork/qnetworkrequest.h>
 
@@ -18,20 +18,24 @@ class ServerResponsePrivate final : public ResponsePrivate
 {
 public:
     ServerResponsePrivate(ServerResponse *q);
+    ~ServerResponsePrivate();
+
+    Body readBody();
 
     AbstractRequestHandler::Method method;
+    Body body;
 
     int httpStatusCode;
-    Body body;
     HeaderList headers;
 
     bool finished;
+    bool atEnd;
 
     QNetworkRequest networkRequest;
 
     Server *server;
 
-    mutable QMutex mutex;
+    mutable QReadWriteLock lock;
 };
 
 } // namespace RestLink

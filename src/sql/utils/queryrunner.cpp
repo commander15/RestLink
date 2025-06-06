@@ -51,7 +51,10 @@ QSqlQuery QueryRunner::exec(const QString &statement, Api *api, bool *success)
     QSqlQuery sqlQuery(api->database());
     sqlQuery.setForwardOnly(true);
     if (!sqlQuery.exec(statement)) {
-        sqlWarning() << sqlQuery.lastError().databaseText();
+#ifdef RESTLINK_DEBUG
+        const QString error = sqlQuery.lastError().databaseText();
+        sqlWarning() << error;
+#endif
         if (success) *success = false;
     } else {
         if (success) *success = true;

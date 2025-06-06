@@ -36,7 +36,7 @@ Relation::Relation(const QString &name, Model *model)
         break;
 
     case Type::BelongsToMany:
-        m_impl.reset(new BelongsToManyThroughImpl(this));
+        m_impl.reset(new BelongsToManyImpl(this));
         break;
 
     default:
@@ -70,6 +70,11 @@ Relation &Relation::operator=(const Relation &other)
 QString Relation::relationName() const
 {
     return m_info.name();
+}
+
+QStringList Relation::loadableRelations() const
+{
+    return m_info.loadableRelations();
 }
 
 QString Relation::modelName() const
@@ -135,7 +140,7 @@ bool Relation::get()
 
 bool Relation::save()
 {
-    if (m_operationMode == m_impl->operationMode())
+    if (m_operationMode == m_impl->operationMode(SaveOperation))
         return m_impl->save();
     else
         return true;
@@ -143,7 +148,7 @@ bool Relation::save()
 
 bool Relation::insert()
 {
-    if (m_operationMode == m_impl->operationMode())
+    if (m_operationMode == m_impl->operationMode(InsertOperation))
         return m_impl->insert();
     else
         return true;
@@ -151,7 +156,7 @@ bool Relation::insert()
 
 bool Relation::update()
 {
-    if (m_operationMode == m_impl->operationMode())
+    if (m_operationMode == m_impl->operationMode(UpdateOperation))
         return m_impl->update();
     else
         return true;
@@ -159,14 +164,16 @@ bool Relation::update()
 
 bool Relation::deleteData()
 {
-    if (m_operationMode == m_impl->operationMode())
+    if (m_operationMode == m_impl->operationMode(DeleteOperation))
         return m_impl->deleteData();
     else
         return true;
 }
 
-void Relation::prepareOperations(OperationMode mode)
+void Relation::prepareOperations(Model *model, OperationMode mode)
 {
+    m_model = model;
+    m_impl->root = model;
     m_operationMode = mode;
 }
 

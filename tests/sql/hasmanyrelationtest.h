@@ -1,12 +1,12 @@
 #ifndef HASMANYRELATIONTEST_H
 #define HASMANYRELATIONTEST_H
 
-#include "relationtest.h"
+#include "common/relationtest.h"
 
 class HasManyRelationTest : public RelationTest
 {
-public:
-    HasManyRelationTest() : RelationTest("sales") {}
+protected:
+    HasManyRelationTest() : RelationTest("categories", 3) {}
 };
 
 #endif // HASMANYRELATIONTEST_H

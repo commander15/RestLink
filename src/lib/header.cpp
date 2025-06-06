@@ -17,6 +17,16 @@ Header::Header(const QString &name, const QVariant &value)
     setValue(value);
 }
 
+Header::Header(const Header &other)
+    : Parameter(other)
+{
+}
+
+Header::Header(Header &&other)
+    : Parameter(std::move(other))
+{
+}
+
 Header::Header(const QSharedDataPointer<ParameterData> &d)
     : Parameter(d)
 {

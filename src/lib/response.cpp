@@ -97,12 +97,27 @@ Response::~Response()
 }
 
 /*!
+ * \fn Response::method
+ * \brief Retrieves the HTTP method type for this response.
+ * \return The HTTP mthod as an Api::Method.
+ */
+
+/*!
  * \brief Retrieves the API endpoint associated with this response.
  * \return The endpoint as a QString.
  */
 QString Response::endpoint() const
 {
     return d_ptr->request.endpoint();
+}
+
+/*!
+ * \brief Retrieves the URL associated with this response.
+ * \return The URL as a QUrl object.
+ */
+QUrl Response::url() const
+{
+    return d_ptr->request.url();
 }
 
 /*!
@@ -115,27 +130,12 @@ Request Response::request() const
 }
 
 /*!
- * \fn Response::method
- * \brief Retrieves the HTTP method type for this response.
- * \return The HTTP mthod as an Api::Method.
- */
-
-/*!
  * \brief Retrieves the API instance associated with this response.
  * \return A pointer to the Api object.
  */
 Api *Response::api() const
 {
     return d_ptr->request.api();
-}
-
-/*!
- * \brief Retrieves the URL associated with this response.
- * \return The URL as a QUrl object.
- */
-QUrl Response::url() const
-{
-    return d_ptr->request.url();
 }
 
 /*!
@@ -204,7 +204,7 @@ QString Response::httpReasonPhrase() const
  * \param name The name of the header to check.
  * \return \c true if the header is present, otherwise \c false.
  */
-bool Response::hasHeader(const QByteArray &name) const
+bool Response::hasHeader(const QString &name) const
 {
     return headerList().contains(name);
 }
@@ -213,13 +213,13 @@ bool Response::hasHeader(const QByteArray &name) const
  * \fn Response::header
  * \brief Retrieves the value of a specific header.
  * \param header The name of the header to retrieve.
- * \return The header value as a QByteArray.
+ * \return The header value as a QString.
  */
 
 /*!
  * \fn Response::headerList
  * \brief Retrieves a list of all headers in the response.
- * \return A QByteArrayList containing the header names.
+ * \return A QStringList containing the header names.
  */
 
 /*!
@@ -235,7 +235,10 @@ bool Response::hasHeader(const QByteArray &name) const
 int Response::networkError() const
 {
     const QNetworkReply *reply = networkReply();
-    return (reply ? reply->error() : QNetworkReply::NoError);
+    if (reply)
+        return reply->error();
+    else
+        return (isHttpStatusSuccess() ? QNetworkReply::NoError : QNetworkReply::InternalServerError);
 }
 
 /*!

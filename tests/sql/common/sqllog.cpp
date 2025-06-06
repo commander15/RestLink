@@ -1,5 +1,7 @@
 #include "sqllog.h"
 
+#include <QtCore/qtextstream.h>
+
 SqlLog::SqlLog()
 {
     s_logs.append(this);
@@ -32,6 +34,15 @@ void SqlLog::log(const QString &statement)
 
     for (SqlLog *log : std::as_const(s_logs))
         log->append(statement);
+
+    static QTextStream out(stdout);
+    out << statement << Qt::endl;
+}
+
+void SqlLog::logError(const QString &str)
+{
+    static QTextStream out(stdout);
+    out << "-> " << str << Qt::endl;
 }
 
 bool SqlLog::s_enabled(true);

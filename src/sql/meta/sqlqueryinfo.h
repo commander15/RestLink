@@ -20,9 +20,14 @@ public:
 
     SqlQueryInfo &operator=(const SqlQueryInfo &other);
 
-    QString query() const;
+    QString statement() const;
     QString formated(const QVariantHash &data) const;
+
+    QStringList statements() const;
     QStringList allFormated(const QVariantHash &data) const;
+
+    QVariant parameterValue(const QString &name) const;
+    QStringList parameterNames() const;
 
     bool isObjectQuery() const;
     bool isArrayQuery() const;
@@ -30,7 +35,7 @@ public:
     bool isValid() const override;
 
     void load(const QJsonObject &object);
-    void save(QJsonObject *object) const;
+    void save(QJsonObject *object) const override;
 
 private:
     QExplicitlySharedDataPointer<SqlQueryInfoData> d_ptr;

@@ -2,6 +2,7 @@
 #define MODELCONTROLLER_H
 
 #include <global.h>
+#include <meta/resourceinfo.h>
 
 #include <QtCore/qstring.h>
 
@@ -13,6 +14,7 @@ namespace RestLink {
 namespace Sql {
 
 class Model;
+class ResourceInfo;
 
 class Api;
 
@@ -23,7 +25,7 @@ public:
 
     QString endpoint() const override;
 
-    void init(Api *api);
+    void init(const ServerRequest &request, Api *api);
 
     void index(const ServerRequest &request, ServerResponse *response) override;
     void show(const ServerRequest &request, ServerResponse *response) override;
@@ -35,13 +37,15 @@ public:
     void processRequest(const ServerRequest &request, ServerResponse *response) override;
 
     Model requestModel(const ServerRequest &request) const;
+    ResourceInfo requestedResource(const ServerRequest &request) const;
+    QStringList requestedRelations(const ServerRequest &request, const ResourceInfo &resource) const;
 
     static int httpStatusCodeFromSqlError(const QJsonObject &error);
     static int httpStatusCodeFromSqlError(int type);
 
 private:
     QString m_endpoint;
-    QString m_resource;
+    ResourceInfo m_resource;
     Api *m_api;
 };
 

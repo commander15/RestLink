@@ -1,0 +1,60 @@
+{
+  "resources": {
+    "users": {
+        "relations": {
+            "role": {
+                "table": "UserRoles",
+                "local_key": "role_id",
+                "foreign_key": "id",
+                "type": "BelongsToOne"
+            }
+        }
+    },
+    "products": {
+      "relations": {
+        "category": {
+            "table": "Categories",
+            "local_key": "category_id",
+            "foreign_key": "id",
+            "type": "BelongsToOne"
+        },
+        "stock": {
+            "table": "Stocks",
+            "local_key": "id",
+            "foreign_key": "product_id",
+            "type": "HasOne"
+        }
+      }
+    },
+    "stocks": {
+      "relations": {
+        "product": {
+            "table": "Products",
+            "local_key": "id",
+            "foreign_key": "product_id",
+            "type": "BelongsToOne"
+        }
+      }
+    },
+    "sales": {
+        "relations": {
+            "seller": {
+                "table": "Users",
+                "local_key": "seller_id",
+                "foreign_key": "id",
+                "type": "BelongsToOne"
+            }
+        }
+    },
+    "sale_items": {
+        "ralations": {
+            "product": {
+                "table": "Products",
+                "local_key": "product_id",
+                "foreign_key": "id",
+                "type": "BelongsToOne"
+            }
+        }
+    }
+  }
+}

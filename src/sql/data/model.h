@@ -26,6 +26,7 @@ class SQL_EXPORT Model final: public CRUDInterface
 public:
     enum FillMode {
         NormalFill,
+        ExtendedFill,
         FullFill
     };
 
@@ -60,6 +61,7 @@ public:
     bool getByFilters(const QueryFilters &filters);
 
     bool loadAll();
+    bool loadDefault();
     bool load(const QStringList &relations);
 
     bool insert() override;
@@ -92,7 +94,7 @@ private:
     QSqlQuery exec(const QString &statement);
 
 private:
-    QSharedDataPointer<ModelData> d_ptr;
+    QExplicitlySharedDataPointer<ModelData> d_ptr;
 
     friend class Relation;
     friend class RelationImpl;

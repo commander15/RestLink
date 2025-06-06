@@ -9,6 +9,14 @@ namespace Sql {
 class SQL_EXPORT CRUDInterface
 {
 public:
+    enum Operation {
+        GetOperation,
+        SaveOperation,
+        InsertOperation,
+        UpdateOperation,
+        DeleteOperation
+    };
+
     virtual ~CRUDInterface() = default;
 
     virtual bool exists() const = 0;
@@ -20,6 +28,8 @@ public:
     virtual bool update() = 0;
 
     virtual bool deleteData() = 0;
+
+    bool exec(Operation op);
 };
 
 } // namespace Sql

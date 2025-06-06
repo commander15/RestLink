@@ -1,6 +1,7 @@
 #include "relation_api_impl.h"
 
 #include <api.h>
+#include <utils/queryrunner.h>
 
 #include <QtSql/qsqlerror.h>
 #include <QtSql/qsqlquery.h>
@@ -15,59 +16,41 @@ bool HasOneImpl::get()
 
     m_relatedModel = createModel();
 
-    if (!m_relatedModel.getByFilters(filters))
-        return false;
-
-    return true;
+    return m_relatedModel.getByFilters(filters);
 }
 
 bool HasOneImpl::insert()
 {
-    // If root doesn't own the resource, it can't create it
-    if (!info.owned())
-        return true;
-
     m_relatedModel.setField(info.foreignKey(), root->primary());
     return m_relatedModel.insert();
 }
 
 bool HasOneImpl::update()
 {
-    // If root doesn't own the resource, it can't modiffy it
-    if (!info.owned())
-        return true;
-
     m_relatedModel.setField(info.foreignKey(), root->primary());
     return m_relatedModel.update();
 }
 
 bool HasOneImpl::deleteData()
 {
-    // If root doesn't own the resource, it can't delete it
-    if (!info.owned())
-        return true;
-
     return m_relatedModel.deleteData();
 }
 
 bool BelongsToOneImpl::get()
 {
     QueryFilters filters;
-    filters.andWhere(info.foreignKey(), root->field(info.foreignKey()));
+    filters.andWhere(info.foreignKey(), root->field(info.localKey()));
 
     m_relatedModel = createModel();
 
     if (!m_relatedModel.getByFilters(filters))
         return false;
 
-    return true;
+    return SingleRelationImpl::get();
 }
 
 bool BelongsToOneImpl::insert()
 {
-    if (info.owned() && !m_relatedModel.insert())
-        return false;
-
     // We update foreign key on root
     root->setField(info.localKey(), m_relatedModel.primary());
 
@@ -76,9 +59,6 @@ bool BelongsToOneImpl::insert()
 
 bool BelongsToOneImpl::update()
 {
-    if (info.owned() && !m_relatedModel.update())
-        return false;
-
     // We update foreign key on root
     root->setField(info.localKey(), m_relatedModel.primary());
 
@@ -87,9 +67,6 @@ bool BelongsToOneImpl::update()
 
 bool BelongsToOneImpl::deleteData()
 {
-    if (info.owned() && !m_relatedModel.deleteData())
-        return false;
-
     // We update foreign key on root
     root->setField(info.localKey(), QVariant());
 
@@ -103,36 +80,65 @@ bool HasManyImpl::get()
 
     bool success = false;
     m_relatedModels = Model::getMulti(foreignResource, options, root->api(), &success);
-    return success;
+    return success && MultipleRelationImpl::get();
 }
 
 bool HasManyImpl::save()
 {
-    return false;
+    for (Model &model : m_relatedModels) {
+        model.setField(info.foreignKey(), root->primary());
+        if (!model.save())
+            return false;
+    }
+
+    // Syncing
+
+    QueryOptions options;
+
+    QString filter("%1 NOT IN (%2)");
+    filter = filter.arg(QueryBuilder::formatFieldName(foreignResource.primaryKey(), root->api()));
+    filter = filter.arg(formatedRelatedIds().join(", "));
+    options.filters.andWhere(Expression(filter));
+
+    QString deleteStatement = QueryBuilder::deleteStatement(foreignResource, options, root->api());
+    bool success = false;
+    QueryRunner::exec(deleteStatement, root->api(), &success);
+    return success;
 }
 
 bool HasManyImpl::insert()
 {
-    return false;
+    for (Model &model : m_relatedModels) {
+        model.setField(info.foreignKey(), root->primary());
+        if (!model.insert())
+            return false;
+    }
+    return true;
 }
 
 bool HasManyImpl::update()
 {
-    return false;
+    return save();
 }
 
 bool HasManyImpl::deleteData()
 {
-    return MultipleRelationImpl::deleteData();
+    for (Model &model : m_relatedModels)
+        if (!model.deleteData())
+            return false;
+    return true;
 }
 
-bool BelongsToManyThroughImpl::get()
+bool BelongsToManyImpl::get()
 {
     Api *api = root->api();
     const QString pivot = info.pivot();
 
-    QString statement = "SELECT " + foreignResource.localKey() + " FROM " + pivot;
-    statement.append(" WHERE " + rootResource.primaryKey() + " = " + QueryBuilder::formatValue(root->primary(), api));
+    QString statement = QStringLiteral("SELECT %1 FROM %2 WHERE %3 = %4")
+                            .arg(QueryBuilder::formatFieldName(info.foreignKey(), api),
+                                 QueryBuilder::formatTableName(pivot, api),
+                                 QueryBuilder::formatFieldName(info.localKey(), api),
+                                 QueryBuilder::formatValue(root->primary(), api));
 
     QSqlQuery query = exec(statement);
 
@@ -141,29 +147,51 @@ bool BelongsToManyThroughImpl::get()
         ids.append(QueryBuilder::formatValue(query.value(0), api));
 
     QueryOptions options;
-    options.filters.andWhere(Expression("id IN(" + ids.join(", ") + ')'));
+    options.filters.andWhere(Expression(QueryBuilder::formatFieldName(foreignResource.primaryKey(), api) + " IN(" + ids.join(", ") + ')'));
     // options.withRelations = true;
 
     m_relatedModels = Model::getMulti(foreignResource, options, api, &query);
-    return query.lastError().type() == QSqlError::NoError;
+    if (query.lastError().type() != QSqlError::NoError)
+        return false;
+
+    return MultipleRelationImpl::get();
 }
 
-bool BelongsToManyThroughImpl::save()
+bool BelongsToManyImpl::save()
 {
-    return false;
+    for (Model &model : m_relatedModels) {
+        root->setField(info.localKey(), model.primary());
+        if (!model.save())
+            return false;
+    }
+
+    // Syncing
+
+    QueryOptions options;
+
+    QString filter("%1 NOT IN (%2)");
+    filter = filter.arg(QueryBuilder::formatFieldName(foreignResource.primaryKey(), root->api()));
+    filter = filter.arg(formatedRelatedIds().join(", "));
+    options.filters.andWhere(Expression(filter));
+
+    QString deleteStatement = QueryBuilder::deleteStatement(foreignResource, options, root->api());
+    bool success = false;
+    QueryRunner::exec(deleteStatement, root->api(), &success);
+
+    return success && MultipleRelationImpl::save();
 }
 
-bool BelongsToManyThroughImpl::insert()
+bool BelongsToManyImpl::insert()
 {
-    return false;
+    return save();
 }
 
-bool BelongsToManyThroughImpl::update()
+bool BelongsToManyImpl::update()
 {
-    return false;
+    return save();
 }
 
-bool BelongsToManyThroughImpl::deleteData()
+bool BelongsToManyImpl::deleteData()
 {
     return false;
 }

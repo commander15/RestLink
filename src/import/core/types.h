@@ -3,11 +3,11 @@
 
 #include <QtQml/qqmlengine.h>
 
-#include <lib/api.h>
-#include <lib/response.h>
-#include <lib/network/cache.h>
-#include <lib/network/cookiejar.h>
-#include <lib/network/networkmanager.h>
+#include "../lib/api.h"
+#include "../lib/response.h"
+#include "../lib/network/cache.h"
+#include "../lib/network/cookiejar.h"
+#include "../lib/network/networkmanager.h"
 
 struct ForeignApi
 {

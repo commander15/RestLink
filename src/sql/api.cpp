@@ -19,6 +19,7 @@ Api::Api(const QUrl &url)
     : m_url(url)
     , m_connectionClosable(true)
     , m_autoConfigured(true)
+    , m_activeModels(0)
 {
     static unsigned int connectionId = 0;
 
@@ -46,7 +47,8 @@ Api::Api(const QUrl &url)
 
 Api::~Api()
 {
-    QSqlDatabase::removeDatabase(m_dbConnectionName);
+    if (!s_shutingDown && QSqlDatabase::contains(m_dbConnectionName))
+        QSqlDatabase::removeDatabase(m_dbConnectionName);
     s_apis.remove(m_url);
 }
 
@@ -98,10 +100,22 @@ QJsonObject Api::configuration() const
     return configuration;
 }
 
-void Api::configure(const QJsonObject &configuration)
+void Api::configure(const QJsonObject &configuration, const QHash<QString, QString> &options)
 {
     m_endpoints.clear();
     m_resources.clear();
+
+    if (!options.isEmpty()) {
+        QSqlDatabase db = QSqlDatabase::database(m_dbConnectionName, false);
+        if (db.isOpen())
+            db.close();
+
+        if (options.contains("DATABASE_NAME"))
+            db.setDatabaseName(options.value("DATABASE_NAME"));
+
+        if (options.contains("CONNECT_OPTIONS"))
+            db.setConnectOptions(options.value("CONNECT_OPTIONS"));
+    }
 
     // Loading resources
     const QJsonObject resources = configuration.value("resources").toObject();
@@ -276,6 +290,7 @@ void Api::purgeApis(int atLeast, bool remove)
 
 void Api::cleanupApis()
 {
+    s_shutingDown = true;
     const QList<QUrl> urls = s_apis.keys();
     for (const QUrl &url : urls)
         delete s_apis.take(url);
@@ -294,6 +309,7 @@ void Api::unrefModel(const Model *model)
 }
 
 QHash<QUrl, Api *> Api::s_apis;
+bool Api::s_shutingDown(false);
 
 } // namespace Sql
 } // namespace RestLink

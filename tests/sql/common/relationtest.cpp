@@ -1,24 +1,17 @@
 #include "relationtest.h"
 
-RelationTest::RelationTest(const QString &resource)
-    : api(Api::api(QUrl(DB_URL)))
+RelationTest::RelationTest(const QString &resource, int configIndex)
+    :SqlTest(configIndex)
     , root(resource, api)
 {
     if (!root.isValid())
         assert("Invalid resouce !");
 }
 
-void RelationTest::initializeTest()
-{
-}
-
 void RelationTest::SetUp()
 {
-    resetDatabase();
-    if (root.get(1))
-        ready = true;
-    else
-        ready = false;
+    SqlTest::SetUp();
+    root.get(1);
 }
 
 QString RelationTest::creationTimestamp() const

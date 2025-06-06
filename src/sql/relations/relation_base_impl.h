@@ -21,6 +21,8 @@ public:
 
     bool exists() const override;
 
+    bool get() override;
+
 protected:
     Model m_relatedModel;
 };
@@ -39,13 +41,37 @@ public:
 
     bool exists() const override;
 
+    bool get() override;
     bool save() override;
     bool insert() override;
     bool update() override;
     bool deleteData() override;
 
 protected:
+    QStringList formatedRelatedIds() const;
+
     QList<Model> m_relatedModels;
+};
+
+class PivotBasedMultipleRelationImpl : public MultipleRelationImpl
+{
+public:
+    PivotBasedMultipleRelationImpl(Relation *relation);
+    virtual ~PivotBasedMultipleRelationImpl() = default;
+
+    QJsonValue jsonValue() const override;
+    void setJsonValue(const QJsonValue &value) override;
+
+    //bool get() override;
+    //bool save() override;
+    //bool insert() override;
+    //bool update() override;
+    //bool deleteData() override;
+
+protected:
+    ResourceInfo pivotResource() const;
+
+    QList<Model> m_pivots;
 };
 
 class MultipleThroughRelationImpl : public MultipleRelationImpl

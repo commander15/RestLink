@@ -27,13 +27,13 @@ class Request : public QObject, public QQmlParserStatus
     Q_OBJECT
     Q_PROPERTY(Method method MEMBER m_method NOTIFY methodChanged FINAL)
     Q_PROPERTY(QString endpoint MEMBER m_endpoint NOTIFY endpointChanged FINAL)
-    Q_PROPERTY(RestLink::Qml::Body* body READ body NOTIFY bodyChanged FINAL)
+    Q_PROPERTY(RestLink::Qml::Body* body READ body CONSTANT FINAL)
     Q_PROPERTY(bool autoRun MEMBER m_autoRun NOTIFY autoRunChanged)
     Q_PROPERTY(bool running READ isRunning NOTIFY finished FINAL)
     Q_PROPERTY(bool finished READ isFinished NOTIFY finished FINAL)
     Q_PROPERTY(RestLink::Response *response READ response NOTIFY started FINAL)
     Q_PROPERTY(RestLink::Qml::Api *api MEMBER m_api NOTIFY apiChanged FINAL)
-    Q_PROPERTY(QQmlListProperty<RestLink::Qml::RequestParameter> parameters MEMBER m_parametersProperty NOTIFY parametersChanged FINAL)
+    Q_PROPERTY(QQmlListProperty<RestLink::Qml::RequestParameter> parameters READ parameters FINAL)
 
     Q_CLASSINFO("DefaultProperty", "parameters")
 
@@ -51,6 +51,7 @@ public:
 
     explicit Request(QObject *parent = nullptr);
 
+    QQmlListProperty<RequestParameter> parameters();
     Body *body() const;
 
     bool isRunning() const;
@@ -66,7 +67,6 @@ public slots:
 signals:
     void methodChanged();
     void endpointChanged();
-    void bodyChanged();
     void apiChanged();
 
     void parametersChanged();
@@ -85,7 +85,6 @@ private:
     Api *m_api;
 
     QList<RequestParameter *> m_parameters;
-    QQmlListProperty<RequestParameter> m_parametersProperty;
 };
 
 class Body : public QObject
@@ -94,8 +93,9 @@ class Body : public QObject
     QML_ADDED_IN_VERSION(2, 0)
 
     Q_OBJECT
-    Q_PROPERTY(QVariant data READ data WRITE setData NOTIFY contentChanged FINAL)
     Q_PROPERTY(QString file READ fileName WRITE setFileName NOTIFY contentChanged FINAL)
+    Q_PROPERTY(QVariant data READ data WRITE setData NOTIFY contentChanged FINAL)
+    Q_PROPERTY(bool json READ hasJson WRITE setJson NOTIFY dataTypeChanged FINAL)
 
 public:
     enum Content {
@@ -105,20 +105,27 @@ public:
 
     explicit Body(QObject *parent = nullptr);
 
+    QString fileName() const;
+    void setFileName(const QString &fileName);
+
     QVariant data() const;
     void setData(const QVariant &data);
 
-    QString fileName() const;
-    void setFileName(const QString &fileName);
+    bool hasJson() const;
+    void setJson(bool on);
 
     RestLink::Body body() const;
 
 signals:
     void contentChanged();
+    void dataTypeChanged();
 
 private:
+    void setDataType(int type);
+
     QVariant m_content;
     Content m_contentType;
+    int m_dataType;
 };
 
 } // namespace Qml

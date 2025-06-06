@@ -16,7 +16,7 @@ public:
     bool update() override;
     bool deleteData() override;
 
-    Relation::OperationMode operationMode() const override { return Relation::PostProcessing; }
+    Relation::OperationMode operationMode(Operation) const override { return Relation::PostProcessing; }
     Relation::Type relationType() const override { return Relation::Type::HasOne; }
     RelationImpl *clone() const override { return new HasOneImpl(relation); }
 };
@@ -33,7 +33,7 @@ public:
 
     //void setJsonValue(const QJsonValue &value) override;
 
-    Relation::OperationMode operationMode() const override { return Relation::OperationMode::PreProcessing; }
+    Relation::OperationMode operationMode(Operation) const override { return Relation::PreProcessing; }
     Relation::Type relationType() const override { return Relation::Type::BelongsToOne; }
     RelationImpl *clone() const override { return new BelongsToOneImpl(relation); }
 };
@@ -49,15 +49,15 @@ public:
     bool update() override;
     bool deleteData() override;
 
-    Relation::OperationMode operationMode() const override { return Relation::OperationMode::PreProcessing; }
+    Relation::OperationMode operationMode(Operation op) const override { return op != DeleteOperation ? Relation::PostProcessing : Relation::PreProcessing; }
     Relation::Type relationType() const override { return Relation::Type::HasMany; }
     RelationImpl *clone() const override { return new HasManyImpl(relation); }
 };
 
-class BelongsToManyThroughImpl : public RestLink::Sql::MultipleRelationImpl
+class BelongsToManyImpl : public RestLink::Sql::MultipleRelationImpl
 {
 public:
-    BelongsToManyThroughImpl(Relation *relation) : MultipleRelationImpl(relation) {}
+    BelongsToManyImpl(Relation *relation) : MultipleRelationImpl(relation) {}
 
     bool get() override;
     bool save() override;
@@ -65,9 +65,9 @@ public:
     bool update() override;
     bool deleteData() override;
 
-    Relation::OperationMode operationMode() const override { return Relation::OperationMode::PostProcessing; }
+    Relation::OperationMode operationMode(Operation) const override { return Relation::PostProcessing; }
     Relation::Type relationType() const override { return Relation::Type::BelongsToManyThrough; }
-    RelationImpl *clone() const override { return new BelongsToManyThroughImpl(relation); }
+    RelationImpl *clone() const override { return new BelongsToManyImpl(relation); }
 };
 
 } // namespace Sql

@@ -68,22 +68,28 @@ QString NetworkResponse::httpReasonPhrase() const
     return d->netReply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
 }
 
-bool NetworkResponse::hasHeader(const QByteArray &name) const
+bool NetworkResponse::hasHeader(const QString &name) const
 {
     RESTLINK_D(const NetworkResponse);
     return d->netReply->hasRawHeader(name);
 }
 
-QByteArray NetworkResponse::header(const QByteArray &name) const
+QString NetworkResponse::header(const QString &name) const
 {
     RESTLINK_D(const NetworkResponse);
     return d->netReply->rawHeader(name);
 }
 
-QByteArrayList NetworkResponse::headerList() const
+QStringList NetworkResponse::headerList() const
 {
     RESTLINK_D(const NetworkResponse);
-    return d->netReply->rawHeaderList();
+
+    const QByteArrayList rawHeaderNames = d->netReply->rawHeaderList();
+    QStringList headerNames;
+    std::transform(rawHeaderNames.begin(), rawHeaderNames.end(), std::back_inserter(headerNames), [](const QByteArray &rawHeaderName) {
+        return QString::fromUtf8(rawHeaderName);
+    });
+    return headerNames;
 }
 
 QByteArray NetworkResponse::readBody()

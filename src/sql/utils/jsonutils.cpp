@@ -2,6 +2,7 @@
 
 #include <meta/resourceinfo.h>
 
+#include <QtCore/qjsondocument.h>
 #include <QtCore/qjsonobject.h>
 #include <QtCore/qjsonarray.h>
 #include <QtCore/qjsonvalue.h>

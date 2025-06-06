@@ -1,3 +1,3 @@
 #include "debug.h"
 
-Q_LOGGING_CATEGORY(restlinkSql, "restlink.sql", QtCriticalMsg)
+Q_LOGGING_CATEGORY(restlinkSql, "restlink.sql", QtWarningMsg)

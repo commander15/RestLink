@@ -114,29 +114,30 @@ AbstractRequestHandler::HandlerType NetworkManager::handlerType() const
 QNetworkRequest NetworkManager::generateNetworkRequest(Method method, const Request &request, const Body &body)
 {
     const QUrl url = request.url();
-    QHttpHeaders headers = request.httpHeaders();
+    QHttpHeaders httpHeaders;
 
-    // Body headers
-    const HeaderList bodyHeaders = body.headers();
-    for (const Header &header : bodyHeaders) {
-        if (headers.contains(header.name()))
-            headers.removeAll(header.name());
+    // Api, Request and Body headers
+    const HeaderList allHeaders = (request.api() ? request.api()->headers() : HeaderList()) + request.headers() + body.headers();
+    for (const Header &header : allHeaders) {
+        const QString name = header.name();
+        if (httpHeaders.contains(name))
+            httpHeaders.removeAll(name);
 
         const QVariantList values = header.values();
         for (const QVariant &value : values)
-            headers.append(header.name(), value.toString());
+            httpHeaders.append(name, value.toString());
     }
 
     // Compression support
-    if (request.attribute(Request::CompressionAllowedAttribute, true).toBool() && !headers.contains(QHttpHeaders::WellKnownHeader::AcceptEncoding)) {
+    if (request.attribute(Request::CompressionAllowedAttribute, true).toBool() && !httpHeaders.contains(QHttpHeaders::WellKnownHeader::AcceptEncoding)) {
         const QByteArrayList algorithms = CompressionUtils::supportedAlgorithms();
         if (!algorithms.isEmpty())
-            headers.append(QHttpHeaders::WellKnownHeader::AcceptEncoding, algorithms.join(", "));
+            httpHeaders.append(QHttpHeaders::WellKnownHeader::AcceptEncoding, algorithms.join(", "));
     }
 
-    auto fillGap = [&headers](QHttpHeaders::WellKnownHeader header, const QAnyStringView &value) {
-        if (!headers.contains(header))
-            headers.append(header, value);
+    auto fillGap = [&httpHeaders](QHttpHeaders::WellKnownHeader header, const QAnyStringView &value) {
+        if (!httpHeaders.contains(header))
+            httpHeaders.append(header, value);
     };
 
     // Make keep alive
@@ -150,8 +151,11 @@ QNetworkRequest NetworkManager::generateNetworkRequest(Method method, const Requ
 
     QNetworkRequest netRequest(url);
     netRequest.setOriginatingObject(request.api());
-    netRequest.setHeaders(headers);
+    netRequest.setHeaders(httpHeaders);
     netRequest.setAttribute(QNetworkRequest::UserMax, QVariant::fromValue(request));
+
+    auto contentType = httpHeaders.values(QHttpHeaders::WellKnownHeader::ContentType);
+    Q_UNUSED(contentType);
 
     // Request attributes
     auto applyAttribute = [&request, &netRequest](Request::Attribute source, QNetworkRequest::Attribute target) {

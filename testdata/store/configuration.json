@@ -1,100 +1,215 @@
 {
-  "endpoints": {
-    "/statistics": {
-      "query": "SELECT Products.id as product_id, Products.name as product_name, SUM(SaleItems.quantity) AS sell_count FROM Products INNER JOIN SaleItems ON(SaleItems.product_id = Products.id) LIMIT 100 OFFSET ({page} - 1) * 100",
-      "parameters": {
-        "page": 1
-      },
-      "object": false,
-      "array": true
-    }
-  },
-  "resources": {
-    "products": {
-      "table": "Products",
-      "primary_key": "id",
-      "local_key": "product_id",
-      "hidden": [ "category_id" ],
-      "fillable": [ "name", "description", "price", "barcode" ],
-      "relations": {
-      "category": {
-        "table": "Categories",
-        "local_key": "category_id",
-        "type": "BelongsToOne"
-      },
-        "stock": {
-          "table": "Stocks",
-          "foreign_key": "product_id",
-          "type": "HasOne",
-          "owned": true
+    "authentication": {
+        "identifier_field": "email",
+        "identifier_type": "email",
+        "password_field": "password",
+        "password_type": "hashed",
+        "resource": "users"
+    },
+    "endpoints": {
+        "/products-categories": {
+            "get_query": {
+                "array": true,
+                "object": false,
+                "parameters": {
+                    "page": 1
+                },
+                "statements": [
+                    "SELECT * FROM Products LIMIT 10 OFFSET ({{page}} - 1) * 10",
+                    "SELECT * FROM Categories LIMIT 10 OFFSET ({{page}} - 1) * 10"
+                ]
+            }
         },
-        "sales": {
-          "table": "Sales",
-          "pivot": "SaleItems",
-          "local_key": "product_id",
-          "foreign_key": "sale_id",
-          "type": "BelongsToMany",
-          "owned": true
+        "/statistics": {
+            "get_query": {
+                "array": true,
+                "object": false,
+                "parameters": {
+                    "page": 1
+                },
+                "statement": "SELECT Products.id as product_id, Products.name as product_name, SUM(SaleItems.quantity) AS sell_count FROM Products INNER JOIN SaleItems ON(SaleItems.product_id = Products.id) LIMIT 100 OFFSET ({{page}} - 1) * 100"
+            }
         }
-      }
     },
-    "categories": {
-        "table": "Categories",
-        "local_key": "category_id"
-    },
-    "stocks": {
-      "table": "Stocks",
-      "primary_key": "id",
-      "local_key": "stock_id",
-      "fillable": [ "quantity", "product_id" ],
-      "relations": {
-        "product": {
-          "table": "Products",
-          "local_key": "product_id",
-          "type": "BelongsToOne",
-          "owned": true
-        }
-      }
-    },
-    "sales": {
-      "table": "Sales",
-      "primary_key": "id",
-      "local_key": "sale_id",
-      "fillable": [ "number", "amount" ],
-      "relations": {
-        "items": {
-          "table": "SaleItems",
-          "foreign_key": "sale_id",
-          "type": "HasMany",
-          "owned": true,
-          "nested_load": true
+    "resources": {
+        "categories": {
+            "fillable": [
+                "name",
+                "description"
+            ],
+            "local_key": "category_id",
+            "primary_key": "id",
+            "relations": {
+                "products": {
+                    "foreign_key": "category_id",
+                    "local_key": "id",
+                    "table": "Products",
+                    "type": "HasMany"
+                }
+            },
+            "table": "Categories"
         },
         "products": {
-          "table": "Products",
-          "pivot": "SaleItems",
-          "local_key": "sale_id",
-          "foreign_key": "product_id",
-          "type": "BelongsToMany"
-        }
-      }
-    },
-    "sale_items": {
-      "table": "SaleItems",
-      "primary_key": "id",
-      "local_key": "sale_item_id",
-      "fillable": [ "quantity", "sale_id", "product_id" ],
-      "relations": {
-        "sale": {
-          "table": "Sales",
-          "local_key": "sale_id",
-          "type": "BelongsToOne"
+            "fillable": [
+                "name",
+                "description",
+                "price",
+                "barcode"
+            ],
+            "local_key": "product_id",
+            "primary_key": "id",
+            "relations": {
+                "category": {
+                    "foreign_key": "id",
+                    "load": {
+                        "auto": true
+                    },
+                    "local_key": "category_id",
+                    "table": "Categories",
+                    "type": "BelongsToOne"
+                },
+                "sales": {
+                    "foreign_key": "sale_id",
+                    "local_key": "product_id",
+                    "pivot": "SaleItems",
+                    "table": "Sales",
+                    "type": "BelongsToMany"
+                },
+                "stock": {
+                    "foreign_key": "product_id",
+                    "load": {
+                        "auto": true
+                    },
+                    "local_key": "id",
+                    "table": "Stocks",
+                    "type": "HasOne"
+                }
+            },
+            "table": "Products"
         },
-        "product": {
-          "table": "Products",
-          "local_key": "product_id",
-          "type": "BelongsToOne"
+        "sale_items": {
+            "fillable": [
+                "quantity"
+            ],
+            "local_key": "item_id",
+            "primary_key": "id",
+            "ralations": {
+                "product": {
+                    "foreign_key": "id",
+                    "local_key": "product_id",
+                    "table": "Products",
+                    "type": "BelongsToOne"
+                }
+            },
+            "relations": {
+                "product": {
+                    "load": {
+                        "auto": true
+                    }
+                },
+                "sale": {
+                    "foreign_key": "sale_id",
+                    "local_key": "item_id",
+                    "pivot": "SaleItems",
+                    "table": "Sales",
+                    "type": "BelongsToMany"
+                }
+            },
+            "table": "SaleItems"
+        },
+        "sales": {
+            "fillable": [
+                "number",
+                "amount"
+            ],
+            "local_key": "sale_id",
+            "primary_key": "id",
+            "relations": {
+                "items": {
+                    "foreign_key": "sale_id",
+                    "local_key": "id",
+                    "table": "SaleItems",
+                    "type": "HasMany"
+                },
+                "seller": {
+                    "foreign_key": "id",
+                    "local_key": "seller_id",
+                    "table": "Users",
+                    "type": "BelongsToOne"
+                }
+            },
+            "table": "Sales"
+        },
+        "stocks": {
+            "fillable": [
+                "quantity"
+            ],
+            "local_key": "stock_id",
+            "primary_key": "id",
+            "relations": {
+                "product": {
+                    "foreign_key": "product_id",
+                    "local_key": "id",
+                    "table": "Products",
+                    "type": "BelongsToOne"
+                }
+            },
+            "table": "Stocks"
+        },
+        "user_groups": {
+            "fillable": [
+                "name"
+            ],
+            "local_key": "group_id",
+            "primary_key": "id",
+            "table": "UserGroups"
+        },
+        "user_roles": {
+            "fillable": [
+                "name"
+            ],
+            "local_key": "role_id",
+            "primary_key": "id",
+            "relations": {
+                "users": {
+                    "foreign_key": "role_id",
+                    "local_key": "id",
+                    "table": "Users",
+                    "type": "HasMany"
+                }
+            },
+            "table": "UserRoles"
+        },
+        "users": {
+            "fillable": [
+                "name",
+                "email",
+                "password"
+            ],
+            "local_key": "user_id",
+            "primary_key": "id",
+            "relations": {
+                "groups": {
+                    "foreign_key": "group_id",
+                    "local_key": "user_id",
+                    "pivot": "UserGroupMembers",
+                    "table": "UserGroups",
+                    "type": "BelongsToMany"
+                },
+                "role": {
+                    "foreign_key": "id",
+                    "local_key": "role_id",
+                    "table": "UserRoles",
+                    "type": "BelongsToOne"
+                },
+                "sales": {
+                    "foreign_key": "user_id",
+                    "local_key": "id",
+                    "table": "Sales",
+                    "type": "HasMany"
+                }
+            },
+            "table": "Users"
         }
-      }
     }
-  }
 }

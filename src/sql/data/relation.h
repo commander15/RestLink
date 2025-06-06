@@ -49,6 +49,8 @@ public:
 
     QString relationName() const;
 
+    QStringList loadableRelations() const;
+
     QString modelName() const;
     bool isOwnedModel() const;
 
@@ -72,7 +74,7 @@ public:
     bool update() override;
     bool deleteData() override;
 
-    void prepareOperations(OperationMode mode);
+    void prepareOperations(Model *model, OperationMode mode);
 
     static Relation::Type typeFromString(const QString &str);
     static QString stringFromType(Relation::Type type);
@@ -102,7 +104,7 @@ public:
     virtual QJsonValue jsonValue() const = 0;
     virtual void setJsonValue(const QJsonValue &value) = 0;
 
-    virtual Relation::OperationMode operationMode() const = 0;
+    virtual Relation::OperationMode operationMode(Operation op) const = 0;
     virtual Relation::Type relationType() const = 0;
 
     virtual RelationImpl *clone() const = 0;
@@ -132,15 +134,15 @@ class NullRelationImpl final : public RelationImpl
 public:
     NullRelationImpl(Relation *relation) : RelationImpl(relation) {}
 
-    void fillFromJson(const QJsonValue &value) override { error(); }
+    void fillFromJson(const QJsonValue &) override { error(); }
 
     QList<Model> relatedModels() const override { error(); return {}; }
-    void setRelatedModels(const QList<Model> &models) override { error(); }
+    void setRelatedModels(const QList<Model> &) override { error(); }
 
     QJsonValue jsonValue() const override { error(); return QJsonValue(); }
-    void setJsonValue(const QJsonValue &value) override { error(); };
+    void setJsonValue(const QJsonValue &) override { error(); };
 
-    Relation::OperationMode operationMode() const override
+    Relation::OperationMode operationMode(Operation) const override
     { error(); return Relation::PostProcessing; }
 
     bool exists() const override { return error(); }

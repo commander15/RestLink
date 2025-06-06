@@ -83,10 +83,10 @@ void AbstractResourceController::processRequest(const ServerRequest &request, Se
     AbstractRequestHandler::Method method = request.method();
 
     if (method == AbstractRequestHandler::GetMethod) {
-        if (request.identifier().isEmpty())
-            index(request, response);
-        else
+        if (request.identifier().isValid())
             show(request, response);
+        else
+            index(request, response);
         return;
     }
 

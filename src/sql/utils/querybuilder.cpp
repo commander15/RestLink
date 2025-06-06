@@ -119,11 +119,15 @@ void QueryBuilder::extract(const ResourceInfo &resource, const QVariantHash &dat
         if (!data.contains(fieldName))
             continue;
 
+        const QVariant value = data.value(fieldName);
+        if (value.isNull() || !value.isValid())
+            continue;
+
         if (columns)
             columns->append(formatFieldName(fieldName, api));
 
         if (values)
-            values->append(formatValue(data.value(fieldName), resource.fieldType(fieldName), api));
+            values->append(formatValue(value, resource.fieldType(fieldName), api));
     }
 }
 

@@ -35,6 +35,8 @@ public:
 
     virtual bool isValid() const;
 
+    virtual void save(QJsonObject *object) const = 0;
+
     static void beginParsing(const QJsonObject &object);
     static void endParsing();
 

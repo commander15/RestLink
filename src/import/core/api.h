@@ -20,31 +20,27 @@ class Api : public RestLink::Api, public QQmlParserStatus
     Q_INTERFACES(QQmlParserStatus)
 
     Q_OBJECT
-    Q_PROPERTY(bool ready READ isReady NOTIFY ready FINAL)
     Q_PROPERTY(QUrl configurationUrl MEMBER m_configUrl NOTIFY configurationUrlChanged FINAL)
-    Q_PROPERTY(QQmlListProperty<RestLink::Qml::RequestParameter> parameters MEMBER m_parametersProperty FINAL)
+    Q_PROPERTY(QQmlListProperty<RestLink::Qml::RequestParameter> parameters READ parameters FINAL)
 
     Q_CLASSINFO("DefaultProperty", "parameters")
 
 public:
     Api(QObject *parent = nullptr);
 
-    bool isReady() const;
-    Q_SIGNAL void ready();
-
     QUrl configurationUrl() const;
-    Q_SLOT void setConfigurationUrl(const QUrl &url);
+    void setConfigurationUrl(const QUrl &url);
     Q_SIGNAL void configurationUrlChanged();
+
+    QQmlListProperty<RequestParameter> parameters();
 
     void classBegin() override;
     void componentComplete() override;
 
 private:
     QUrl m_configUrl;
-    bool m_ready;
 
     QList<RequestParameter *> m_parameters;
-    QQmlListProperty<RequestParameter> m_parametersProperty;
 };
 
 } // namespace Qml
