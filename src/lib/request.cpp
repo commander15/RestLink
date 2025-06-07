@@ -493,7 +493,7 @@ Request Request::merge(const Request &r1, const Request &r2)
     Request request = r1;
 
     // Adding base url from r2 if not present on r1
-    if (!request.baseUrl().isEmpty())
+    if (!request.d_ptr->baseUrl.isEmpty() && !r2.d_ptr->baseUrl.isEmpty())
         request.setBaseUrl(r2.baseUrl());
 
     // Adding path parameters that doesn't exists on r1 from r2 to r1
