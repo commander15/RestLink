@@ -240,9 +240,14 @@ void Request::setBaseUrl(const QUrl &url)
  */
 QUrl Request::url(UrlType type) const
 {
-    QUrl url = baseUrl();
+    if (d_ptr->baseUrl.isValid())
+        return d_ptr->baseUrl;
 
     Api *api = d_ptr->api;
+    if (!api)
+        return QUrl();
+
+    QUrl url = api->url();
 
     auto canUseParameter = [&type](const Parameter &param) {
         return RequestPrivate::canUseUrlParameter(param, type);
