@@ -191,6 +191,7 @@ void Api::setBearerToken(const QString &token)
 {
     RESTLINK_D(Api);
     if (d->bearerToken != token) {
+        setHeader("Authorization", (token.isEmpty() ? QVariant() : QVariant("Bearer " + token)));
         d->bearerToken = token;
         emit bearerTokenChanged(token);
     }
