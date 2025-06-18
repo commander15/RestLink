@@ -49,6 +49,7 @@ Api::~Api()
 {
     if (!s_shutingDown && QSqlDatabase::contains(m_dbConnectionName))
         QSqlDatabase::removeDatabase(m_dbConnectionName);
+
     s_apis.remove(m_url);
 }
 

@@ -109,7 +109,7 @@ void Router::processStandardRequest(const ServerRequest &request, ServerResponse
     processUnsupportedRequest(request, response);
 }
 
-void *Router::requestDataSource(const ServerRequest &request)
+void *Router::createDataSource(const ServerRequest &request)
 {
     Api *api = Api::api(request.baseUrl());
     return (api ? new QSqlDatabase(api->database()) : nullptr);

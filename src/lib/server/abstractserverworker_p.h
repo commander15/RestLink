@@ -31,6 +31,8 @@ public:
 
     bool processNext();
 
+    AbstractController *requestController(const PendingRequest &pending, bool *deletable = nullptr);
+
     AbstractServerWorker *q_ptr;
 
     QQueue<PendingRequest> pendingRequests;

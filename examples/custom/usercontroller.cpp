@@ -1,19 +1,25 @@
 #include "usercontroller.h"
 
-#include <RestLink/restlink.h>
-#include <RestLink/server.h>
+#include <RestLink/serverrequest.h>
+#include <RestLink/serverresponse.h>
 
 #include <qsqldatabase.h>
 #include <qsqlquery.h>
+#include <qjsonobject.h>
 #include <qjsonarray.h>
 
 using namespace RestLink;
+
+QString UserController::endpoint() const
+{
+    return QStringLiteral("/app/users");
+}
 
 void UserController::index(const ServerRequest &request, ServerResponse *response)
 {
     QJsonObject o;
     o.insert("resource", request.resource());
-    o.insert("identifier", request.identifier());
+    o.insert("identifier", request.identifier().toInt());
     o.insert("url", request.url().toString());
 
     response->setBody(o);

@@ -14,7 +14,7 @@ message("QML: ${QT_QML_ROOT_PATH}")
 
 add_subdirectory(tmdb-desktop)
 
-if (RESTLINK_BUILD_SQL)
+if (RESTLINK_SUPPORT_SQL)
     add_subdirectory(custom)
 endif()
 
