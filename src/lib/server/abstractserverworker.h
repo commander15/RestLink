@@ -24,6 +24,7 @@ public:
     AbstractServerWorker(WorkerType type, QObject *parent = nullptr);
     virtual ~AbstractServerWorker();
 
+    bool hasPendingRequests() const;
     void enqueue(const ServerRequest &request, ServerResponse *response);
 
     virtual void processInternalRequest(const ServerRequest &request, ServerResponse *response);
@@ -35,7 +36,7 @@ protected:
     virtual void cleanup() = 0;
     virtual bool maintain() = 0;
 
-    virtual void *requestDataSource(const ServerRequest &request) = 0;
+    virtual void *createDataSource(const ServerRequest &request) = 0;
     virtual void clearDataSource(const ServerRequest &request, void *source) = 0;
 
     void run() override final;

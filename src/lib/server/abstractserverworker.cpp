@@ -20,6 +20,12 @@ AbstractServerWorker::~AbstractServerWorker()
 {
 }
 
+bool AbstractServerWorker::hasPendingRequests() const
+{
+    QMutexLocker locker(&d_ptr->mutex);
+    return !d_ptr->pendingRequests.isEmpty();
+}
+
 void AbstractServerWorker::enqueue(const ServerRequest &request, ServerResponse *response)
 {
     static const QStringList internals = {
@@ -65,6 +71,7 @@ void AbstractServerWorker::processInternalRequest(const ServerRequest &request, 
             response->setHttpStatusCode(400);
             response->setBody(QJsonObject({ { "message", "controller invalid or already registered !" } }));
         }
+
         response->complete();
         return;
     }
@@ -115,6 +122,12 @@ AbstractServerWorkerPrivate::~AbstractServerWorkerPrivate()
 {
     QMutexLocker locker(&mutex);
 
+    while (!pendingRequests.isEmpty()) {
+        AbstractController *controller = pendingRequests.dequeue().request.controller();
+        if (controller)
+            delete controller;
+    }
+
     while (!controllers.isEmpty())
         delete controllers.takeFirst();
 }
@@ -159,31 +172,49 @@ bool AbstractServerWorkerPrivate::processNext()
             pending = pendingRequests.dequeue();
     }
 
-    AbstractController *controller = pending.request.controller();
-    if (!controller) {
-        auto it = std::find_if(controllers.begin(), controllers.end(), [&pending](AbstractController *controller) {
-            return controller->canProcessRequest(pending.request);
-        });
-
-        if (it != controllers.end())
-            controller = *it;
-    }
-
-    if (controller) {
-        void *dataSource = q_ptr->requestDataSource(pending.request);
-        controller->setDataSource(dataSource);
-        controller->processRequest(pending.request, pending.response);
-        q_ptr->clearDataSource(pending.request, dataSource);
-    } else if (pending.internal) {
+    if (pending.internal) {
         q_ptr->processInternalRequest(pending.request, pending.response);
     } else {
-        q_ptr->processStandardRequest(pending.request, pending.response);
+        bool deletable = true;
+        AbstractController *controller = requestController(pending, &deletable);
+        if (controller) {
+            void *source = q_ptr->createDataSource(pending.request);
+            controller->setDataSource(source);
+            if (controller->canProcessRequest(pending.request))
+                controller->processRequest(pending.request, pending.response);
+            q_ptr->clearDataSource(pending.request, source);
+
+            if (deletable)
+                delete controller;
+        } else {
+            q_ptr->processStandardRequest(pending.request, pending.response);
+        }
     }
 
     if (pending.response->isRunning())
         pending.response->complete();
 
     return true;
+}
+
+AbstractController *AbstractServerWorkerPrivate::requestController(const PendingRequest &pending, bool *deletable)
+{
+    AbstractController *controller = pending.request.controller();
+    if (controller != nullptr) {
+        if (deletable) *deletable = true;
+        return controller;
+    }
+
+    auto it = std::find_if(controllers.begin(), controllers.end(), [&pending](AbstractController *controller) {
+        return controller->canProcessRequest(pending.request);
+    });
+
+    if (it != controllers.end()) {
+        if (deletable) *deletable = false;
+        return *it;
+    }
+
+    return nullptr;
 }
 
 } // namespace RestLink

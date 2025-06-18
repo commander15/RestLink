@@ -9,8 +9,7 @@ public:
     ~UserController()
     { qDebug("Bye bye"); }
 
-    QString endpoint() const override
-    { return QStringLiteral("/app/users"); }
+    QString endpoint() const override;
 
     void index(const RestLink::ServerRequest &request, RestLink::ServerResponse *response) override;
     void show(const RestLink::ServerRequest &request, RestLink::ServerResponse *response) override;

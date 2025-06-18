@@ -1,6 +1,8 @@
 #include "server.h"
 #include "server_p.h"
 
+#include <QtCore/qtimer.h>
+
 #include <RestLink/serverrequest.h>
 #include <RestLink/serverresponse.h>
 #include <RestLink/abstractserverworker.h>
@@ -10,6 +12,11 @@ namespace RestLink {
 Server::Server(AbstractServerWorker *worker, QObject *parent)
     : Server(new ServerPrivate(worker, this), parent)
 {
+    RESTLINK_D(Server);
+    QTimer::singleShot(0, this, [d] {
+        if (d->worker && !d->worker->isRunning() && d->worker->hasPendingRequests())
+            d->worker->start();
+    });
 }
 
 Server::Server(ServerPrivate *d, QObject *parent)
@@ -21,7 +28,7 @@ Server::Server(ServerPrivate *d, QObject *parent)
 
 Server::~Server()
 {
-    if (d_ptr->worker->isRunning()) {
+    if (d_ptr->worker && d_ptr->worker->isRunning()) {
         d_ptr->worker->requestInterruption();
         d_ptr->worker->wait();
     }
@@ -68,9 +75,6 @@ Response *Server::sendRequest(Method method, const Request &request, const Body 
     }
 
     d_ptr->worker->enqueue(serverRequest, serverResponse);
-    if (!d_ptr->worker->isRunning())
-        d_ptr->worker->start();
-
     return serverResponse;
 }
 

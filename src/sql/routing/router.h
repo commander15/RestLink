@@ -25,7 +25,7 @@ protected:
 
     void processStandardRequest(const ServerRequest &request, ServerResponse *response) override;
 
-    void *requestDataSource(const ServerRequest &request) override;
+    void *createDataSource(const ServerRequest &request) override;
     void clearDataSource(const ServerRequest &request, void *source) override;
 
 private:
