@@ -108,7 +108,7 @@ QStringList NetworkManager::supportedSchemes() const
 
 AbstractRequestHandler::HandlerType NetworkManager::handlerType() const
 {
-    return AbstractRequestHandler::NetworkManager;
+    return HandlerType::NetworkManager;
 }
 
 QNetworkRequest NetworkManager::generateNetworkRequest(Method method, const Request &request, const Body &body)

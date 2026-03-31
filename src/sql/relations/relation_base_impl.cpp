@@ -1,5 +1,4 @@
 #include "relation_base_impl.h"
-#include "utils/queryrunner.h"
 
 #include <utils/querybuilder.h>
 
@@ -42,8 +41,7 @@ bool SingleRelationImpl::exists() const
 
 bool SingleRelationImpl::get()
 {
-    const QStringList relations = relation->loadableRelations();
-    return (relations.isEmpty() ? true : m_relatedModel.load(relations));
+    return getModel(m_relatedModel);
 }
 
 MultipleRelationImpl::MultipleRelationImpl(Relation *relation)
@@ -90,12 +88,8 @@ bool MultipleRelationImpl::exists() const
 
 bool MultipleRelationImpl::get()
 {
-    const QStringList relations = relation->loadableRelations();
-    if (relations.isEmpty())
-        return true;
-
     for (Model &model : m_relatedModels)
-        if (!model.load(relations))
+        if (!getModel(model))
             return false;
 
     return true;

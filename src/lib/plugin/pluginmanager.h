@@ -10,7 +10,6 @@ class PluginManagerPrivate;
 class RESTLINK_EXPORT PluginManager
 {
 public:
-    PluginManager();
     ~PluginManager();
 
     static QList<AbstractRequestHandler *> handlers();
@@ -24,6 +23,8 @@ public:
     static PluginManager *global();
 
 private:
+    PluginManager();
+
     AbstractRequestHandler *createHandler(Plugin *plugin);
     Plugin *loadPlugin(const QString &name);
     void unloadPlugin();

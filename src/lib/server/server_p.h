@@ -5,7 +5,7 @@
 
 namespace RestLink {
 
-class RESTLINK_EXPORT ServerPrivate
+class ServerPrivate
 {
 public:
     ServerPrivate(AbstractServerWorker *worker, Server *q);

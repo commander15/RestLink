@@ -169,6 +169,11 @@ QJsonObject Model::jsonObject() const
     return object;
 }
 
+bool Model::isEmpty() const
+{
+    return d_ptr->data.empty();
+}
+
 bool Model::exists() const
 {
     return primary().isValid();
@@ -211,17 +216,19 @@ bool Model::loadAll()
 
 bool Model::loadDefault()
 {
-    QStringList names = d_ptr->resource.relationNames();
-    for (const QString &name : std::as_const(names))
-        if (!d_ptr->resource.relation(name).autoLoadable())
-            names.removeOne(name);
-    return load(names);
+    return load(d_ptr->resource.with());
 }
 
-bool Model::load(const QStringList &relations)
+bool Model::load(const QStringList &relations, bool withDefault)
 {
+    QStringList names = relations;
+    if (withDefault) {
+        names.append(d_ptr->resource.with());
+        names.removeDuplicates();
+    }
+
     d_ptr->relations.clear();
-    for (const QString &name : relations) {
+    for (const QString &name : names) {
         Relation relation(name, this);
         if (!relation.get())
             return false;
@@ -348,6 +355,20 @@ Api *Model::api() const
     return d_ptr->api;
 }
 
+Model Model::find(const QString &resource, const QVariant &id, Api *api, bool *success)
+{
+    Model model(resource, api);
+    *success = model.get(id);
+    return model;
+}
+
+Model Model::find(const ResourceInfo &resource, const QVariant &id, Api *api, bool *success)
+{
+    Model model(resource, api);
+    *success = model.get(id);
+    return model;
+}
+
 QList<Model> Model::getMulti(const QString &resource, const QueryOptions &options, Api *api, bool *success)
 {
     QSqlQuery query(api->database());
@@ -403,13 +424,14 @@ QList<Model> Model::getMulti(const ResourceInfo &resource, const QueryOptions &o
     }
 
     QList<Model> models;
+
     while (sqlQuery.next()) {
         Model model(resource, api);
         model.fill(sqlQuery.record());
-        if (!options.withRelations.isEmpty())
-            model.load(options.withRelations);
+        model.load(options.withRelations, true);
         models.append(model);
     }
+
     return models;
 }
 

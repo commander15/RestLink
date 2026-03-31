@@ -15,7 +15,7 @@ QString UserController::endpoint() const
     return QStringLiteral("/app/users");
 }
 
-void UserController::index(const ServerRequest &request, ServerResponse *response)
+void UserController::index(ServerRequest &request, ServerResponse *response)
 {
     QJsonObject o;
     o.insert("resource", request.resource());
@@ -27,7 +27,7 @@ void UserController::index(const ServerRequest &request, ServerResponse *respons
     response->complete();
 }
 
-void UserController::show(const ServerRequest &request, ServerResponse *response)
+void UserController::show(ServerRequest &request, ServerResponse *response)
 {
     QSqlQuery query(database());
 
@@ -49,17 +49,17 @@ void UserController::show(const ServerRequest &request, ServerResponse *response
     response->complete();
 }
 
-void UserController::update(const ServerRequest &request, ServerResponse *response)
+void UserController::update(ServerRequest &request, ServerResponse *response)
 {
 
 }
 
-void UserController::store(const ServerRequest &request, ServerResponse *response)
+void UserController::store(ServerRequest &request, ServerResponse *response)
 {
 
 }
 
-void UserController::destroy(const ServerRequest &request, ServerResponse *response)
+void UserController::destroy(ServerRequest &request, ServerResponse *response)
 {
 
 }

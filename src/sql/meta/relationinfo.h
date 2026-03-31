@@ -26,20 +26,18 @@ public:
     RelationInfo &operator=(const RelationInfo &other);
 
     QString name() const;
+
     QString table() const;
     QString pivot() const;
-    QString localKey() const;
     QString foreignKey() const;
+    QString localKey() const;
+    QString ownerKey() const;
 
-    QStringList loadableRelations() const;
-
-    bool owned() const;
-    bool autoLoadable() const;
-    bool nestLoadable() const;
-
-    bool isValid() const override;
+    QStringList with() const;
 
     int type() const;
+
+    bool isValid() const override;
 
     void load(const QString &name, const QJsonObject &object, const ResourceInfo &resource, Api *api);
     void save(QJsonObject *object) const override;

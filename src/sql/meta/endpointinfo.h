@@ -32,6 +32,7 @@ public:
     void save(QJsonObject *object) const;
 
     static EndpointInfo fromResource(const ResourceInfo &resource);
+    static EndpointInfo fromResource(const QString &endpoint, const ResourceInfo &resource);
 
 private:
     QExplicitlySharedDataPointer<EndpointInfoData> d_ptr;

@@ -117,6 +117,16 @@ protected:
 
     Model createModel() const;
 
+    bool getModel(Model &model) const;
+    bool getModel(Model &model, class QueryFilters &filters) const;
+    bool getModel(Model &model, class QueryOptions options) const;
+
+    bool saveModel(Model &model);
+    bool insertModel(Model &model);
+    bool updateModel(Model &model);
+
+    bool deleteModel(Model &model);
+
     QSqlQuery exec(const QString &statement);
 
     Model *root;

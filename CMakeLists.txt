@@ -1,21 +1,22 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.30)
 
 project(RestLink
-    DESCRIPTION "Powerfull Rest Client for Qt"
-    VERSION     2.2.4
-    LANGUAGES   CXX C
+    DESCRIPTION  "Powerfull Rest Client for Qt"
+    VERSION      2.2.5
+    LANGUAGES    CXX C
+    HOMEPAGE_URL "commander15.github.io/RestLink-Docs"
 )
 
 option(RESTLINK_BUILD_CLI          ON  "Build CLI tool")
 option(RESTLINK_BUILD_QML          ON  "Build QML Plugin")
 option(RESTLINK_BUILD_TESTS        OFF "Build RestLink tests")
-option(RESTLINK_BUILD_DOCS         ON  "Build RestLink documentation")
+option(RESTLINK_BUILD_DOC          OFF "Build RestLink documentation")
 option(RESTLINK_BUILD_TRANSLATIONS OFF "Build RestLink translations")
 option(RESTLINK_BUILD_EXAMPLES     OFF "Build RestLink Examples")
 
 if (NOT WASM)
-    option(RESTLINK_SUPPORT_SQL        OFF "Enable SQL support")
-    option(RESTLINK_SUPPORT_EXCEL      OFF "Enable EXCEL support")
+    option(RESTLINK_SUPPORT_SQL   OFF "Enable SQL support")
+    option(RESTLINK_SUPPORT_EXCEL OFF "Enable EXCEL support")
 endif()
 
 set(RESTLINK_LOCALES en fr)
@@ -79,7 +80,7 @@ endif()
 find_package(Qt6 REQUIRED COMPONENTS ${Qt_MODULES})
 
 qt_standard_project_setup(
-    REQUIRES 6.8.0
+    REQUIRES 6.9.0
     I18N_SOURCE_LANGUAGE      en
     I18N_TRANSLATED_LANGUAGES ${RESTLINK_LOCALES}
 )
@@ -102,8 +103,8 @@ include(cmake/Utils.cmake)
 add_subdirectory(3rdparty)
 add_subdirectory(src)
 
-if (RESTLINK_BUILD_DOCS)
-    add_subdirectory(docs)
+if (RESTLINK_BUILD_DOC)
+    add_subdirectory(doc)
 endif()
 
 if (RESTLINK_BUILD_TESTS)
@@ -113,3 +114,24 @@ endif()
 if (RESTLINK_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
+
+# Packaging
+
+set(CPACK_PACKAGE_VENDOR "Amadou Benjamain")
+
+set(CPACK_GENERATOR ZIP)
+if (LINUX)
+    list(APPEND CPACK_GENERATOR TGZ)
+
+    find_program(DPKG_DEB NAMES dpkg-deb)
+    if (DPKG_DEB)
+        set(CPACK_DEBIAN_PACKAGE_DEPENDS    "libssl3t64 (>= 3.0.13-0ubuntu3.6)")
+        set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Amadou Benjamain")
+        list(APPEND CPACK_GENERATOR DEB)
+    endif()
+endif()
+include(CPack)
+
+# CI/CD
+
+configure_file(.github/workflows/ci-cd.yml.in ${CMAKE_CURRENT_SOURCE_DIR}/.github/workflows/ci-cd.yml @ONLY)

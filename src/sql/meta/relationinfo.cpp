@@ -20,13 +20,10 @@ public:
     QString table;
     QString intermediate;
     QString pivot;
-    QString localKey;
     QString foreignKey;
+    QString localKey;
     QSqlRecord intermediateRecord;
-    QStringList loadableRelations;
-    bool owned = false;
-    bool autoLoadable = false;
-    bool nestedLoadable = false;
+    QStringList with;
     Relation::Type type = Relation::Null;
 };
 
@@ -56,34 +53,29 @@ QString RelationInfo::pivot() const
     return d->pivot;
 }
 
-QString RelationInfo::localKey() const
-{
-    return d->localKey;
-}
-
 QString RelationInfo::foreignKey() const
 {
     return d->foreignKey;
 }
 
-QStringList RelationInfo::loadableRelations() const
+QString RelationInfo::localKey() const
 {
-    return d->loadableRelations;
+    return d->localKey;
 }
 
-bool RelationInfo::owned() const
+QString RelationInfo::ownerKey() const
 {
-    return d->owned;
+    return d->foreignKey;
 }
 
-bool RelationInfo::autoLoadable() const
+QStringList RelationInfo::with() const
 {
-    return d->autoLoadable;
+    return d->with;
 }
 
-bool RelationInfo::nestLoadable() const
+int RelationInfo::type() const
 {
-    return d->nestedLoadable;
+    return d->type;
 }
 
 bool RelationInfo::isValid() const
@@ -94,17 +86,17 @@ bool RelationInfo::isValid() const
            || d->type != Relation::Null;
 }
 
-int RelationInfo::type() const
-{
-    return d->type;
-}
-
 void RelationInfo::load(const QString &name, const QJsonObject &object, const ResourceInfo &resource, Api *api)
 {
     d->name = name;
     d->type = Relation::typeFromString(object.value("type").toString());
 
     auto generateLocalKey = [&resource, &api](const QJsonObject &relation) -> QString {
+        if (relation.contains("owner_key")) {
+            const QString ownerKey = relation.value("owner_key").toString();
+            if (!ownerKey.isEmpty()) return ownerKey;
+        }
+
         const QString table = relation.value("table").toString();
 
         switch (Relation::typeFromString(relation.value("type").toString())) {
@@ -149,19 +141,12 @@ void RelationInfo::load(const QString &name, const QJsonObject &object, const Re
     };
 
     beginParsing(object);
-
     attribute("table", &d->table);
     attribute("intermediate", &d->intermediate);
     attribute("pivot", &d->pivot);
     attribute("local_key", Callback<QString>(generateLocalKey), &d->localKey);
     attribute("foreign_key", Callback<QString>(generateForeignKey), &d->foreignKey);
-    attribute("with", &d->loadableRelations);
-
-    beginParsing(object.value("load").toObject());
-    attribute("auto", false, &d->autoLoadable);
-    attribute("nest", false, &d->nestedLoadable);
-    endParsing();
-
+    attribute("with", &d->with);
     endParsing();
 
     if (!d->intermediate.isEmpty())
@@ -171,17 +156,18 @@ void RelationInfo::load(const QString &name, const QJsonObject &object, const Re
 void RelationInfo::save(QJsonObject *object) const
 {
     object->insert("table", d->table);
-    object->insert("intermediate", d->intermediate);
-    object->insert("with", QJsonValue::fromVariant(d->loadableRelations));
-    object->insert("pivot", d->pivot);
+
+    if (!d->intermediate.isEmpty())
+        object->insert("intermediate", d->intermediate);
+
+    if (!d->pivot.isEmpty())
+        object->insert("pivot", d->pivot);
+
     object->insert("local_key", d->localKey);
     object->insert("foreign_key", d->foreignKey);
-    object->insert("owned", d->owned);
 
-    QJsonObject load;
-    load.insert("auto", d->autoLoadable);
-    load.insert("nest", d->nestedLoadable);
-    object->insert("load", load);
+    if (!d->with.isEmpty())
+        object->insert("with", QJsonValue::fromVariant(d->with));
 
     object->insert("type", Relation::stringFromType(d->type));
 }

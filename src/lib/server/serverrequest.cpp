@@ -19,6 +19,7 @@ public:
 
     AbstractRequestHandler::Method method = AbstractRequestHandler::GetMethod;
     Body body;
+    bool overridable = false;
 };
 
 ServerRequest::ServerRequest()
@@ -118,6 +119,18 @@ Body ServerRequest::body() const
 {
     RESTLINK_D(const ServerRequest);
     return d->body;
+}
+
+bool ServerRequest::isOverridable() const
+{
+    RESTLINK_D(const ServerRequest);
+    return d->overridable;
+}
+
+void ServerRequest::setOverridable(bool o)
+{
+    RESTLINK_D(ServerRequest);
+    d->overridable = o;
 }
 
 } // namespace RestLink

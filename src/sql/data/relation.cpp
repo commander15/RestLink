@@ -74,7 +74,7 @@ QString Relation::relationName() const
 
 QStringList Relation::loadableRelations() const
 {
-    return m_info.loadableRelations();
+    return m_info.with();
 }
 
 QString Relation::modelName() const
@@ -84,7 +84,15 @@ QString Relation::modelName() const
 
 bool Relation::isOwnedModel() const
 {
-    return m_info.owned();
+    switch (m_info.type()) {
+    case HasOne:
+    case HasMany:
+    case HasManyThrough:
+        return true;
+
+    default:
+        return false;
+    };
 }
 
 void Relation::fill(const QJsonValue &value)
@@ -229,6 +237,69 @@ void RelationImpl::removeRootValue(const QString &name)
 Model RelationImpl::createModel() const
 {
     return Model(foreignResource.name(), root->api());
+}
+
+bool RelationImpl::getModel(Model &model) const
+{
+    return getModel(model, { });
+}
+
+bool RelationImpl::getModel(Model &model, QueryFilters &filters) const
+{
+    return getModel(model, { .filters = filters });
+}
+
+bool RelationImpl::getModel(Model &model, QueryOptions options) const
+{
+    options.filters.removeNulls();
+    if (options.filters.empty())
+        return true;
+
+    if (!model.isValid())
+        model = createModel();
+
+    const QStringList defaultRelations = model.resourceInfo().with();
+
+    options.withRelations.append(info.with());
+    options.withRelations.removeIf([&defaultRelations](const QString &relation) {
+        return defaultRelations.contains(relation);
+    });
+    options.withRelations.removeDuplicates();
+
+    auto get = [&model, &options] {
+        if (options.filters.empty())
+            return model.get();
+        else
+            return model.getByFilters(options.filters);
+    };
+
+    if (!get())
+        return !model.lastError().isEmpty();
+
+    if (options.withRelations.isEmpty())
+        return model.load(options.withRelations);
+
+    return true;
+}
+
+bool RelationImpl::saveModel(Model &model)
+{
+    return (model.isEmpty() ? model.save() : true);
+}
+
+bool RelationImpl::insertModel(Model &model)
+{
+    return (model.isEmpty() ? model.insert() : true);
+}
+
+bool RelationImpl::updateModel(Model &model)
+{
+    return (model.isEmpty() ? model.update() : true);
+}
+
+bool RelationImpl::deleteModel(Model &model)
+{
+    return (model.isEmpty() ? model.deleteData() : true);
 }
 
 QSqlQuery RelationImpl::exec(const QString &statement)

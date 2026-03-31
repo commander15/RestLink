@@ -48,7 +48,7 @@ bool Router::maintain()
     return true;
 }
 
-void Router::processStandardRequest(const ServerRequest &request, ServerResponse *response)
+void Router::processStandardRequest(ServerRequest &request, ServerResponse *response)
 {
     Api *api = Api::api(request.baseUrl());
     if (api) {

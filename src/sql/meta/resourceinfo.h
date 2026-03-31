@@ -55,7 +55,7 @@ public:
     QStringList relationNames() const;
     QList<RelationInfo> relations() const;
 
-    bool loadRelations() const;
+    QStringList with() const;
 
     bool isValid() const override;
 

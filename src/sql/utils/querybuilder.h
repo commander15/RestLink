@@ -46,6 +46,9 @@ public:
 class QueryFilters
 {
 public:
+    bool empty() const
+    { return m_filters.empty(); }
+
     void andWhere(const QString &name, const QVariant &value)
     { m_filters.append({ .inclusive = true, .name = name, .op = "=", .value = value }); }
     void andWhere(const QString &name, const QString &op, const QVariant &value)
@@ -60,6 +63,8 @@ public:
     void orWhere(const Expression &expr)
     { m_filters.append({ .inclusive = false, .expression = expr }); }
 
+    void removeNulls()
+    { m_filters.removeIf([](const Filter &filter) { return filter.expression.isEmpty() && filter.value.isNull(); }); }
 
 private:
     struct Filter {

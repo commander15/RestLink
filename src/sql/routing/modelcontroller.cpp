@@ -37,7 +37,7 @@ void ModelController::init(const ServerRequest &request, Api *api)
     m_api = api;
 }
 
-void ModelController::index(const ServerRequest &request, ServerResponse *response)
+void ModelController::index(ServerRequest &request, ServerResponse *response)
 {
     QueryOptions options;
 
@@ -98,7 +98,7 @@ error:
     return;
 }
 
-void ModelController::show(const ServerRequest &request, ServerResponse *response)
+void ModelController::show(ServerRequest &request, ServerResponse *response)
 {
     Model model = requestModel(request);
     if (!model.get())
@@ -122,7 +122,7 @@ error:
     return;
 }
 
-void ModelController::update(const ServerRequest &request, ServerResponse *response)
+void ModelController::update(ServerRequest &request, ServerResponse *response)
 {
     Model model = requestModel(request);
     model.fill(request.body().jsonObject());
@@ -144,7 +144,7 @@ error:
     return;
 }
 
-void ModelController::store(const ServerRequest &request, ServerResponse *response)
+void ModelController::store(ServerRequest &request, ServerResponse *response)
 {
     Model model = requestModel(request);
     model.fill(request.body().jsonObject());
@@ -165,7 +165,7 @@ error:
     return;
 }
 
-void ModelController::destroy(const ServerRequest &request, ServerResponse *response)
+void ModelController::destroy(ServerRequest &request, ServerResponse *response)
 {
     Model model = requestModel(request);
 
@@ -205,7 +205,7 @@ bool ModelController::canProcessRequest(const ServerRequest &request) const
     return true;
 }
 
-void ModelController::processRequest(const ServerRequest &request, ServerResponse *response)
+void ModelController::processRequest(ServerRequest &request, ServerResponse *response)
 {
     QSqlDatabase db = m_api->database();
 

@@ -13,47 +13,37 @@ bool HasOneImpl::get()
 {
     QueryFilters filters;
     filters.andWhere(info.foreignKey(), root->primary());
-
-    m_relatedModel = createModel();
-
-    return m_relatedModel.getByFilters(filters);
+    return getModel(m_relatedModel, filters);
 }
 
 bool HasOneImpl::insert()
 {
     m_relatedModel.setField(info.foreignKey(), root->primary());
-    return m_relatedModel.insert();
+    return insertModel(m_relatedModel);
 }
 
 bool HasOneImpl::update()
 {
     m_relatedModel.setField(info.foreignKey(), root->primary());
-    return m_relatedModel.update();
+    return updateModel(m_relatedModel);
 }
 
 bool HasOneImpl::deleteData()
 {
-    return m_relatedModel.deleteData();
+    return deleteModel(m_relatedModel);
 }
 
 bool BelongsToOneImpl::get()
 {
     QueryFilters filters;
     filters.andWhere(info.foreignKey(), root->field(info.localKey()));
-
-    m_relatedModel = createModel();
-
-    if (!m_relatedModel.getByFilters(filters))
-        return false;
-
-    return SingleRelationImpl::get();
+    return getModel(m_relatedModel, filters);
 }
 
 bool BelongsToOneImpl::insert()
 {
     // We update foreign key on root
     root->setField(info.localKey(), m_relatedModel.primary());
-
     return true;
 }
 
@@ -61,7 +51,6 @@ bool BelongsToOneImpl::update()
 {
     // We update foreign key on root
     root->setField(info.localKey(), m_relatedModel.primary());
-
     return true;
 }
 
@@ -69,8 +58,7 @@ bool BelongsToOneImpl::deleteData()
 {
     // We update foreign key on root
     root->setField(info.localKey(), QVariant());
-
-    return true;
+    return updateModel(*root);
 }
 
 bool HasManyImpl::get()
@@ -87,7 +75,7 @@ bool HasManyImpl::save()
 {
     for (Model &model : m_relatedModels) {
         model.setField(info.foreignKey(), root->primary());
-        if (!model.save())
+        if (!saveModel(model))
             return false;
     }
 
@@ -110,7 +98,7 @@ bool HasManyImpl::insert()
 {
     for (Model &model : m_relatedModels) {
         model.setField(info.foreignKey(), root->primary());
-        if (!model.insert())
+        if (!insertModel(model))
             return false;
     }
     return true;
@@ -124,7 +112,7 @@ bool HasManyImpl::update()
 bool HasManyImpl::deleteData()
 {
     for (Model &model : m_relatedModels)
-        if (!model.deleteData())
+        if (!deleteModel(model))
             return false;
     return true;
 }
@@ -161,7 +149,7 @@ bool BelongsToManyImpl::save()
 {
     for (Model &model : m_relatedModels) {
         root->setField(info.localKey(), model.primary());
-        if (!model.save())
+        if (!saveModel(model))
             return false;
     }
 

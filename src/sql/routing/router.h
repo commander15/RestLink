@@ -23,7 +23,7 @@ protected:
     void cleanup() override;
     bool maintain() override;
 
-    void processStandardRequest(const ServerRequest &request, ServerResponse *response) override;
+    void processStandardRequest(ServerRequest &request, ServerResponse *response) override;
 
     void *createDataSource(const ServerRequest &request) override;
     void clearDataSource(const ServerRequest &request, void *source) override;

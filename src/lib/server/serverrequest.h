@@ -27,6 +27,9 @@ public:
     QVariant identifier() const;
 
     Body body() const;
+
+    bool isOverridable() const;
+    void setOverridable(bool o = true);
 };
 
 } // namespace RestLink

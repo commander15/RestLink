@@ -53,6 +53,7 @@ public:
     void fill(const QSqlRecord &record);
 
     QJsonObject jsonObject() const;
+    bool isEmpty() const;
 
     bool exists() const override;
 
@@ -62,7 +63,7 @@ public:
 
     bool loadAll();
     bool loadDefault();
-    bool load(const QStringList &relations);
+    bool load(const QStringList &relations, bool withDefault = false);
 
     bool insert() override;
     bool update() override;
@@ -77,6 +78,9 @@ public:
     bool isValid() const;
 
     Api *api() const;
+
+    static Model find(const QString &resource, const QVariant &id, Api *api, bool *success);
+    static Model find(const ResourceInfo &resource, const QVariant &id, Api *api, bool *success);
 
     static QList<Model> getMulti(const QString &resource, const QueryOptions &options, Api *api, bool *success);
     static QList<Model> getMulti(const ResourceInfo &resource, const QueryOptions &options, Api *api, bool *success);

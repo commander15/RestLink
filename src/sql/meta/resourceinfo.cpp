@@ -29,7 +29,7 @@ public:
     QString updatedAtField;
     QSqlRecord record;
     QHash<QString, RelationInfo> relations;
-    bool loadRelations = false;
+    QStringList with;
 };
 
 ResourceInfo::ResourceInfo()
@@ -158,9 +158,9 @@ QList<RelationInfo> ResourceInfo::relations() const
     return d->relations.values();
 }
 
-bool ResourceInfo::loadRelations() const
+QStringList ResourceInfo::with() const
 {
-    return d->loadRelations;
+    return d->with;
 }
 
 bool ResourceInfo::isValid() const
@@ -227,6 +227,7 @@ void ResourceInfo::load(const QString &name, const QJsonObject &object, Api *api
 
     attribute("fillable", Callback<QStringList>(generateFillable), &d->fillableProperties);
     attribute("hidden", Callback<QStringList>(generateHiddenFields), &d->hiddenFields);
+    attribute("with", &d->with);
 
     beginParsing(object.value("timestamps").toObject());
     attribute("created_at", Callback<QString>(generateCreationTimestamp), &d->createdAtField);
@@ -254,7 +255,7 @@ void ResourceInfo::save(QJsonObject *object) const
         object->insert("fillable", QJsonValue::fromVariant(d->fillableProperties));
     if (!d->hiddenFields.isEmpty())
         object->insert("hidden", QJsonValue::fromVariant(d->hiddenFields));
-    object->insert("load_relations", d->loadRelations);
+    object->insert("with", QJsonValue::fromVariant(d->with));
 
     QJsonObject timestamps;
     if (!d->createdAtField.isEmpty())

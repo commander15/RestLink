@@ -49,7 +49,7 @@ void AbstractServerWorker::enqueue(const ServerRequest &request, ServerResponse 
     });
 }
 
-void AbstractServerWorker::processInternalRequest(const ServerRequest &request, ServerResponse *response)
+void AbstractServerWorker::processInternalRequest(ServerRequest &request, ServerResponse *response)
 {
     const QString function = request.endpoint().mid(1);
 
@@ -184,15 +184,15 @@ bool AbstractServerWorkerPrivate::processNext()
                 controller->processRequest(pending.request, pending.response);
             q_ptr->clearDataSource(pending.request, source);
 
+            if (pending.request.isOverridable())
+                q_ptr->processStandardRequest(pending.request, pending.response);
+
             if (deletable)
                 delete controller;
         } else {
             q_ptr->processStandardRequest(pending.request, pending.response);
         }
     }
-
-    if (pending.response->isRunning())
-        pending.response->complete();
 
     return true;
 }

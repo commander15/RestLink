@@ -3,13 +3,18 @@
 #include <QtCore/qjsondocument.h>
 #include <QtCore/qjsonobject.h>
 #include <QtCore/qjsonarray.h>
+#include <QtCore/qfile.h>
 
 #include <RestLink/api.h>
 #include <RestLink/request.h>
 #include <RestLink/body.h>
 #include <RestLink/response.h>
+#include <RestLink/networkmanager.h>
 
-// Config option
+// Infos options
+#define SCHEMES_OPTIONS "schemes"
+
+// Config options
 #define CONFIG_OPTION   "config"
 #define VERBOSE_OPTION  "verbose"
 #define BODYONLY_OPTION "body-only"
@@ -48,6 +53,12 @@ void App::initParser()
     m_parser.setApplicationDescription("RestCli - The RestLink commandline tool");
     m_parser.addVersionOption();
     m_parser.addHelpOption();
+
+    // Scheme option
+    {
+        QCommandLineOption option(SCHEMES_OPTIONS, "List supported url schemes");
+        m_parser.addOption(option);
+    }
 
     // Config option
     {
@@ -169,11 +180,16 @@ void App::setApi(RestLink::Api *api)
 
     QUrl configUrl;
     if (m_parser.isSet(CONFIG_OPTION)) {
-        configUrl = QUrl::fromUserInput(m_parser.value(CONFIG_OPTION));
-        if (!configUrl.isValid())
-            configUrl = QUrl::fromLocalFile(m_parser.value(CONFIG_OPTION));
-    } else {
-        const QString config = qEnvironmentVariable("API_CONFIG_FILE", m_parser.value(CONFIG_OPTION));
+        const QString config = m_parser.value(CONFIG_OPTION);
+        if (QFile::exists(config))
+            configUrl = QUrl::fromLocalFile(config);
+        else
+            configUrl = QUrl::fromUserInput(config);
+    } else if (qEnvironmentVariableIsSet("API_CONFIG_FILE")) {
+        const QString config = qEnvironmentVariable("API_CONFIG_FILE");
+        configUrl = QUrl::fromLocalFile(config);
+    } else if (qEnvironmentVariableIsSet("API_CONFIG_URL")) {
+        const QString config = qEnvironmentVariable("API_CONFIG_URL");
         configUrl = QUrl::fromLocalFile(config);
     }
 
@@ -184,6 +200,12 @@ void App::setApi(RestLink::Api *api)
 
 void App::run()
 {
+    if (m_parser.isSet(SCHEMES_OPTIONS)) {
+        m_out << m_api->networkManager()->supportedSchemes().join("\n") << Qt::endl;
+        quit();
+        return;
+    }
+
     if (m_parser.isSet(HEAD_OPTION)) {
         Request request = makeRequest(HEAD_OPTION);
         Response *response = m_api->head(request);

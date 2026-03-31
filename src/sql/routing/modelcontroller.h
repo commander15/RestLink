@@ -27,14 +27,14 @@ public:
 
     void init(const ServerRequest &request, Api *api);
 
-    void index(const ServerRequest &request, ServerResponse *response) override;
-    void show(const ServerRequest &request, ServerResponse *response) override;
-    void update(const ServerRequest &request, ServerResponse *response) override;
-    void store(const ServerRequest &request, ServerResponse *response) override;
-    void destroy(const ServerRequest &request, ServerResponse *response) override;
+    void index(ServerRequest &request, ServerResponse *response) override;
+    void show(ServerRequest &request, ServerResponse *response) override;
+    void update(ServerRequest &request, ServerResponse *response) override;
+    void store(ServerRequest &request, ServerResponse *response) override;
+    void destroy(ServerRequest &request, ServerResponse *response) override;
 
     bool canProcessRequest(const ServerRequest &request) const override;
-    void processRequest(const ServerRequest &request, ServerResponse *response) override;
+    void processRequest(ServerRequest &request, ServerResponse *response) override;
 
     Model requestModel(const ServerRequest &request) const;
     ResourceInfo requestedResource(const ServerRequest &request) const;

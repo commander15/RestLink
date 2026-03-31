@@ -27,7 +27,7 @@ public:
         UnknownMethod = -1
     };
 
-    enum HandlerType {
+    enum class HandlerType {
         NetworkManager,
         ServerHandler,
 

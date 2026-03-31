@@ -76,10 +76,10 @@ AbstractRequestHandler::~AbstractRequestHandler()
 QString AbstractRequestHandler::handlerName() const
 {
     switch (handlerType()) {
-    case NetworkManager:
+    case HandlerType::NetworkManager:
         return QStringLiteral("NetworkManager");
 
-    case ServerHandler:
+    case HandlerType::ServerHandler:
         return QStringLiteral("UnknownServer");
 
     default:

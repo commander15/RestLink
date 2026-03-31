@@ -14,6 +14,10 @@ int main(int argc, char *argv[])
     app.setApplicationVersion(RESTLINK_VERSION_STR);
     app.initParser();
 
+#ifdef QT_DEBUG
+    app.addLibraryPath(QString(RESTLINK_ROOT) + "/plugins");
+#endif
+
     PluginManager::enableDiscovery();
 
     Api api;

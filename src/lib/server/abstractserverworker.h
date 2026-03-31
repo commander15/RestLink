@@ -27,8 +27,8 @@ public:
     bool hasPendingRequests() const;
     void enqueue(const ServerRequest &request, ServerResponse *response);
 
-    virtual void processInternalRequest(const ServerRequest &request, ServerResponse *response);
-    virtual void processStandardRequest(const ServerRequest &request, ServerResponse *response) = 0;
+    virtual void processInternalRequest(ServerRequest &request, ServerResponse *response);
+    virtual void processStandardRequest(ServerRequest &request, ServerResponse *response) = 0;
     static void processUnsupportedRequest(const ServerRequest &request, ServerResponse *response);
 
 protected:

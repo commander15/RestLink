@@ -60,7 +60,7 @@ CREATE TABLE Products (
     category_id INTEGER,
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(category_id) REFERENCES Categories(id) ON DELETE CASCADE
+    FOREIGN KEY(category_id) REFERENCES Categories(id) ON DELETE SET NULL
 );
 
 CREATE TABLE Stocks (
@@ -86,10 +86,11 @@ CREATE TABLE Sales (
 
 CREATE TABLE SaleItems (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    unit_price REAL NOT NULL,
     quantity   INTEGER NOT NULL CHECK (quantity > 0),
     sale_id    INTEGER NOT NULL,
-    product_id INTEGER NOT NULL,
-    FOREIGN KEY (sale_id) REFERENCES Sales(id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES Products(id)
+    product_id INTEGER,
+    FOREIGN KEY (sale_id)    REFERENCES Sales(id)    ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES Products(id) ON DELETE SET NULL
 );
 

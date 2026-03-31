@@ -13,7 +13,7 @@
 #   define RESTLINK_EXPORT
 #endif
 
-#define RESTLINK_D(ClassName) ClassName##Private *d = static_cast<ClassName##Private *>(qGetPtrHelper(d_ptr))
+#define RESTLINK_D(ClassName) ClassName##Private *d = static_cast<ClassName##Private *>(d_ptr.get());
 
 class QString;
 class QByteArray;

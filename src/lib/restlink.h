@@ -30,5 +30,4 @@
 #include <RestLink/httputils.h>
 #include <RestLink/compressionutils.h>
 
-
 #endif // RESTLINK_H

@@ -88,13 +88,18 @@ void EndpointInfo::save(QJsonObject *object) const
 
 EndpointInfo EndpointInfo::fromResource(const ResourceInfo &resource)
 {
-    EndpointInfo endpoint;
+    return fromResource('/' + resource.name(), resource);
+}
 
-    EndpointInfoData *data = endpoint.d_ptr.get();
-    data->name = '/' + resource.name();
+EndpointInfo EndpointInfo::fromResource(const QString &endpoint, const ResourceInfo &resource)
+{
+    EndpointInfo info;
+
+    EndpointInfoData *data = info.d_ptr.get();
+    data->name = endpoint;
     data->resource = resource;
 
-    return endpoint;
+    return info;
 }
 
 } // namespace Sql
