@@ -56,13 +56,13 @@ void App::initParser()
 
     // Scheme option
     {
-        QCommandLineOption option(SCHEMES_OPTIONS, "List supported url schemes");
+        QCommandLineOption option(SCHEMES_OPTIONS, "List supported url schemes.");
         m_parser.addOption(option);
     }
 
     // Config option
     {
-        QCommandLineOption option(CONFIG_OPTION, "Set the API config JSON file");
+        QCommandLineOption option(CONFIG_OPTION, "Set the API config JSON file.");
         option.setValueName("config-file");
         option.setDefaultValue("APIConfig.json");
         m_parser.addOption(option);
@@ -70,102 +70,102 @@ void App::initParser()
 
     // Verbose option
     {
-        QCommandLineOption option(VERBOSE_OPTION, "Make the operation more talkative");
+        QCommandLineOption option(VERBOSE_OPTION, "Make the operation more talkative.");
         m_parser.addOption(option);
     }
 
     // Body only option
     {
-        QCommandLineOption option(BODYONLY_OPTION, "Only the response body must be shown");
+        QCommandLineOption option(BODYONLY_OPTION, "Only the response body must be shown.");
         m_parser.addOption(option);
     }
 
     // Timing option
     {
-        QCommandLineOption option(TIMING_OPTION, "compute execution time");
+        QCommandLineOption option(TIMING_OPTION, "compute execution time.");
         m_parser.addOption(option);
     }
 
     // HEAD Option
     {
-        QCommandLineOption option(HEAD_OPTION, "Send a HEAD request to the specified endpoint");
+        QCommandLineOption option(HEAD_OPTION, "Send a HEAD request to the specified endpoint.");
         option.setValueName("endpoint");
         m_parser.addOption(option);
     }
 
     // GET Option
     {
-        QCommandLineOption getOption(GET_OPTION, "Send a GET request to the specified endpoint");
+        QCommandLineOption getOption(GET_OPTION, "Send a GET request to the specified endpoint.");
         getOption.setValueName("endpoint");
         m_parser.addOption(getOption);
     }
 
     // POST Option
     {
-        QCommandLineOption postOption(POST_OPTION, "Send a POST request with data to the specified endpoint");
+        QCommandLineOption postOption(POST_OPTION, "Send a POST request with data to the specified endpoint.");
         postOption.setValueName("endpoint");
         m_parser.addOption(postOption);
     }
 
     // PUT Option
     {
-        QCommandLineOption putOption(PUT_OPTION, "Send a PUT request with data to the specified endpoint");
+        QCommandLineOption putOption(PUT_OPTION, "Send a PUT request with data to the specified endpoint.");
         putOption.setValueName("endpoint");
         m_parser.addOption(putOption);
     }
 
     // PATCH Option
     {
-        QCommandLineOption patchOption(PATCH_OPTION, "Send a PATCH request with data to the specified endpoint");
+        QCommandLineOption patchOption(PATCH_OPTION, "Send a PATCH request with data to the specified endpoint.");
         patchOption.setValueName("endpoint");
         m_parser.addOption(patchOption);
     }
 
     // DELETE Option
     {
-        QCommandLineOption deleteOption(DELETE_OPTION, "Send a DELETE request to the specified endpoint");
+        QCommandLineOption deleteOption(DELETE_OPTION, "Send a DELETE request to the specified endpoint.");
         deleteOption.setValueName("endpoint");
         m_parser.addOption(deleteOption);
     }
 
     // Path Option
     {
-        QCommandLineOption option(PATH_OPTION, "Set an url path parameter");
+        QCommandLineOption option(PATH_OPTION, "Set an url path parameter.");
         option.setValueName("parameter");
         m_parser.addOption(option);
     }
 
     // Query Option
     {
-        QCommandLineOption option(QUERY_OPTION, "Set an url query parameter");
+        QCommandLineOption option(QUERY_OPTION, "Set an url query parameter.");
         option.setValueName("parameter");
         m_parser.addOption(option);
     }
 
     // Header Option
     {
-        QCommandLineOption option(HEADER_OPTION, "Set a request header");
+        QCommandLineOption option(HEADER_OPTION, "Set a request header.");
         option.setValueName("header");
         m_parser.addOption(option);
     }
 
     // Data Option
     {
-        QCommandLineOption option(DATA_OPTION, "Set the request raw data");
+        QCommandLineOption option(DATA_OPTION, "Set the request raw data.");
         option.setValueName("data");
         m_parser.addOption(option);
     }
 
     // JSON Data Option
     {
-        QCommandLineOption option(JSON_OPTION, "Set the request json data");
+        QCommandLineOption option(JSON_OPTION, "Set the request json data.");
         option.setValueName("data");
         m_parser.addOption(option);
     }
 
     // File Data Option
     {
-        QCommandLineOption option(FILE_OPTION, "Set the request file data");
+        QCommandLineOption option(FILE_OPTION, "Set the request file data.");
         option.setValueName("file name");
         m_parser.addOption(option);
     }
