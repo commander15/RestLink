@@ -82,7 +82,7 @@ void App::initParser()
 
     // Timing option
     {
-        QCommandLineOption option(TIMING_OPTION, "compute execution time.");
+        QCommandLineOption option(TIMING_OPTION, "Compute execution time.");
         m_parser.addOption(option);
     }
 
