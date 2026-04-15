@@ -1,9 +1,7 @@
 #ifndef RESTLINK_NETWORKRESPONSE_P_H
 #define RESTLINK_NETWORKRESPONSE_P_H
 
-#include "networkresponse.h"
-
-#include "../response_p.h"
+#include "../core/response_p.h"
 
 namespace RestLink {
 

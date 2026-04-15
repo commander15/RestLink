@@ -1,9 +1,11 @@
 target_headers(RestLink
     PUBLIC
-        bcrypt.h
+        fileutils.h
+        compressionutils.h
 )
 
 target_sources(RestLink
     PRIVATE
-        bcrypt.cpp
+        fileutils.cpp
+        compressionutils.cpp
 )

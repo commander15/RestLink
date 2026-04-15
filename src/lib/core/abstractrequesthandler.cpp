@@ -70,6 +70,15 @@ AbstractRequestHandler::~AbstractRequestHandler()
 }
 
 /*!
+ * \brief Returns the id of the handler.
+ * \note the id must be globally unique.
+ */
+QByteArray AbstractRequestHandler::handlerId() const
+{
+    return handlerName().toLower().toUtf8();
+}
+
+/*!
  * \brief Returns the name of the handler based on its type.
  * \note this method can be overriden on subclasses.
  */

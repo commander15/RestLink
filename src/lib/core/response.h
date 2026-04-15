@@ -7,9 +7,10 @@
 
 #include <QtCore/qobject.h>
 
+#include <QtNetwork/qsslerror.h>
+
 class QNetworkRequest;
 class QNetworkReply;
-class QSslError;
 
 class QJsonParseError;
 
