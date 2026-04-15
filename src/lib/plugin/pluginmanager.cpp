@@ -3,11 +3,12 @@
 
 #include <RestLink/debug.h>
 #include <RestLink/abstractrequesthandler.h>
+#include <RestLink/networkmanager.h>
 
 #include <QtCore/qcoreapplication.h>
 #include <QtCore/qdiriterator.h>
 #include <QtCore/qdir.h>
-#include <QtCore/qlibrary.h>
+#include <qstandardpaths.h>
 
 namespace RestLink {
 
@@ -45,121 +46,132 @@ PluginManager::~PluginManager()
 }
 
 /**
- * @brief Returns a list of all discovered and valid AbstractRequestHandler instances.
- * @return QList of AbstractRequestHandler pointers.
+ * @brief Load a RestLink plugin according to mode policy.
+ * @return True if the plugin has been loaded, False otherwise
  */
-QList<AbstractRequestHandler *> PluginManager::handlers()
+bool PluginManager::loadPlugin(const QString &name, LoadMode mode)
 {
-    static QList<AbstractRequestHandler *> handlers;
-    if (!handlers.isEmpty())
-        return handlers;
+    PluginManagerPrivate *d = internal();
 
-// Plugins disabled for WASM
-#ifdef Q_OS_WASM
-    return handlers;
-#endif
+    // If the plugin is already loaded, we do nothing
+    if (d->loadedPlugins.contains(name))
+        return true;
 
-    PluginManager *manager = global();
-    PluginManagerPrivate *data = manager->d_ptr.get();
+    // We try to load the plugin
+    QString errorString;
+    Plugin *plugin = d->load(name, errorString);
 
-    QStringList fileNames;
-    auto processDir = [data, &fileNames](const QFileInfo &entry) {
-        const QDir dir(entry.absoluteFilePath());
-        const QFileInfoList files = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
-        for (const QFileInfo &file : files) {
-            if (!QLibrary::isLibrary(file.fileName()))
-                continue;
+    // If load failed, we just add a warning and return false
+    if (!plugin) {
+        restlinkWarning() << errorString;
+        return false;
+    }
 
-            for (const QString &pluginName : std::as_const(data->names)) {
-                if (file.baseName() == pluginName) {
-                    fileNames.append(file.absoluteFilePath());
-                    continue;
-                }
-            }
+    // Retrieving plugin supported schemes
+    QStringList pluginSchemes = plugin->supportedSchemes();
 
-            if (data->discoveryEnabled)
-                fileNames.append(file.absoluteFilePath());
+    // We block HTTP/HTTPS plugins
+    if (pluginSchemes.contains("http", Qt::CaseInsensitive) || pluginSchemes.contains("https", Qt::CaseInsensitive)) {
+        restlinkWarning() << "an HTTP/HTTPS handler has been detected on '" << plugin->name()
+        << "' plugin, this is unsuported for security reasons";
+    }
+
+    // We create an handler from the plugin
+    AbstractRequestHandler *handler = d->createHandler(plugin, errorString);
+    d->unload(); // We don't keep plugin object instance after handler creation
+
+    // If we can't create a handle, we issue a warning with the error that occured
+    if (!handler) {
+        restlinkWarning() << errorString;
+        return false;
+    }
+
+    // We sort both plugin and handler schemes to ease comparison
+    QStringList handlerSchemes = handler->supportedSchemes();
+    handlerSchemes.sort();
+    pluginSchemes.sort();
+
+    if (pluginSchemes != handlerSchemes) {
+        restlinkWarning() << "Plugin advertissed schemes didn't match the plugin handler ones";
+
+        // In strict mode, we don't allow this plugin handler to work, so we discard it
+        if (mode == SafeMode) {
+            delete handler;
+            return false;
         }
+    }
+
+    switch (NetworkManager::registerHandler(handler)) {
+    case NetworkManager::InvalidHandlerRegistrationError:
+        restlinkWarning() << "can't register plugin " + name + ", NetworkManager refuses it, may be it's a duplicate";
+        delete handler;
+        return false;
+
+    case NetworkManager::HandlerAlreadyRegisteredError:
+        restlinkWarning() << "can't register plugin " + name + ", NetworkManager refuses it, may be it's a duplicate";
+        delete handler;
+        return false;
+
+    case NetworkManager::HandlerSchemesAlreadyExistsError:
+        restlinkWarning() << "can't register plugin " + name + ", NetworkManager refuses it, may be it's a duplicate";
+        delete handler;
+        return false;
+
+    case NetworkManager::NoHandlerRegistrationError:
+        d->loadedPlugins.append(name);
+        restlinkInfo() << plugin->name() << " plugin loaded, supported schemes: "
+                       << pluginSchemes.join(", ");
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * @brief Discover and load all available plugins according to mode policies.
+ * @return The list of loaded plugins.
+ */
+QStringList PluginManager::loadAvailablePlugins(LoadMode mode)
+{
+    QStringList plugins = discoverPlugins();
+    for (const QString &p : std::as_const(plugins)) {
+        if (!loadPlugin(p, mode))
+            plugins.removeOne(p);
+    }
+    return plugins;
+}
+
+/**
+ * @brief Find all available plugins.
+ * @return The plugins list.
+ * @note The plugin names returned by this method may refers to invalid or insecure plugins.
+ */
+QStringList PluginManager::discoverPlugins()
+{
+    static const QStringList pluginsDirs = {
+        qApp->applicationDirPath() + "/plugins/restlink",
     };
 
-    const QStringList searchPaths = QCoreApplication::libraryPaths();
-    for (const QString &path : searchPaths) {
-        QDirIterator it(path, { "restlink" }, QDir::Dirs, QDirIterator::Subdirectories);
-        while (it.hasNext())
-            processDir(it.nextFileInfo());
+    QStringList plugins;
+    for (const QString &pluginsDir : pluginsDirs) {
+        QDirIterator it(pluginsDir, QDir::Files, QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            const QString file = it.next();
+            if (QLibrary::isLibrary(file))
+                plugins.append(file);
+        }
     }
 
-    for (const QString &fileName : std::as_const(fileNames)) {
-        // loading plugin
-        Plugin *plugin = manager->loadPlugin(fileName);
-        if (!plugin)
-            continue;
-
-        // Retrieve handler
-        AbstractRequestHandler *handler = manager->createHandler(plugin);
-        if (handler)
-            handlers.append(handler);
-
-        manager->unloadPlugin();
-    }
-
-    return handlers;
+    return plugins;
 }
 
-/**
- * @brief Returns whether plugin discovery is currently enabled.
- * @return true if discovery is enabled, false otherwise.
- */
-bool PluginManager::isDiscoveryEnabled()
+PluginManagerPrivate *PluginManager::internal()
 {
-    return global()->d_ptr->discoveryEnabled;
+    static PluginManager manager;
+    return manager.d_ptr.get();
 }
 
-/**
- * @brief Enables plugin discovery.
- *
- * When enabled, RestLink will scan library paths at runtime to detect and load available plugins.
- * This feature is disabled by default to avoid potential security risks from untrusted binaries.
- *
- * @note This must be called before creating any NetworkManager instance.
- * It is recommended to invoke this immediately after initializing the Qt application object
- * in your main application file.
- */
-void PluginManager::enableDiscovery()
-{
-    global()->d_ptr->discoveryEnabled = true;
-}
-
-/**
- * @brief Sets whether plugin discovery should be enabled.
- * @param enable If true, enables discovery; disables it otherwise.
- */
-void PluginManager::setDiscoveryEnabled(bool enable)
-{
-    global()->d_ptr->discoveryEnabled = enable;
-}
-
-/**
- * @brief Registers a plugin name manually.
- *
- * This will cause the plugin manager attempt to load a plugin,
- * should be more secure than plugin discovery.
- *
- * @param name The name of the plugin to load.
- */
-void PluginManager::registerPlugin(const QString &name)
-{
-    QStringList *names = &global()->d_ptr->names;
-    if (!names->contains(name))
-        names->append(name);
-}
-
-/**
- * @brief Creates a handler instance from a plugin.
- * @param plugin The plugin to instantiate a handler from.
- * @return A pointer to an AbstractRequestHandler, or nullptr if failed.
- */
-AbstractRequestHandler *PluginManager::createHandler(Plugin *plugin)
+AbstractRequestHandler *PluginManagerPrivate::createHandler(Plugin *plugin, QString &errorString)
 {
     AbstractRequestHandler *handler = plugin->createHandler();
 
@@ -181,34 +193,38 @@ AbstractRequestHandler *PluginManager::createHandler(Plugin *plugin)
     return handler;
 }
 
-/**
- * @brief Loads a plugin from the given name or absolute path.
- * @param name The plugin file name or absolute path.
- * @return A pointer to the loaded Plugin, or nullptr on failure.
- */
-Plugin *PluginManager::loadPlugin(const QString &name)
+Plugin *PluginManagerPrivate::load(const QString &name, QString &errorString)
 {
-    unloadPlugin();
+    // If a plugin is already loaded, we unload it first
+    if (m_loader.isLoaded())
+        m_loader.unload();
 
-    d_ptr->pluginLoader.setFileName(name);
-    if (!d_ptr->pluginLoader.load()) {
-        restlinkWarning() << "Failed to load plugin: " << name << d_ptr->pluginLoader.errorString();
+    m_loader.setFileName(name);
+
+    // If we can't load it, we can't go further
+    if (!m_loader.load()) {
+        errorString = "Failed to load plugin: " + name + ' ' + m_loader.errorString();
         return nullptr;
     }
 
     // Loading meta data
-    const QJsonObject metaData = d_ptr->pluginLoader.metaData();
-    if (metaData.value("IID").toString() != RESTLINK_PLUGIN_IID) {
-        restlinkWarning() << "invalid plugin";
-        unloadPlugin();
+    const QJsonObject metaData = m_loader.metaData();
+    const QString pluginId = metaData.value("IID").toString();
+    if (pluginId.isEmpty()) {
+        const QString name = metaData.value("name").toString();
+        errorString = "A plugin without IID has been detected and can't be loaded"
+                      + (name.isEmpty() ? "" : ", reported its name as: " + name);
+
+        m_loader.unload();
         return nullptr;
     }
 
     // loading plugin
-    Plugin *plugin = reinterpret_cast<Plugin *>(d_ptr->pluginLoader.instance());
+    Plugin *plugin = reinterpret_cast<Plugin *>(m_loader.instance());
     if (!plugin) {
-        restlinkWarning() << "Invalid plugin interface for:" << name;
-        unloadPlugin();
+        errorString = "Invalid plugin interface for: " + name;
+
+        m_loader.unload();
         return nullptr;
     }
 
@@ -216,30 +232,21 @@ Plugin *PluginManager::loadPlugin(const QString &name)
 
     // We can't identify ? Right, just skip it
     if (plugin->name().isEmpty()) {
-        restlinkWarning() << "suspect plugin detected: " << d_ptr->pluginLoader.fileName();
+        errorString = "suspect plugin detected: " + m_loader.fileName();
+
+        m_loader.unload();
         return nullptr;
     }
 
     return plugin;
 }
 
-/**
- * @brief Unloads the currently loaded plugin.
- */
-void PluginManager::unloadPlugin()
+bool PluginManagerPrivate::unload()
 {
-    if (d_ptr->pluginLoader.isLoaded())
-        d_ptr->pluginLoader.unload();
-}
-
-/**
- * @brief Returns the global singleton instance of PluginManager.
- * @return A pointer to the global PluginManager.
- */
-PluginManager *PluginManager::global()
-{
-    static PluginManager manager;
-    return &manager;
+    if (m_loader.isLoaded())
+        return m_loader.unload();
+    else
+        return true;
 }
 
 } // namespace RestLink

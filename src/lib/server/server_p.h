@@ -23,8 +23,9 @@ class DefaultServer : public Server
     Q_OBJECT
 
 public:
-    DefaultServer(const QString &name, const QStringList &schemes, AbstractServerWorker *worker, QObject *parent = nullptr)
+    DefaultServer(const QByteArray &id, const QString &name, const QStringList &schemes, AbstractServerWorker *worker, QObject *parent = nullptr)
         : Server(worker, parent)
+        , m_id(id)
         , m_name(name)
         , m_schemes(schemes)
     {}
@@ -36,6 +37,7 @@ public:
     { return m_schemes; }
 
 private:
+    const QByteArray m_id;
     const QString m_name;
     const QStringList m_schemes;
 };

@@ -24,14 +24,18 @@ public:
 
     QString uuid() const;
     QString name() const;
+    QStringList supportedSchemes() const;
 
     QJsonObject metaData() const;
-    void setMetaData(const QJsonObject &metaData);
 
     virtual AbstractRequestHandler *createHandler() = 0;
 
 private:
+    void setMetaData(const QJsonObject &metaData);
+
     QJsonObject m_metaData;
+
+    friend class PluginManagerPrivate;
 };
 
 } // namespace RestLink

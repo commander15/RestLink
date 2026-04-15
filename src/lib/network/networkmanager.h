@@ -32,7 +32,22 @@ protected:
     QNetworkRequest generateNetworkRequest(Method method, const Request &request, const Body &body);
     QNetworkReply *generateNetworkReply(Method method, const QNetworkRequest &request, const Body &body);
 
+private:
+    enum HandlerRegistrationError {
+        NoHandlerRegistrationError,
+        InvalidHandlerRegistrationError,
+        HandlerAlreadyRegisteredError,
+        HandlerSchemesAlreadyExistsError,
+    };
+
+    static HandlerRegistrationError registerHandler(AbstractRequestHandler *handler);
+
+    static QStringList s_supportedNetworkSchemes;
+    static QStringList s_supportedHandlerSchemes;
+    static QVector<AbstractRequestHandler *> s_extraHandlers;
+
     friend class Api;
+    friend class PluginManager;
 };
 
 }

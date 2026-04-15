@@ -1,6 +1,8 @@
 #include "plugin.h"
 #include "plugin_p.h"
 
+#include <QJsonArray>
+
 /**
  * @file plugin.h
  *
@@ -60,6 +62,21 @@ QString Plugin::uuid() const
 QString Plugin::name() const
 {
     return m_metaData.value("name").toString();
+}
+
+/**
+ * @brief Returns the plugin handler supported schemes
+ * @return Schmes as a QStringList.
+ * @note If the plugin reported schemes didn't match the plugin handler ones, the plugin may fail to load.
+ */
+QStringList Plugin::supportedSchemes() const
+{
+    const QJsonArray metaSchemes = m_metaData.value("schemes").toArray();
+
+    QStringList schemes;
+    for (const QJsonValue &scheme : metaSchemes)
+        schemes.append(scheme.toString());
+    return schemes;
 }
 
 /**

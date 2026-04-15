@@ -49,7 +49,12 @@ void Server::stop()
 
 Server *Server::create(const QString &name, const QStringList &schemes, AbstractServerWorker *worker, QObject *parent)
 {
-    return new DefaultServer(name, schemes, worker, parent);
+    return new DefaultServer(name.toLower().toUtf8(), name, schemes, worker, parent);
+}
+
+Server *Server::create(const QByteArray &id, const QString &name, const QStringList &schemes, AbstractServerWorker *worker, QObject *parent)
+{
+    return new DefaultServer(id, name, schemes, worker, parent);
 }
 
 AbstractRequestHandler::HandlerType Server::handlerType() const

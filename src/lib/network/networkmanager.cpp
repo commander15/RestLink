@@ -9,8 +9,8 @@
 #include <RestLink/response.h>
 #include <RestLink/httputils.h>
 #include <RestLink/compressionutils.h>
-#include <RestLink/pluginmanager.h>
 
+#include <RestLink/networkresponse.h>
 #include <RestLink/private/networkresponse_p.h>
 
 #include <QtCore/qcoreapplication.h>
@@ -67,8 +67,8 @@ Response *NetworkManager::sendRequest(Method method, const Request &request, con
         return response;
     }
 
-    // Otherwise, try using plugin handlers
-    QList<AbstractRequestHandler *> handlers = PluginManager::handlers();
+    // Otherwise, try using extra handlers
+    QList<AbstractRequestHandler *> handlers = s_extraHandlers;
 
     auto it = std::find_if(handlers.begin(), handlers.end(), [&requestScheme](const AbstractRequestHandler *handler) {
         return handler->supportedSchemes().contains(requestScheme);
@@ -90,20 +90,18 @@ Response *NetworkManager::sendRequest(Method method, const Request &request, con
 
 QStringList NetworkManager::supportedSchemes() const
 {
-    // Getting schemes from QNetworkAccessManager and network handlers
-    QStringList schemes = QNetworkAccessManager::supportedSchemes();
-    const QList<AbstractRequestHandler *> handlers = PluginManager::handlers();
-    for (AbstractRequestHandler *handler : handlers)
-        schemes.append(handler->supportedSchemes());
+    // If we don't have cached network schemes yet, we do it now
+    if (s_supportedNetworkSchemes.isEmpty()) {
+        s_supportedNetworkSchemes = QNetworkAccessManager::supportedSchemes();
 
 #ifdef Q_OS_WASM
-    // Force HTTP/HTTPS on WASM
-    schemes.append({ "https", "http" });
+        // Force HTTP/HTTPS on WASM
+        s_supportedNetworkSchemes.append({ "https", "http" });
 #endif
+    }
 
-    // Removing duplicates and returning schemes
-    schemes.removeDuplicates();
-    return schemes;
+    // Merging and returning schemes
+    return s_supportedNetworkSchemes + s_supportedHandlerSchemes;
 }
 
 AbstractRequestHandler::HandlerType NetworkManager::handlerType() const
@@ -233,5 +231,33 @@ QNetworkReply *NetworkManager::generateNetworkReply(Method method, const QNetwor
 
     return reply;
 }
+
+NetworkManager::HandlerRegistrationError NetworkManager::registerHandler(AbstractRequestHandler *handler)
+{
+    // First, we check if the handler is valid (ie: has enough id informations
+    if (handler == nullptr || handler->handlerId().isEmpty())
+        return InvalidHandlerRegistrationError;
+
+    auto it = std::find_if(s_extraHandlers.cbegin(), s_extraHandlers.cend(), [handler](const AbstractRequestHandler *current) {
+        return handler == current || handler->handlerId() != current->handlerId();
+    });
+
+    if (it != s_extraHandlers.cend())
+        return HandlerAlreadyRegisteredError;
+
+    const QStringList oldSchemes = s_supportedNetworkSchemes + s_supportedHandlerSchemes;
+    const QStringList newSchemes = handler->supportedSchemes();
+    for (const QString &newScheme : newSchemes)
+        if (oldSchemes.contains(newScheme))
+            return HandlerSchemesAlreadyExistsError;
+
+    s_supportedHandlerSchemes.append(handler->supportedSchemes());
+    s_extraHandlers.append(handler);
+    return NoHandlerRegistrationError;
+}
+
+QStringList NetworkManager::s_supportedNetworkSchemes = QNetworkAccessManager().supportedSchemes();
+QStringList NetworkManager::s_supportedHandlerSchemes;
+QVector<AbstractRequestHandler *> NetworkManager::s_extraHandlers;
 
 }

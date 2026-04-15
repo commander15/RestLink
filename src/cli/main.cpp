@@ -18,7 +18,8 @@ int main(int argc, char *argv[])
     app.addLibraryPath(QString(RESTLINK_ROOT) + "/plugins");
 #endif
 
-    PluginManager::enableDiscovery();
+    // We load all available plugins, no need for extra checks for the tool
+    PluginManager::loadAvailablePlugins(PluginManager::UnsafeMode);
 
     Api api;
     app.setApi(&api);
