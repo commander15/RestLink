@@ -4,6 +4,7 @@
 #include <QtCore/qjsonobject.h>
 #include <QtCore/qjsonarray.h>
 #include <QtCore/qfile.h>
+#include <QtCore/qtimer.h>
 
 #include <RestLink/api.h>
 #include <RestLink/request.h>
@@ -193,7 +194,10 @@ void App::setApi(RestLink::Api *api)
         configUrl = QUrl::fromLocalFile(config);
     }
 
-    api->configure(configUrl);
+    if (configUrl.isValid())
+        api->configure(configUrl);
+    else
+        QTimer::singleShot(0, this, &App::run);
 
     m_api = api;
 }
@@ -316,6 +320,9 @@ Body App::makeBody()
 
 void App::monitorResponse(Response *response)
 {
+    if (response == nullptr)
+        return;
+
     if (m_parser.isSet(VERBOSE_OPTION)) {
         switch (response->method()) {
         case AbstractRequestHandler::HeadMethod:
