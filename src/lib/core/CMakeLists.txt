@@ -13,6 +13,7 @@ target_headers(RestLink
         parameter_p.h pathparameter_p.h queryparameter_p.h header_p.h body_p.h
         request_p.h response_p.h
         abstractrequesthandler_p.h
+        emptyresponse_p.h
 )
 
 target_sources(RestLink

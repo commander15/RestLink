@@ -13,6 +13,8 @@
 #include <RestLink/networkresponse.h>
 #include <RestLink/private/networkresponse_p.h>
 
+#include <RestLink/private/emptyresponse_p.h>
+
 #include <QtCore/qcoreapplication.h>
 
 #include <QtNetwork/qhttpmultipart.h>
@@ -85,7 +87,11 @@ Response *NetworkManager::sendRequest(Method method, const Request &request, con
 
     // We don't known the scheme, we just go null ;)
     restlinkWarning() << "NetworkManager: unsupported scheme usage detected !";
-    return nullptr;
+
+    EmptyResponse *response = new EmptyResponse(method, this);
+    initResponse(response, request, method);
+    response->netRequest = generateNetworkRequest(method, request, body);
+    return response;
 }
 
 QStringList NetworkManager::supportedSchemes() const
