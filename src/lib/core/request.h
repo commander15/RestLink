@@ -16,9 +16,6 @@ class Request;
 class Body;
 class Response;
 class Api;
-class AbstractController;
-
-typedef std::function<void(const Request &, const Body &, void *, Response *)> RequestProcessing;
 
 class RequestPrivate;
 class RESTLINK_EXPORT Request : public RequestInterface
@@ -27,7 +24,7 @@ public:
     enum Attribute {
         CacheLoadControlAttribute,
         CacheSaveControlAttribute,
-        CompressionAllowedAttribute
+        CompressionAllowedAttribute,
     };
 
     enum UrlType {
@@ -39,7 +36,6 @@ public:
     Request(const char *endpoint);
     Request(const QString &endpoint);
     Request(const QUrl &url);
-    Request(const RequestProcessing &processing);
     Request(const Request &other);
     Request(Request &&other);
     virtual ~Request();
@@ -62,11 +58,8 @@ public:
     QVariant attribute(Attribute attribute, const QVariant &defaultValue) const;
     void setAttribute(Attribute attribute, const QVariant &value);
 
-    RequestProcessing processing() const;
-    void setProcessing(RequestProcessing processing);
-
-    AbstractController *controller() const;
-    void setController(AbstractController *controller);
+    int timeout() const;
+    void setTimeout(int duration);
 
     Api *api() const;
     void setApi(Api *api);

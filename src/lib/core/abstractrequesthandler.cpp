@@ -5,6 +5,7 @@
 #include <RestLink/request.h>
 #include <RestLink/body.h>
 #include <RestLink/response.h>
+#include <RestLink/private/emptyresponse_p.h>
 #include <RestLink/abstractrequestinterceptor.h>
 #include <RestLink/httputils.h>
 
@@ -70,14 +71,10 @@ AbstractRequestHandler::~AbstractRequestHandler()
 }
 
 /*!
+ * \fn RestLink::AbstractRequestHandler::handlerId
  * \brief Returns the id of the handler.
  * \note the id must be globally unique.
  */
-QByteArray AbstractRequestHandler::handlerId() const
-{
-    return handlerName().toLower().toUtf8();
-}
-
 /*!
  * \brief Returns the name of the handler based on its type.
  * \note this method can be overriden on subclasses.
@@ -146,15 +143,19 @@ Response *AbstractRequestHandler::deleteResource(const Request &request)
 
 Response *AbstractRequestHandler::send(Method method, const Request &request, const Body &body)
 {
-    if (!isRequestSupported(request)) {
-        restlinkWarning() << handlerName() << ": trying to send an unsupported request !";
-        return nullptr;
-    }
-
     Request finalRequest = request;
     Body finalBody = body;
     for (AbstractRequestInterceptor *interceptor : std::as_const(d_ptr->interceptors))
         interceptor->intercept(method, finalRequest, finalBody);
+
+    if (!isRequestSupported(finalRequest)) {
+        restlinkWarning() << handlerName() << ": trying to send an unsupported request !";
+
+        EmptyResponse *response = new EmptyResponse(method, reinterpret_cast<QObject *>(this));
+        initResponse(response, finalRequest, method);
+        return response;
+    }
+
     return sendRequest(method, finalRequest, finalBody);
 }
 

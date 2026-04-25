@@ -15,7 +15,18 @@ set_target_properties(RestLinkExcel PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}
 )
 
-target_link_libraries(RestLinkExcel PUBLIC QXlsx::QXlsx RestLink)
+include(FetchContent)
+
+FetchContent_Declare(
+    QXlsx
+    GIT_REPOSITORY "https://github.com/QtExcel/QXlsx.git"
+    GIT_TAG        "v1.5.0"
+    SOURCE_SUBDIR QXlsx
+)
+
+FetchContent_MakeAvailable(QXlsx)
+
+target_link_libraries(RestLinkExcel PUBLIC QXlsx RestLink)
 
 set(INSTALL_DIR plugins/restlink)
 install(TARGETS RestLinkExcel

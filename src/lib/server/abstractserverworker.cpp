@@ -29,7 +29,6 @@ bool AbstractServerWorker::hasPendingRequests() const
 void AbstractServerWorker::enqueue(const ServerRequest &request, ServerResponse *response)
 {
     static const QStringList internals = {
-        "/register-controller"
     };
 
     AbstractServerWorkerPrivate::PendingRequest pending;
@@ -49,30 +48,40 @@ void AbstractServerWorker::enqueue(const ServerRequest &request, ServerResponse 
     });
 }
 
+void AbstractServerWorker::registerController(AbstractController *controller)
+{
+    QMutexLocker locker(&d_ptr->mutex);
+    if (!d_ptr->controllers.contains(controller))
+        d_ptr->controllers.append(controller);
+}
+
+void AbstractServerWorker::unregisterController(AbstractController *controller)
+{
+    QMutexLocker locker(&d_ptr->mutex);
+    d_ptr->controllers.removeOne(controller);
+}
+
 void AbstractServerWorker::processInternalRequest(ServerRequest &request, ServerResponse *response)
 {
     const QString function = request.endpoint().mid(1);
 
-    if (function == "register-controller") {
-        AbstractController *controller = request.controller();
-        bool registered = false;
+    // No functions for now
+    Q_UNUSED(function)
 
-        d_ptr->mutex.lock();
-        if (controller && !d_ptr->controllers.contains(controller)) {
-            d_ptr->controllers.prepend(controller);
-            registered = true;
-        }
-        d_ptr->mutex.unlock();
+    processUnsupportedRequest(request, response);
+}
 
-        if (registered) {
-            response->setHttpStatusCode(201);
-            response->setBody(QJsonObject({ { "message", "controller registered !" } }));
-        } else {
-            response->setHttpStatusCode(400);
-            response->setBody(QJsonObject({ { "message", "controller invalid or already registered !" } }));
-        }
+void AbstractServerWorker::processStandardRequest(ServerRequest &request, ServerResponse *response)
+{
+    d_ptr->mutex.lock();
+    auto it = std::find_if(d_ptr->controllers.cbegin(), d_ptr->controllers.cend(), [&request](AbstractController *controller) {
+        return controller->canProcessRequest(request);
+    });
+    AbstractController *controller = (it == d_ptr->controllers.cend() ? nullptr : *it);
+    d_ptr->mutex.unlock();
 
-        response->complete();
+    if (controller != nullptr) {
+        processControllerRequest(request, response, controller);
         return;
     }
 
@@ -84,9 +93,29 @@ void AbstractServerWorker::processUnsupportedRequest(const ServerRequest &reques
     QString msg = QStringLiteral("unsupported method %1 for endpoint %2")
         .arg(HttpUtils::verbString(request.method()), request.endpoint());
 
-    response->setHttpStatusCode(400);
+    response->setHttpStatusCode(404);
     response->setBody(QJsonObject({ { "message", msg } }));
     response->complete();
+}
+
+void AbstractServerWorker::processControllerRequest(ServerRequest &request, ServerResponse *response, AbstractController *controller)
+{
+    void *source = createDataSource(request);
+    controller->setDataSource(source);
+    controller->processRequest(request, response);
+
+    if (source == nullptr)
+        return;
+
+    switch (d_ptr->type) {
+    case Synchronous:
+        clearDataSource(request, source);
+        break;
+
+    case Asynchronous:
+        connect(response, &Response::finished, this, [this, request, source] { clearDataSource(request, source); });
+        break;
+    }
 }
 
 void AbstractServerWorker::run()
@@ -120,16 +149,8 @@ AbstractServerWorkerPrivate::AbstractServerWorkerPrivate(AbstractServerWorker::W
 
 AbstractServerWorkerPrivate::~AbstractServerWorkerPrivate()
 {
-    QMutexLocker locker(&mutex);
-
-    while (!pendingRequests.isEmpty()) {
-        AbstractController *controller = pendingRequests.dequeue().request.controller();
-        if (controller)
-            delete controller;
-    }
-
     while (!controllers.isEmpty())
-        delete controllers.takeFirst();
+        delete controllers.takeLast();
 }
 
 void AbstractServerWorkerPrivate::syncRun(int interval)
@@ -147,14 +168,15 @@ void AbstractServerWorkerPrivate::assyncRun(int interval)
     QTimer timer;
     timer.start(interval);
 
-    QObject::connect(&timer, &QTimer::timeout, &timer, [this] {
-        if (!q_ptr->isInterruptionRequested()) {
-            if (!processNext())
-                if (!q_ptr->maintain())
-                    q_ptr->quit();
-        } else {
-            q_ptr->quit();
-        }
+    QObject::connect(&timer, &QTimer::timeout, q_ptr, [this] {
+        if (q_ptr->isInterruptionRequested())
+            return;
+
+        if (processNext())
+            return;
+
+        if (!q_ptr->maintain())
+            q_ptr->exit(1);
     });
 
     q_ptr->exec();
@@ -168,53 +190,40 @@ bool AbstractServerWorkerPrivate::processNext()
         QMutexLocker locker(&mutex);
         if (pendingRequests.isEmpty())
             return false;
-        else
-            pending = pendingRequests.dequeue();
     }
 
+    pending = pendingRequests.dequeue();
     if (pending.internal) {
         q_ptr->processInternalRequest(pending.request, pending.response);
     } else {
-        bool deletable = true;
-        AbstractController *controller = requestController(pending, &deletable);
-        if (controller) {
-            void *source = q_ptr->createDataSource(pending.request);
-            controller->setDataSource(source);
-            if (controller->canProcessRequest(pending.request))
-                controller->processRequest(pending.request, pending.response);
-            q_ptr->clearDataSource(pending.request, source);
+        q_ptr->processStandardRequest(pending.request, pending.response);
+    }
 
-            if (pending.request.isOverridable())
-                q_ptr->processStandardRequest(pending.request, pending.response);
+    static const std::function<void(ServerResponse *)> autoComplete = [](ServerResponse *response) {
+        // If not completed, we complete and assign a HTTP 500 status if no status has been set
+        if (response->isFinished())
+            return;
 
-            if (deletable)
-                delete controller;
-        } else {
-            q_ptr->processStandardRequest(pending.request, pending.response);
-        }
+        if (response->httpStatusCode() == 0)
+            response->setHttpStatusCode(500);
+
+        response->complete();
+    };
+
+    // Process timeout
+    switch (type) {
+    case AbstractServerWorker::Synchronous:
+        autoComplete(pending.response);
+        break;
+
+    case AbstractServerWorker::Asynchronous:
+        QTimer::singleShot(pending.request.timeout(), pending.response, [pending] {
+            autoComplete(pending.response);
+        });
+        break;
     }
 
     return true;
-}
-
-AbstractController *AbstractServerWorkerPrivate::requestController(const PendingRequest &pending, bool *deletable)
-{
-    AbstractController *controller = pending.request.controller();
-    if (controller != nullptr) {
-        if (deletable) *deletable = true;
-        return controller;
-    }
-
-    auto it = std::find_if(controllers.begin(), controllers.end(), [&pending](AbstractController *controller) {
-        return controller->canProcessRequest(pending.request);
-    });
-
-    if (it != controllers.end()) {
-        if (deletable) *deletable = false;
-        return *it;
-    }
-
-    return nullptr;
 }
 
 } // namespace RestLink

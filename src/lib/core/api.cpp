@@ -191,7 +191,6 @@ void Api::setBearerToken(const QString &token)
 {
     RESTLINK_D(Api);
     if (d->bearerToken != token) {
-        setHeader("Authorization", (token.isEmpty() ? QVariant() : QVariant("Bearer " + token)));
         d->bearerToken = token;
         emit bearerTokenChanged(token);
     }
@@ -289,6 +288,12 @@ bool Api::configure(const QJsonObject &config)
 
     setUrl(config.value("url").toString());
 
+    if (config.contains("language"))
+        setLocale(QLocale(config.value("language").toString()));
+
+    if (config.contains("bearer_token"))
+        setBearerToken(config.value("bearer_token").toString());
+
     const Request request = Request::fromJsonbject(config);
     const RequestPrivate *data = request.d_ptr.get();
     d_ptr->internalRequestData->pathParameters = data->pathParameters;
@@ -316,6 +321,9 @@ Response *Api::send(AbstractRequestHandler::Method method, const Request &reques
 {
     RESTLINK_D(Api);
     d->internalRequestData->api = this;
+
+    if (!d->bearerToken.isEmpty())
+        setHeader("Authorization", "Bearer " + d->bearerToken);
 
     if (d->hasRemoteRequest(request))
         return ApiBase::send(method, Request::merge(request, d->remoteRequest(request)), body);

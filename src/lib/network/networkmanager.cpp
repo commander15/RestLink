@@ -46,20 +46,18 @@ NetworkManager::NetworkManager(QObject *parent)
     setRedirectPolicy(QNetworkRequest::SameOriginRedirectPolicy);
 }
 
+QByteArray NetworkManager::handlerId() const
+{
+    return QByteArrayLiteral("restlink.network.manager");
+}
+
 Response *NetworkManager::sendRequest(Method method, const Request &request, const Body &body)
 {
     const QString requestScheme = request.baseUrl().scheme();
-#ifdef Q_OS_WASM
-    // Workaround for a Qt bug on WebAssembly, http and https didn't appears in supported schemes
-    const QStringList httpSchemes = { "http", "https" }; // force HTTP/HTTPS support on WASM
-#else
-    // Here we don't enforce https cause it depends on SSL support and works well on non WASM platform
-    const QStringList httpSchemes = { "http" }; // force HTTP support on all platforms
-#endif
 
     // If it's supported, send though QNetworkAccessManager base
-    const QStringList networkSchemes = QNetworkAccessManager::supportedSchemes();
-    if (httpSchemes.contains(requestScheme) || networkSchemes.contains(requestScheme)) {
+    const QStringList networkSchemes = s_supportedNetworkSchemes;
+    if (networkSchemes.contains(requestScheme)) {
         QNetworkRequest netRequest = generateNetworkRequest(method, request, body);
         QNetworkReply *netReply = generateNetworkReply(method, netRequest, body);
 
@@ -96,15 +94,9 @@ Response *NetworkManager::sendRequest(Method method, const Request &request, con
 
 QStringList NetworkManager::supportedSchemes() const
 {
-    // If we don't have cached network schemes yet, we do it now
-    if (s_supportedNetworkSchemes.isEmpty()) {
-        s_supportedNetworkSchemes = QNetworkAccessManager::supportedSchemes();
-
-#ifdef Q_OS_WASM
-        // Force HTTP/HTTPS on WASM
-        s_supportedNetworkSchemes.append({ "https", "http" });
-#endif
-    }
+    // If we don't have cached network schemes yet, we cache it now
+    if (s_supportedNetworkSchemes.isEmpty())
+        loadNetworkSchemes();
 
     // Merging and returning schemes
     return s_supportedNetworkSchemes + s_supportedHandlerSchemes;
@@ -113,6 +105,37 @@ QStringList NetworkManager::supportedSchemes() const
 AbstractRequestHandler::HandlerType NetworkManager::handlerType() const
 {
     return HandlerType::NetworkManager;
+}
+
+NetworkManager::HandlerRegistrationError NetworkManager::registerHandler(AbstractRequestHandler *handler)
+{
+    // First, we check if the handler is valid (ie: has enough id informations)
+    if (handler == nullptr || handler->handlerId().isEmpty())
+        return InvalidHandlerRegistrationError;
+
+    // Next, we check if it is not already registered
+    auto it = std::find_if(s_extraHandlers.cbegin(), s_extraHandlers.cend(), [handler](const AbstractRequestHandler *current) {
+        return handler == current || handler->handlerId() == current->handlerId();
+    });
+
+    if (it != s_extraHandlers.cend())
+        return HandlerAlreadyRegisteredError;
+
+    // If network schemes are not already available, we query them
+    if (s_supportedNetworkSchemes.empty())
+        loadNetworkSchemes();
+
+    // Next, we check if its schemes are not already supported
+    const QStringList oldSchemes = s_supportedNetworkSchemes + s_supportedHandlerSchemes;
+    const QStringList newSchemes = handler->supportedSchemes();
+    for (const QString &newScheme : newSchemes)
+        if (oldSchemes.contains(newScheme))
+            return HandlerSchemesAlreadyExistsError;
+
+    // If everything ok, we process registration and report no errors
+    s_supportedHandlerSchemes.append(handler->supportedSchemes());
+    s_extraHandlers.append(handler);
+    return NoHandlerRegistrationError;
 }
 
 QNetworkRequest NetworkManager::generateNetworkRequest(Method method, const Request &request, const Body &body)
@@ -238,31 +261,18 @@ QNetworkReply *NetworkManager::generateNetworkReply(Method method, const QNetwor
     return reply;
 }
 
-NetworkManager::HandlerRegistrationError NetworkManager::registerHandler(AbstractRequestHandler *handler)
+void NetworkManager::loadNetworkSchemes()
 {
-    // First, we check if the handler is valid (ie: has enough id informations
-    if (handler == nullptr || handler->handlerId().isEmpty())
-        return InvalidHandlerRegistrationError;
+    s_supportedNetworkSchemes = QNetworkAccessManager().supportedSchemes();
 
-    auto it = std::find_if(s_extraHandlers.cbegin(), s_extraHandlers.cend(), [handler](const AbstractRequestHandler *current) {
-        return handler == current || handler->handlerId() != current->handlerId();
-    });
-
-    if (it != s_extraHandlers.cend())
-        return HandlerAlreadyRegisteredError;
-
-    const QStringList oldSchemes = s_supportedNetworkSchemes + s_supportedHandlerSchemes;
-    const QStringList newSchemes = handler->supportedSchemes();
-    for (const QString &newScheme : newSchemes)
-        if (oldSchemes.contains(newScheme))
-            return HandlerSchemesAlreadyExistsError;
-
-    s_supportedHandlerSchemes.append(handler->supportedSchemes());
-    s_extraHandlers.append(handler);
-    return NoHandlerRegistrationError;
+#ifdef Q_OS_WASM
+    // Force HTTP/HTTPS on WASM
+    s_supportedNetworkSchemes.append({ "https", "http" });
+    s_supportedNetworkSchemes.removeDuplicates();
+#endif
 }
 
-QStringList NetworkManager::s_supportedNetworkSchemes = QNetworkAccessManager().supportedSchemes();
+QStringList NetworkManager::s_supportedNetworkSchemes;
 QStringList NetworkManager::s_supportedHandlerSchemes;
 QVector<AbstractRequestHandler *> NetworkManager::s_extraHandlers;
 

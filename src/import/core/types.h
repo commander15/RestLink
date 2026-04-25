@@ -3,8 +3,8 @@
 
 #include <QtQml/qqmlengine.h>
 
-#include "../lib/api.h"
-#include "../lib/response.h"
+#include "../lib/core/api.h"
+#include "../lib/core/response.h"
 #include "../lib/network/cache.h"
 #include "../lib/network/cookiejar.h"
 #include "../lib/network/networkmanager.h"

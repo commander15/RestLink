@@ -36,7 +36,7 @@ public:
 
     virtual ~AbstractRequestHandler();
 
-    virtual QByteArray handlerId() const;
+    virtual QByteArray handlerId() const = 0;
     virtual QString handlerName() const;
 
     Response *head(const Request &request);

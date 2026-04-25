@@ -34,9 +34,7 @@ public:
     QList<QueryParameter> queryParameters;
     QList<Header> headers;
     QHash<Request::Attribute, QVariant> attributes;
-
-    RequestProcessing processing;
-    AbstractController *controller = nullptr;
+    int timeout = 30000;
 
     Api *api = nullptr;
 };

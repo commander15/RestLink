@@ -112,12 +112,6 @@ Request::Request(const QUrl &url)
     d_ptr->baseUrl = url;
 }
 
-Request::Request(const RequestProcessing &processing) :
-    d_ptr(new RequestPrivate())
-{
-    d_ptr->processing = processing;
-}
-
 Request::Request(RequestPrivate *d)
     : d_ptr(d)
 {
@@ -362,37 +356,26 @@ void Request::setAttribute(Attribute attribute, const QVariant &value)
         d_ptr->attributes.remove(attribute);
 }
 
-RequestProcessing Request::processing() const
-{
-    return d_ptr->processing;
-}
-
-void Request::setProcessing(RequestProcessing processing)
-{
-    d_ptr->processing = processing;
-}
-
 /*!
- * \brief Get the controller associated with the request.
+ * \brief Return the timeout this request requires.
+ * \return The timeout (in ms).
  */
-AbstractController *Request::controller() const
+int Request::timeout() const
 {
-    return d_ptr->controller;
+    return d_ptr->timeout;
 }
 
 /*!
- * \brief Associate a controller to the request.
- * \param controller The controller to set.
- * \note The controller will be used to process the request in meantime except if it's used with
- * a special RestLink endpoint such as /restlink/register-controller.
+ * \brief Set the request timeout.
+ * \param duration The duration (in ms) to be set as timeout
  */
-void Request::setController(AbstractController *controller)
+void Request::setTimeout(int duration)
 {
-    d_ptr->controller = controller;
+    d_ptr->timeout = (duration > 0 ? duration : 0);
 }
 
 /*!
- * \brief return the Api associated to this request
+ * \brief Return the Api associated to this request
  * \return The Api.
  */
 Api *Request::api() const

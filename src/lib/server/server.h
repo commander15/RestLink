@@ -23,7 +23,9 @@ public:
     bool isRunning() const;
     void start();
     void stop();
+    void wait();
 
+    QByteArray handlerId() const override;
     HandlerType handlerType() const override;
 
     template<typename Worker>

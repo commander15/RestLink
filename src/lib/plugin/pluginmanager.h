@@ -17,18 +17,20 @@ public:
         UnsafeMode,
     };
 
-    ~PluginManager();
-
+    static QList<Plugin *> loadedPlugins();
     static bool loadPlugin(const QString &name, LoadMode mode = SafeMode);
     static QStringList loadAvailablePlugins(LoadMode mode = SafeMode);
     static QStringList discoverPlugins();
 
 private:
     PluginManager();
+    ~PluginManager();
 
     static PluginManagerPrivate *internal();
 
     QScopedPointer<PluginManagerPrivate> d_ptr;
+
+    friend class QScopedPointerDeleter<PluginManager>;
 };
 
 } // namespace RestLink

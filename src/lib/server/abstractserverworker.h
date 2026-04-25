@@ -9,6 +9,7 @@ namespace RestLink {
 
 class ServerRequest;
 class ServerResponse;
+class AbstractController;
 
 class AbstractServerWorkerPrivate;
 class RESTLINK_EXPORT AbstractServerWorker : public QThread
@@ -27,8 +28,11 @@ public:
     bool hasPendingRequests() const;
     void enqueue(const ServerRequest &request, ServerResponse *response);
 
+    void registerController(AbstractController *controller);
+    void unregisterController(AbstractController *controller);
+
     virtual void processInternalRequest(ServerRequest &request, ServerResponse *response);
-    virtual void processStandardRequest(ServerRequest &request, ServerResponse *response) = 0;
+    virtual void processStandardRequest(ServerRequest &request, ServerResponse *response);
     static void processUnsupportedRequest(const ServerRequest &request, ServerResponse *response);
 
 protected:
@@ -36,6 +40,7 @@ protected:
     virtual void cleanup() = 0;
     virtual bool maintain() = 0;
 
+    void processControllerRequest(ServerRequest &request, ServerResponse *response, AbstractController *controller);
     virtual void *createDataSource(const ServerRequest &request) = 0;
     virtual void clearDataSource(const ServerRequest &request, void *source) = 0;
 

@@ -11,9 +11,11 @@
 #include <RestLink/body.h>
 #include <RestLink/response.h>
 #include <RestLink/networkmanager.h>
+#include <RestLink/pluginmanager.h>
 
 // Infos options
 #define SCHEMES_OPTIONS "schemes"
+#define LIST_PLUGINS_OPTIONS "list-plugins"
 
 // Config options
 #define CONFIG_OPTION   "config"
@@ -58,6 +60,12 @@ void App::initParser()
     // Scheme option
     {
         QCommandLineOption option(SCHEMES_OPTIONS, "List supported url schemes.");
+        m_parser.addOption(option);
+    }
+
+    // List Plugins option
+    {
+        QCommandLineOption option(LIST_PLUGINS_OPTIONS, "List all loaded plugins.");
         m_parser.addOption(option);
     }
 
@@ -175,7 +183,7 @@ void App::initParser()
 void App::setApi(RestLink::Api *api)
 {
     connect(api, &Api::configurationCompleted, this, &App::run);
-    connect(api, &Api::configurationFailed, this, &QCoreApplication::quit);
+    connect(api, &Api::configurationFailed, qApp, &QCoreApplication::quit);
 
     m_parser.process(*this);
 
@@ -205,7 +213,50 @@ void App::setApi(RestLink::Api *api)
 void App::run()
 {
     if (m_parser.isSet(SCHEMES_OPTIONS)) {
-        m_out << m_api->networkManager()->supportedSchemes().join("\n") << Qt::endl;
+        m_out << m_api->networkManager()->supportedSchemes().join(", ") << Qt::endl;
+        quit();
+        return;
+    }
+
+    if (m_parser.isSet(LIST_PLUGINS_OPTIONS)) {
+        const QList<Plugin *> plugins = PluginManager::loadedPlugins();
+        for (const Plugin *plugin : plugins) {
+            m_out << "* " << plugin->name() << " (" << plugin->uuid() << ")\n";
+
+            const QJsonObject metaData = plugin->metaData();
+            const QStringList mainKeys = { "description", "version", "schemes" };
+            const QStringList blackKeys = { "uuid", "name" };
+
+            QStringList allKeys = metaData.keys();
+            allKeys.removeIf([mainKeys, blackKeys](const QString &key) {
+                return mainKeys.contains(key) || blackKeys.contains(key);
+            });
+            allKeys = mainKeys + allKeys;
+
+            auto getValue = [&metaData, &plugin](const QString &key) {
+                if (metaData.contains(key))
+                    return metaData.value(key).toVariant().toString();
+                else if (key == "version")
+                    return plugin->version();
+                else if (key == "schemes")
+                    return plugin->supportedSchemes().join(", ");
+                else
+                    return QString();
+            };
+
+            for (const QString &key : std::as_const(allKeys)) {
+                const QString value = getValue(key);
+                if (value.isEmpty())
+                    continue;
+
+                m_out << "  - " << key << ": " << value << '\n';
+            }
+
+            m_out << Qt::endl;
+        }
+
+        m_out << plugins.size() << " plugin(s) loaded." << Qt::endl;
+
         quit();
         return;
     }

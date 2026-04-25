@@ -18,7 +18,7 @@ public:
     friend class Server;
 };
 
-class DefaultServer : public Server
+class DefaultServer final : public Server
 {
     Q_OBJECT
 
@@ -29,6 +29,9 @@ public:
         , m_name(name)
         , m_schemes(schemes)
     {}
+
+    QByteArray handlerId() const override
+    { return m_id; }
 
     QString handlerName() const override
     { return m_name; }

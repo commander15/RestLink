@@ -363,7 +363,7 @@ void RequestInterface::setHeader(const QString &name, const QVariant &value)
 {
     auto it = findHeader(name);
     if (it != mutableHeaders()->end())
-        it->addValue(value);
+        it->setValue(value);
     else
         mutableHeaders()->append(Header(name, value));
 }

@@ -7,7 +7,7 @@ on:
 
 env:
   PACKAGE_NAME: RestLink
-  PACKAGE_VERSION: 2.2.5
+  PACKAGE_VERSION: 2.3.0
   BUILD_DIR: ${{github.workspace}}/build
   QT_VERSION: 6.9.0
 
@@ -45,7 +45,7 @@ jobs:
           arch: ${{matrix.arch}}
 
       - name: Install Doxygen
-        run: ${{matrix.pm}} install -y doxygen
+        run: ${matrix.pm} install -y doxygen
 
       - name: Setup MSVC (Windows Only)
         if: matrix.platform == 'Windows'

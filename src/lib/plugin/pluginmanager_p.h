@@ -12,15 +12,30 @@ class Plugin;
 class PluginManagerPrivate
 {
 public:
+    ~PluginManagerPrivate();
+
     AbstractRequestHandler *createHandler(Plugin *plugin, QString &errorString);
 
-    Plugin *load(const QString &name, QString &errorString);
-    bool unload();
+    QList<Plugin *> loadedPlugins;
+    QPluginLoader m_loader;
+};
 
-    QStringList loadedPlugins;
+class PluginLoadHelper
+{
+public:
+    PluginLoadHelper();
+    ~PluginLoadHelper();
+
+    Plugin *load(const QString &name, QString &errorString);
+
+    AbstractRequestHandler *handler();
+    void commit() { m_commit = true; }
 
 private:
     QPluginLoader m_loader;
+    Plugin *m_plugin;
+    AbstractRequestHandler *m_handler;
+    bool m_commit;
 };
 
 }

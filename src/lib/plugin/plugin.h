@@ -15,20 +15,27 @@ class AbstractRequestHandler;
 class RESTLINK_EXPORT Plugin : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QString uuid READ uuid CONSTANT)
-    Q_PROPERTY(QString name READ name CONSTANT)
+    Q_PROPERTY(QString uuid READ uuid CONSTANT FINAL)
+    Q_PROPERTY(QString name READ name CONSTANT FINAL)
+    Q_PROPERTY(QString version READ version CONSTANT FINAL)
+    Q_PROPERTY(QString description READ description CONSTANT FINAL)
+    Q_PROPERTY(QStringList supportedSchemes READ supportedSchemes CONSTANT FINAL)
 
 public:
     explicit Plugin(QObject *parent = nullptr);
-    virtual ~Plugin();
 
     QString uuid() const;
     QString name() const;
-    QStringList supportedSchemes() const;
+    QString description() const;
+    virtual QString version() const;
+    virtual QStringList supportedSchemes() const = 0;
 
     QJsonObject metaData() const;
 
-    virtual AbstractRequestHandler *createHandler() = 0;
+protected:
+    virtual ~Plugin();
+
+    virtual AbstractRequestHandler *createHandler(QObject *parent) = 0;
 
 private:
     void setMetaData(const QJsonObject &metaData);
@@ -36,6 +43,7 @@ private:
     QJsonObject m_metaData;
 
     friend class PluginManagerPrivate;
+    friend class PluginLoadHelper;
 };
 
 } // namespace RestLink
