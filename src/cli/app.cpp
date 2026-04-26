@@ -224,7 +224,7 @@ void App::run()
             m_out << "* " << plugin->name() << " (" << plugin->version() << ")\n";
 
             const QJsonObject metaData = plugin->metaData();
-            const QStringList mainKeys = { "uuid", "description", "schemes" };
+            const QStringList mainKeys = { "uuid", "description" };
             const QStringList blackKeys = { "name" };
 
             QStringList allKeys = metaData.keys();
@@ -232,6 +232,7 @@ void App::run()
                 return mainKeys.contains(key) || blackKeys.contains(key);
             });
             allKeys = mainKeys + allKeys;
+            allKeys.append("schemes");
 
             auto getValue = [&metaData, &plugin](const QString &key) {
                 if (metaData.contains(key))
