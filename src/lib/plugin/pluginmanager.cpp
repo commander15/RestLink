@@ -96,7 +96,7 @@ bool PluginManager::loadPlugin(const QString &name, LoadMode mode)
     // We try to register the handler
     switch (NetworkManager::registerHandler(handler)) {
     case NetworkManager::InvalidHandlerRegistrationError:
-        restlinkWarning() << "can't register plugin " + name + ", NetworkManager refuses it, may be it's a duplicate";
+        restlinkWarning() << "can't register plugin " + name + ", NetworkManager refuses it, seems that the plugin handler is faulty";
         return false;
 
     case NetworkManager::HandlerAlreadyRegisteredError:
@@ -104,7 +104,7 @@ bool PluginManager::loadPlugin(const QString &name, LoadMode mode)
         return false;
 
     case NetworkManager::HandlerSchemesAlreadyExistsError:
-        restlinkWarning() << "can't register plugin " + name + ", NetworkManager refuses it, may be it's a duplicate";
+        restlinkWarning() << "can't register plugin " + name + ", NetworkManager refuses it, one of it schemes is already provided elsewhere";
         return false;
 
     case NetworkManager::NoHandlerRegistrationError:
