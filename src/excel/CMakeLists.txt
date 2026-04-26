@@ -1,12 +1,16 @@
 qt_add_plugin(RestLinkExcel
-    CLASS_NAME RestLink::ExcelPlugin
-    excelplugin.h excelplugin.cpp
-    excelserver.h excelserver_p.h excelserver.cpp
-    exceldocument.h exceldocument.cpp
-    excelsheet.h excelsheet.cpp
+    CLASS_NAME RestLink::Excel::Plugin
+    plugin.cpp
 )
 
-set(OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/restlink)
+target_sources(RestLinkExcel
+  PRIVATE
+    worker.h worker.cpp
+    documentmanager.h documentmanager.cpp
+    document.h document.cpp
+)
+
+set(OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/plugins/restlink)
 set_target_properties(RestLinkExcel PROPERTIES
     OUTPUT_NAME restlinkexcel
     PREFIX      ""
