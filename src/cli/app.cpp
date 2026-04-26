@@ -221,11 +221,11 @@ void App::run()
     if (m_parser.isSet(LIST_PLUGINS_OPTIONS)) {
         const QList<Plugin *> plugins = PluginManager::loadedPlugins();
         for (const Plugin *plugin : plugins) {
-            m_out << "* " << plugin->name() << " (" << plugin->uuid() << ")\n";
+            m_out << "* " << plugin->name() << " (" << plugin->version() << ")\n";
 
             const QJsonObject metaData = plugin->metaData();
-            const QStringList mainKeys = { "description", "version", "schemes" };
-            const QStringList blackKeys = { "uuid", "name" };
+            const QStringList mainKeys = { "uuid", "description", "schemes" };
+            const QStringList blackKeys = { "name" };
 
             QStringList allKeys = metaData.keys();
             allKeys.removeIf([mainKeys, blackKeys](const QString &key) {
