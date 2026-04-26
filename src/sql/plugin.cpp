@@ -10,7 +10,7 @@
 namespace RestLink {
 namespace Sql {
 
-class Plugin final : public RestLink::Plugin
+class Q_DECL_EXPORT Plugin final : public RestLink::Plugin
 {
     Q_OBJECT
 
