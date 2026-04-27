@@ -1,6 +1,0 @@
-{
-    "uuid": "6a789948-d196-11ef-af72-8f7d83c3d7d1",
-    "name": "RestLink SQL",
-    "description": "A SQL backend plugin providing REST access to relational databases (SQLite, MySQL, PostgreSQL, ODBC, MariaDB, Mimer). Supports basic CRUD operations and query execution.",
-    "author": "Amadou Benjamain | amadoubenjamain@gmail.com | www.linkedin.com/in/amadou-benjamain"
-}
