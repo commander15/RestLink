@@ -42,8 +42,8 @@ INSERT INTO Sales (number, amount, seller_id) VALUES
 (2, 1.80, 2);
 
 -- Insert SaleItems
-INSERT INTO SaleItems (quantity, sale_id, product_id) VALUES
-(2, 1, 1),
-(1, 1, 3),
-(3, 2, 2);
+INSERT INTO SaleItems (quantity, sale_id, product_id, unit_price) VALUES
+(2, 1, 1, 0.50),
+(1, 1, 3, 1.20),
+(3, 2, 2, 0.30);
 

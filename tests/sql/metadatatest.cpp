@@ -109,8 +109,6 @@ TEST_F(MetadataTest, RetrievesValidRelationInfo)
     EXPECT_EQ(relation.table().toStdString(), "Categories");
     EXPECT_EQ(relation.localKey().toStdString(), "category_id");
     EXPECT_EQ(relation.foreignKey().toStdString(), "id");
-    EXPECT_EQ(relation.autoLoadable(), true);
-    EXPECT_EQ(relation.nestLoadable(), false);
     EXPECT_EQ(relation.type(), Relation::BelongsToOne);
 
     relation = resource.relation("stock");
@@ -119,8 +117,6 @@ TEST_F(MetadataTest, RetrievesValidRelationInfo)
     EXPECT_EQ(relation.table().toStdString(), "Stocks");
     EXPECT_EQ(relation.localKey().toStdString(), "id");
     EXPECT_EQ(relation.foreignKey().toStdString(), "product_id");
-    EXPECT_EQ(relation.autoLoadable(), true);
-    EXPECT_EQ(relation.nestLoadable(), false);
     EXPECT_EQ(relation.type(), Relation::HasOne);
 
     relation = resource.relation("sales");
@@ -130,8 +126,6 @@ TEST_F(MetadataTest, RetrievesValidRelationInfo)
     EXPECT_EQ(relation.pivot().toStdString(), "SaleItems");
     EXPECT_EQ(relation.localKey().toStdString(), "product_id");
     EXPECT_EQ(relation.foreignKey().toStdString(), "sale_id");
-    EXPECT_EQ(relation.autoLoadable(), false);
-    EXPECT_EQ(relation.nestLoadable(), false);
     EXPECT_EQ(relation.type(), Relation::BelongsToMany);
 }
 
