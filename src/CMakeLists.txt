@@ -47,7 +47,7 @@ endmacro()
 fetch_plugin(
     RestLinkSQL RESTLINK_SQL
     "commander15/RestLinkSQL"
-    "1cce235c7d37875691983c9adae6c65247ecf4f2"
+    "49447dcfb515bb5b4d3d2eafb9f36625d6f3740c"
     RESTLINK_SUPPORT_SQL
 )
 
