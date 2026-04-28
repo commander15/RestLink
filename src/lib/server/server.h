@@ -23,14 +23,21 @@ public:
     bool isRunning() const;
     void start();
     void stop();
+    void wait();
 
+    QByteArray handlerId() const override;
     HandlerType handlerType() const override;
+
+    template<typename Worker>
+    static Server *create(const QByteArray &id, const QString &name, const QStringList &schemes, QObject *parent = nullptr)
+    { return create(id, name, schemes, new Worker(), parent); }
 
     template<typename Worker>
     static Server *create(const QString &name, const QStringList &schemes, QObject *parent = nullptr)
     { return create(name, schemes, new Worker(), parent); }
 
     static Server *create(const QString &name, const QStringList &schemes, AbstractServerWorker *worker, QObject *parent = nullptr);
+    static Server *create(const QByteArray &id, const QString &name, const QStringList &schemes, AbstractServerWorker *worker, QObject *parent = nullptr);
 
 signals:
     void started();

@@ -6,59 +6,73 @@
 #include <RestLink/serverrequest.h>
 #include <RestLink/serverresponse.h>
 #include <RestLink/abstractserverworker.h>
+#include <qcoreapplication.h>
 
 namespace RestLink {
 
 Server::Server(AbstractServerWorker *worker, QObject *parent)
     : Server(new ServerPrivate(worker, this), parent)
 {
-    RESTLINK_D(Server);
-    QTimer::singleShot(0, this, [d] {
-        if (d->worker && !d->worker->isRunning() && d->worker->hasPendingRequests())
-            d->worker->start();
-    });
 }
 
 Server::Server(ServerPrivate *d, QObject *parent)
     : QObject(parent)
     , d_ptr(d)
 {
-    d_ptr->worker->setParent(this);
+    d->worker->setParent(this);
+    connect(qApp, &QCoreApplication::aboutToQuit, this, &Server::stop);
+    connect(qApp, &QCoreApplication::aboutToQuit, this, &Server::wait);
 }
 
 Server::~Server()
 {
-    if (d_ptr->worker && d_ptr->worker->isRunning()) {
-        d_ptr->worker->requestInterruption();
-        d_ptr->worker->wait();
-    }
 }
 
 bool Server::isRunning() const
 {
-    return (d_ptr->worker ? d_ptr->worker->isRunning() : false);
+    return d_ptr->worker->isRunning();
 }
 
 void Server::start()
 {
-    if (d_ptr->worker)
+    if (!d_ptr->worker->isRunning())
         d_ptr->worker->start();
 }
 
 void Server::stop()
 {
-    if (d_ptr->worker)
+    if (d_ptr->worker->isRunning()) {
         d_ptr->worker->requestInterruption();
+        d_ptr->worker->quit();
+    }
+}
+
+void Server::wait()
+{
+    if (d_ptr->worker->isRunning())
+        d_ptr->worker->wait();
+}
+
+QByteArray Server::handlerId() const
+{
+    return QByteArrayLiteral("restlink.server");
 }
 
 Server *Server::create(const QString &name, const QStringList &schemes, AbstractServerWorker *worker, QObject *parent)
 {
-    return new DefaultServer(name, schemes, worker, parent);
+    QString id = name.toLower();
+    id.replace(' ', '.');
+    return new DefaultServer(id.toLower().toUtf8(), name, schemes, worker, parent);
+}
+
+Server *Server::create(const QByteArray &id, const QString &name, const QStringList &schemes, AbstractServerWorker *worker, QObject *parent)
+{
+    return new DefaultServer(id, name, schemes, worker, parent);
 }
 
 AbstractRequestHandler::HandlerType Server::handlerType() const
 {
-    return ServerHandler;
+    return HandlerType::ServerHandler;
 }
 
 Response *Server::sendRequest(Method method, const Request &request, const Body &body)
@@ -69,12 +83,11 @@ Response *Server::sendRequest(Method method, const Request &request, const Body 
     initResponse(serverResponse, request, method);
     serverResponse->setMethod(method);
 
-    if (!d_ptr->worker) {
-        AbstractServerWorker::processUnsupportedRequest(serverRequest, serverResponse);
-        return serverResponse;
+    d_ptr->worker->enqueue(serverRequest, serverResponse);
+    if (!d_ptr->worker->isRunning()) {
+        d_ptr->worker->start();
     }
 
-    d_ptr->worker->enqueue(serverRequest, serverResponse);
     return serverResponse;
 }
 

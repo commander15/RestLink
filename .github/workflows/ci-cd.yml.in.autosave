@@ -1,0 +1,137 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # Enables manual trigger from GitHub UI
+
+env:
+  PACKAGE_NAME: @PROJECT_NAME@
+  PACKAGE_VERSION: @PROJECT_VERSION@
+  BUILD_DIR: ${{github.workspace}}/build
+  QT_VERSION: 6.9.0
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - platform: Windows
+            os: windows-2025
+            host: windows
+            arch: win64_msvc2019_64
+            target: desktop
+            pm: choco
+
+          - platform: Linux
+            os: ubuntu-24.04
+            host: linux
+            arch: linux_gcc_64
+            target: desktop
+            pm: apt
+
+    runs-on: ${{matrix.os}}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{env.QT_VERSION}}
+          host: ${{matrix.host}}
+          target: ${{matrix.target}}
+          arch: ${{matrix.arch}}
+
+      - name: Install Doxygen
+        run: ${matrix.pm} install -y doxygen
+
+      - name: Setup MSVC (Windows Only)
+        if: matrix.platform == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure CMake
+        run: cmake -S ${{github.workspace}} -B ${{env.BUILD_DIR}} -G Ninja -DCMAKE_BUILD_TYPE=Release -DRESTLINK_BUILD_DOC=ON -DRESTLINK_BUILD_TRANSLATIONS=ON
+
+      - name: Build
+        run: cmake --build ${{env.BUILD_DIR}} --target all --parallel 4
+
+      - name: Test
+        if: false
+        run: cmake --build ${{env.BUILD_DIR}} --target test
+
+      - name: Package
+        run: cmake --build ${{env.BUILD_DIR}} --target package --parallel 4
+
+      - name: Upload Artifacts (binaries)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{matrix.platform}}-Build
+          path: |
+            ${{env.BUILD_DIR}}/*.zip
+            ${{env.BUILD_DIR}}/*.tar.gz
+            ${{env.BUILD_DIR}}/*.deb
+
+      - name: Upload Artifacts (documentation)
+        if: matrix.platform == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Documentation
+          path: |
+            ${{env.BUILD_DIR}}/*.zip
+
+  release:
+    runs-on: ubuntu-24.04
+    needs: build
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download Release Note
+        run: wget https://raw.githubusercontent.com/${{github.repository}}/refs/heads/main/notes/RELEASE-${{env.PACKAGE_VERSION}}.md
+
+      - name: Download Artifacts (binaries)
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{github.workspace}}/build
+          merge-multiple: true
+
+      - name: Download Artifacts (documentation)
+        uses: actions/download-artifact@v4
+        with:
+          name: Documentation
+          path: ${{github.workspace}}/doc
+          merge-multiple: true
+
+      - name: Create Release
+        # if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{env.PACKAGE_NAME}} ${{env.PACKAGE_VERSION}}
+          body_path: ${{github.workspace}}/RELEASE-${{env.PACKAGE_VERSION}}.md
+          tag_name: v${{env.PACKAGE_VERSION}}
+          files: |
+            ${{github.workspace}}/build/*.*
+          make_latest: true
+
+      - name: Update Documentation
+        env:
+          USER_NAME: commander15
+          USER_MAIL: amadoubenjamain@gmail.com
+          REPO_URL: github.com/commander15/RestLink-Docs.git
+          REPO_TOKEN: ${{ secrets.DOCS_DEPLOY_TOKEN }}
+        run: |
+          cd ${{ steps.strings.outputs.build-output-dir }}
+          git config --global user.name "${USER_NAME}"
+          git config --global user.email "${USER_MAIL}"
+          git clone https://${REPO_URL}
+          cp -f ${{ github.workspace }}/README.md RestLink-Docs/
+          cp -f -R docs/html docs/latex RestLink-Docs/
+          cd RestLink-Docs
+          git add .
+          git commit -m "Update documentation [CI]"
+          git push "https://${USER_NAME}:${REPO_TOKEN}@${REPO_URL}"
+

@@ -4,31 +4,33 @@
 #include <RestLink/global.h>
 #include <RestLink/plugin.h>
 
+class QPluginLoader;
+
 namespace RestLink {
 
 class PluginManagerPrivate;
 class RESTLINK_EXPORT PluginManager
 {
 public:
+    enum LoadMode {
+        SafeMode,
+        UnsafeMode,
+    };
+
+    static QList<Plugin *> loadedPlugins();
+    static bool loadPlugin(const QString &name, LoadMode mode = SafeMode);
+    static QStringList loadAvailablePlugins(LoadMode mode = SafeMode);
+    static QStringList discoverPlugins();
+
+private:
     PluginManager();
     ~PluginManager();
 
-    static QList<AbstractRequestHandler *> handlers();
-
-    static bool isDiscoveryEnabled();
-    static void enableDiscovery();
-    static void setDiscoveryEnabled(bool enable = true);
-
-    static void registerPlugin(const QString &name);
-
-    static PluginManager *global();
-
-private:
-    AbstractRequestHandler *createHandler(Plugin *plugin);
-    Plugin *loadPlugin(const QString &name);
-    void unloadPlugin();
+    static PluginManagerPrivate *internal();
 
     QScopedPointer<PluginManagerPrivate> d_ptr;
+
+    friend class QScopedPointerDeleter<PluginManager>;
 };
 
 } // namespace RestLink

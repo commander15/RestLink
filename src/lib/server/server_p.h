@@ -5,7 +5,7 @@
 
 namespace RestLink {
 
-class RESTLINK_EXPORT ServerPrivate
+class ServerPrivate
 {
 public:
     ServerPrivate(AbstractServerWorker *worker, Server *q);
@@ -18,16 +18,20 @@ public:
     friend class Server;
 };
 
-class DefaultServer : public Server
+class DefaultServer final : public Server
 {
     Q_OBJECT
 
 public:
-    DefaultServer(const QString &name, const QStringList &schemes, AbstractServerWorker *worker, QObject *parent = nullptr)
+    DefaultServer(const QByteArray &id, const QString &name, const QStringList &schemes, AbstractServerWorker *worker, QObject *parent = nullptr)
         : Server(worker, parent)
+        , m_id(id)
         , m_name(name)
         , m_schemes(schemes)
     {}
+
+    QByteArray handlerId() const override
+    { return m_id; }
 
     QString handlerName() const override
     { return m_name; }
@@ -36,6 +40,7 @@ public:
     { return m_schemes; }
 
 private:
+    const QByteArray m_id;
     const QString m_name;
     const QStringList m_schemes;
 };

@@ -31,12 +31,10 @@ public:
 
     bool processNext();
 
-    AbstractController *requestController(const PendingRequest &pending, bool *deletable = nullptr);
-
     AbstractServerWorker *q_ptr;
 
+    QList<AbstractController *> controllers;
     QQueue<PendingRequest> pendingRequests;
-    QList<class AbstractController *> controllers;
     AbstractServerWorker::WorkerType type;
     QMutex mutex;
 };

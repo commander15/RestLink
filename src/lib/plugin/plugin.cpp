@@ -1,6 +1,8 @@
 #include "plugin.h"
 #include "plugin_p.h"
 
+#include <QJsonArray>
+
 /**
  * @file plugin.h
  *
@@ -61,6 +63,31 @@ QString Plugin::name() const
 {
     return m_metaData.value("name").toString();
 }
+
+/**
+ * @brief Returns the plugin description from metadata.
+ * @return Description as a QString.
+ */
+QString Plugin::description() const
+{
+    return m_metaData.value("description").toString();
+}
+
+/**
+ * @brief Returns the plugin version
+ * @return Version as a QString.
+ */
+QString Plugin::version() const
+{
+    return QStringLiteral("1.0.0");
+}
+
+/**
+ * @fn RestLink::Plugin::supportedSchemes
+ * @brief Returns the plugin handler supported schemes
+ * @return Schmes as a QStringList.
+ * @note If the plugin reported schemes didn't match the plugin handler ones, the plugin may fail to load.
+ */
 
 /**
  * @brief Returns the raw plugin metadata.

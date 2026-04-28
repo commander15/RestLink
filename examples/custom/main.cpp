@@ -2,9 +2,10 @@
 #include <QtCore/qtimer.h>
 
 #include <RestLink/restlink.h>
+#include <RestLink/server.h>
 #include <qloggingcategory.h>
 
-#include "usercontroller.h"
+#include "worker.h"
 
 using namespace RestLink;
 
@@ -13,28 +14,18 @@ void listUsers(Api *api);
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
-    app.addLibraryPath("../plugins");
+    //app.addLibraryPath("../plugins");
 
+    // Just for verbosity
     QLoggingCategory::setFilterRules("restlink.info = true");
 
-    PluginManager::enableDiscovery();
+    // We register a virtual server that will use our custom worker
+    Server *server = Server::create<Worker>("Custom", { "custom" }, &app);
+    RestLink::NetworkManager::registerHandler(server);
 
+    // We test directly
     Api api;
-    api.setUrl(QUrl("sqlite:///home/commander/Projects/SODEC/SodecSureApi/SodecSure.sqlite"));
-
-    UserController *controller = new UserController();
-
-    Request request("/register-controller");
-    request.setController(controller);
-
-    api.post(request, Body(), [](Response *response) {
-        if (response->isSuccess()) {
-            qDebug() << response->readBody();
-        } else {
-            qDebug() << "Handler registration failed";
-        }
-    });
-
+    api.setUrl(QUrl("custom://myserver.com/api/v1"));
     listUsers(&api);
 
     return app.exec();
@@ -43,6 +34,7 @@ int main(int argc, char *argv[])
 void listUsers(Api *api)
 {
     auto handleResponse = [](Response *response) {
+        qDebug() << response->method() << response->url().toString();
         if (!response->isSuccess()) {
             qDebug() << response->httpReasonPhrase();
             qDebug() << response->networkErrorString();
@@ -55,14 +47,27 @@ void listUsers(Api *api)
             qDebug().noquote() << response->readBody();
         }
 
+        if (response->isOpen())
+            qDebug() << response->readAll();
+
         static int count = 0;
-        if (++count == 2)
+        if (++count == 4)
             qApp->quit();
     };
 
-    //api->post("/query", "SELECT * FROM garages", handleResponse);
+    const QString endpoint = "/users";
 
-    //api->get("/tables", handleResponse);
-    api->get("/app/users/1", handleResponse);
-    api->get("/app/users/1", handleResponse);
+    QJsonObject user;
+    user.insert("last_name", "Doe");
+
+    user.insert("first_name", "John");
+    user.insert("gender", "M");
+    api->post(endpoint, user, handleResponse);
+
+    user.insert("first_name", "Jane");
+    user.insert("gender", "F");
+    api->post(endpoint, user, handleResponse);
+
+    api->get(endpoint + "/1", handleResponse);
+    api->get(endpoint + "/2", handleResponse);
 }

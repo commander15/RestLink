@@ -54,31 +54,23 @@
                 "name",
                 "description"
             ],
-            "load_relations": false,
             "local_key": "category_id",
             "primary_key": "id",
             "relations": {
                 "products": {
                     "foreign_key": "category_id",
-                    "intermediate": "",
-                    "load": {
-                        "auto": false,
-                        "nest": false
-                    },
                     "local_key": "id",
-                    "owned": false,
-                    "pivot": "",
                     "table": "Products",
-                    "type": "HasMany",
-                    "with": [
-                    ]
+                    "type": "HasMany"
                 }
             },
             "table": "Categories",
             "timestamps": {
                 "created_at": "created_at",
                 "updated_at": "updated_at"
-            }
+            },
+            "with": [
+            ]
         },
         "products": {
             "fillable": [
@@ -90,61 +82,36 @@
             "hidden": [
                 "category_id"
             ],
-            "load_relations": false,
             "local_key": "product_id",
             "primary_key": "id",
             "relations": {
                 "category": {
                     "foreign_key": "id",
-                    "intermediate": "",
-                    "load": {
-                        "auto": true,
-                        "nest": false
-                    },
                     "local_key": "category_id",
-                    "owned": false,
-                    "pivot": "",
                     "table": "Categories",
-                    "type": "BelongsToOne",
-                    "with": [
-                    ]
+                    "type": "BelongsToOne"
                 },
                 "sales": {
                     "foreign_key": "sale_id",
-                    "intermediate": "",
-                    "load": {
-                        "auto": false,
-                        "nest": false
-                    },
                     "local_key": "product_id",
-                    "owned": false,
                     "pivot": "SaleItems",
                     "table": "Sales",
-                    "type": "BelongsToMany",
-                    "with": [
-                    ]
+                    "type": "BelongsToMany"
                 },
                 "stock": {
                     "foreign_key": "product_id",
-                    "intermediate": "",
-                    "load": {
-                        "auto": true,
-                        "nest": false
-                    },
                     "local_key": "id",
-                    "owned": false,
-                    "pivot": "",
                     "table": "Stocks",
-                    "type": "HasOne",
-                    "with": [
-                    ]
+                    "type": "HasOne"
                 }
             },
             "table": "Products",
             "timestamps": {
                 "created_at": "created_at",
                 "updated_at": "updated_at"
-            }
+            },
+            "with": [
+            ]
         },
         "sale_items": {
             "fillable": [
@@ -154,42 +121,26 @@
                 "sale_id",
                 "product_id"
             ],
-            "load_relations": false,
             "local_key": "item_id",
             "primary_key": "id",
             "relations": {
                 "product": {
                     "foreign_key": "",
-                    "intermediate": "",
-                    "load": {
-                        "auto": true,
-                        "nest": false
-                    },
                     "local_key": "",
-                    "owned": false,
-                    "pivot": "",
                     "table": "",
-                    "type": "Null",
-                    "with": [
-                    ]
+                    "type": "Null"
                 },
                 "sale": {
                     "foreign_key": "sale_id",
-                    "intermediate": "",
-                    "load": {
-                        "auto": false,
-                        "nest": false
-                    },
                     "local_key": "item_id",
-                    "owned": false,
                     "pivot": "SaleItems",
                     "table": "Sales",
-                    "type": "BelongsToMany",
-                    "with": [
-                    ]
+                    "type": "BelongsToMany"
                 }
             },
-            "table": "SaleItems"
+            "table": "SaleItems",
+            "with": [
+            ]
         },
         "sales": {
             "fillable": [
@@ -199,46 +150,29 @@
             "hidden": [
                 "seller_id"
             ],
-            "load_relations": false,
             "local_key": "sale_id",
             "primary_key": "id",
             "relations": {
                 "items": {
                     "foreign_key": "sale_id",
-                    "intermediate": "",
-                    "load": {
-                        "auto": false,
-                        "nest": false
-                    },
                     "local_key": "id",
-                    "owned": false,
-                    "pivot": "",
                     "table": "SaleItems",
-                    "type": "HasMany",
-                    "with": [
-                    ]
+                    "type": "HasMany"
                 },
                 "seller": {
                     "foreign_key": "id",
-                    "intermediate": "",
-                    "load": {
-                        "auto": false,
-                        "nest": false
-                    },
                     "local_key": "seller_id",
-                    "owned": false,
-                    "pivot": "",
                     "table": "Users",
-                    "type": "BelongsToOne",
-                    "with": [
-                    ]
+                    "type": "BelongsToOne"
                 }
             },
             "table": "Sales",
             "timestamps": {
                 "created_at": "created_at",
                 "updated_at": "updated_at"
-            }
+            },
+            "with": [
+            ]
         },
         "stocks": {
             "fillable": [
@@ -247,66 +181,51 @@
             "hidden": [
                 "product_id"
             ],
-            "load_relations": false,
             "local_key": "stock_id",
             "primary_key": "id",
             "relations": {
                 "product": {
                     "foreign_key": "product_id",
-                    "intermediate": "",
-                    "load": {
-                        "auto": false,
-                        "nest": false
-                    },
                     "local_key": "id",
-                    "owned": false,
-                    "pivot": "",
                     "table": "Products",
-                    "type": "BelongsToOne",
-                    "with": [
-                    ]
+                    "type": "BelongsToOne"
                 }
             },
             "table": "Stocks",
             "timestamps": {
                 "created_at": "created_at",
                 "updated_at": "updated_at"
-            }
+            },
+            "with": [
+            ]
         },
         "user_groups": {
             "fillable": [
                 "name"
             ],
-            "load_relations": false,
             "local_key": "group_id",
             "primary_key": "id",
-            "table": "UserGroups"
+            "table": "UserGroups",
+            "with": [
+            ]
         },
         "user_roles": {
             "fillable": [
                 "name"
             ],
-            "load_relations": false,
             "local_key": "role_id",
             "primary_key": "id",
             "relations": {
                 "users": {
                     "foreign_key": "role_id",
-                    "intermediate": "",
-                    "load": {
-                        "auto": false,
-                        "nest": false
-                    },
                     "local_key": "id",
-                    "owned": false,
-                    "pivot": "",
                     "table": "Users",
-                    "type": "HasMany",
-                    "with": [
-                    ]
+                    "type": "HasMany"
                 }
             },
-            "table": "UserRoles"
+            "table": "UserRoles",
+            "with": [
+            ]
         },
         "users": {
             "fillable": [
@@ -317,57 +236,32 @@
             "hidden": [
                 "role_id"
             ],
-            "load_relations": false,
             "local_key": "user_id",
             "primary_key": "id",
             "relations": {
                 "groups": {
                     "foreign_key": "group_id",
-                    "intermediate": "",
-                    "load": {
-                        "auto": false,
-                        "nest": false
-                    },
                     "local_key": "user_id",
-                    "owned": false,
                     "pivot": "UserGroupMembers",
                     "table": "UserGroups",
-                    "type": "BelongsToMany",
-                    "with": [
-                    ]
+                    "type": "BelongsToMany"
                 },
                 "role": {
                     "foreign_key": "id",
-                    "intermediate": "",
-                    "load": {
-                        "auto": false,
-                        "nest": false
-                    },
                     "local_key": "role_id",
-                    "owned": false,
-                    "pivot": "",
                     "table": "UserRoles",
-                    "type": "BelongsToOne",
-                    "with": [
-                    ]
+                    "type": "BelongsToOne"
                 },
                 "sales": {
                     "foreign_key": "user_id",
-                    "intermediate": "",
-                    "load": {
-                        "auto": false,
-                        "nest": false
-                    },
                     "local_key": "id",
-                    "owned": false,
-                    "pivot": "",
                     "table": "Sales",
-                    "type": "HasMany",
-                    "with": [
-                    ]
+                    "type": "HasMany"
                 }
             },
-            "table": "Users"
+            "table": "Users",
+            "with": [
+            ]
         }
     }
 }

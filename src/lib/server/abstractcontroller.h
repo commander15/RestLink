@@ -17,7 +17,7 @@ public:
     virtual QString endpoint() const = 0;
 
     virtual bool canProcessRequest(const ServerRequest &request) const;
-    virtual void processRequest(const ServerRequest &request, ServerResponse *response) = 0;
+    virtual void processRequest(ServerRequest &request, ServerResponse *response) = 0;
 
     void *dataSource() const;
     void setDataSource(void *source);

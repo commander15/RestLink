@@ -14,6 +14,13 @@ class RESTLINK_EXPORT NetworkManager : public QNetworkAccessManager, public Abst
     Q_PROPERTY(QStringList supportedSchemes READ supportedSchemes CONSTANT FINAL)
 
 public:
+    enum HandlerRegistrationError {
+        NoHandlerRegistrationError,
+        InvalidHandlerRegistrationError,
+        HandlerAlreadyRegisteredError,
+        HandlerSchemesAlreadyExistsError,
+    };
+
     explicit NetworkManager(QObject *parent = nullptr);
 
     using AbstractRequestHandler::head;
@@ -23,8 +30,11 @@ public:
     using AbstractRequestHandler::patch;
     using AbstractRequestHandler::deleteResource;
 
+    QByteArray handlerId() const override final;
     QStringList supportedSchemes() const override final;
     HandlerType handlerType() const override final;
+
+    static HandlerRegistrationError registerHandler(AbstractRequestHandler *handler);
 
 protected:
     Response *sendRequest(Method method, const Request &request, const Body &body) override;
@@ -32,7 +42,15 @@ protected:
     QNetworkRequest generateNetworkRequest(Method method, const Request &request, const Body &body);
     QNetworkReply *generateNetworkReply(Method method, const QNetworkRequest &request, const Body &body);
 
+private:
+    static void loadNetworkSchemes();
+
+    static QStringList s_supportedNetworkSchemes;
+    static QStringList s_supportedHandlerSchemes;
+    static QVector<AbstractRequestHandler *> s_extraHandlers;
+
     friend class Api;
+    friend class PluginManager;
 };
 
 }

@@ -11,11 +11,11 @@ public:
 
     QString endpoint() const override;
 
-    void index(const RestLink::ServerRequest &request, RestLink::ServerResponse *response) override;
-    void show(const RestLink::ServerRequest &request, RestLink::ServerResponse *response) override;
-    void update(const RestLink::ServerRequest &request, RestLink::ServerResponse *response) override;
-    void store(const RestLink::ServerRequest &request, RestLink::ServerResponse *response) override;
-    void destroy(const RestLink::ServerRequest &request, RestLink::ServerResponse *response) override;
+    void index(RestLink::ServerRequest &request, RestLink::ServerResponse *response) override;
+    void show(RestLink::ServerRequest &request, RestLink::ServerResponse *response) override;
+    void update(RestLink::ServerRequest &request, RestLink::ServerResponse *response) override;
+    void store(RestLink::ServerRequest &request, RestLink::ServerResponse *response) override;
+    void destroy(RestLink::ServerRequest &request, RestLink::ServerResponse *response) override;
 
 private:
     class QSqlDatabase database() const;

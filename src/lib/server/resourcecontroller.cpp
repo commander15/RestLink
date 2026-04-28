@@ -78,7 +78,7 @@ bool AbstractResourceController::canProcessRequest(const ServerRequest &request)
  *
  * Dispatch logic typically maps request methods to controller actions like index, show, update, etc.
  */
-void AbstractResourceController::processRequest(const ServerRequest &request, ServerResponse *response)
+void AbstractResourceController::processRequest(ServerRequest &request, ServerResponse *response)
 {
     AbstractRequestHandler::Method method = request.method();
 

@@ -4,6 +4,8 @@
 
 #include <QtQml/qqmlapplicationengine.h>
 
+#include <RestLink/pluginmanager.h>
+
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
@@ -13,6 +15,8 @@ int main(int argc, char *argv[])
     app.addLibraryPath(app.applicationDirPath() + "/../plugins");
 
     QDir::setCurrent(TEST_DATA_DIR);
+
+    RestLink::PluginManager::loadAvailablePlugins();
 
     QQmlApplicationEngine engine;
     engine.addImportPath(app.applicationDirPath() + "/../qml");

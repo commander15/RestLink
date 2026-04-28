@@ -1,12 +1,16 @@
 qt_add_plugin(RestLinkExcel
-    CLASS_NAME RestLink::ExcelPlugin
-    excelplugin.h excelplugin.cpp
-    excelserver.h excelserver_p.h excelserver.cpp
-    exceldocument.h exceldocument.cpp
-    excelsheet.h excelsheet.cpp
+    CLASS_NAME RestLink::Excel::Plugin
+    plugin.cpp
 )
 
-set(OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/restlink)
+target_sources(RestLinkExcel
+  PRIVATE
+    worker.h worker.cpp
+    documentmanager.h documentmanager.cpp
+    document.h document.cpp
+)
+
+set(OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/plugins/restlink)
 set_target_properties(RestLinkExcel PROPERTIES
     OUTPUT_NAME restlinkexcel
     PREFIX      ""
@@ -15,7 +19,18 @@ set_target_properties(RestLinkExcel PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}
 )
 
-target_link_libraries(RestLinkExcel PUBLIC QXlsx::QXlsx RestLink)
+include(FetchContent)
+
+FetchContent_Declare(
+    QXlsx
+    GIT_REPOSITORY "https://github.com/QtExcel/QXlsx.git"
+    GIT_TAG        "v1.5.0"
+    SOURCE_SUBDIR QXlsx
+)
+
+FetchContent_MakeAvailable(QXlsx)
+
+target_link_libraries(RestLinkExcel PUBLIC QXlsx RestLink)
 
 set(INSTALL_DIR plugins/restlink)
 install(TARGETS RestLinkExcel
