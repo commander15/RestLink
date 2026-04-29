@@ -18,12 +18,13 @@
 #define LIST_PLUGINS_OPTIONS "list-plugins"
 
 // Config options
-#define API_URL_OPTION   "api-url"
+#define API_URL_OPTION      "api-url"
 #define BEARER_TOKEN_OPTION "bearer-token"
-#define CONFIG_OPTION    "config"
-#define VERBOSE_OPTION   "verbose"
-#define BODYONLY_OPTION  "body-only"
-#define TIMING_OPTION    "timing"
+#define CONFIG_OPTION       "config"
+#define VERBOSE_OPTION      "verbose"
+#define HEADERSONLY_OPTION  "headers-only"
+#define BODYONLY_OPTION     "body-only"
+#define TIMING_OPTION       "timing"
 
 // HTTP Methods
 #define HEAD_OPTION   "head"
@@ -97,6 +98,12 @@ void App::initParser()
         m_parser.addOption(option);
     }
 
+    // Headers only option
+    {
+        QCommandLineOption option(HEADERSONLY_OPTION, "Only the response headers must be shown.");
+        m_parser.addOption(option);
+    }
+
     // Body only option
     {
         QCommandLineOption option(BODYONLY_OPTION, "Only the response body must be shown.");
@@ -154,21 +161,21 @@ void App::initParser()
     // Path Option
     {
         QCommandLineOption option(PATH_OPTION, "Set an url path parameter.");
-        option.setValueName("parameter");
+        option.setValueName("parameter=value");
         m_parser.addOption(option);
     }
 
     // Query Option
     {
         QCommandLineOption option(QUERY_OPTION, "Set an url query parameter.");
-        option.setValueName("parameter");
+        option.setValueName("key=value");
         m_parser.addOption(option);
     }
 
     // Header Option
     {
         QCommandLineOption option(HEADER_OPTION, "Set a request header.");
-        option.setValueName("header");
+        option.setValueName("name=value");
         m_parser.addOption(option);
     }
 
@@ -218,8 +225,15 @@ void App::setApi(RestLink::Api *api)
 
     if (configUrl.isValid())
         api->configure(configUrl);
-    else
+    else {
+        if (qEnvironmentVariableIsSet("API_URL"))
+            api->setUrl(QUrl::fromUserInput(qEnvironmentVariable("API_URL")));
+
+        if (qEnvironmentVariableIsSet("BEARER_TOKEN"))
+            api->setBearerToken(qEnvironmentVariable("BEARER_TOKEN"));
+
         QTimer::singleShot(0, this, &App::run);
+    }
 
     m_api = api;
 }
@@ -444,7 +458,7 @@ void App::monitorResponse(Response *response)
             delete timer;
         }
 
-        if (!m_parser.isSet(BODYONLY_OPTION) && response->hasHttpStatusCode()) {
+        if (m_parser.isSet(HEADERSONLY_OPTION) || (!m_parser.isSet(BODYONLY_OPTION) && response->hasHttpStatusCode())) {
             m_out << "HTTP " << response->httpStatusCode() << ' ' << response->httpReasonPhrase() << Qt::endl;
             const QStringList headers = response->headerList();
             for (const QString &header : headers) {
@@ -454,17 +468,19 @@ void App::monitorResponse(Response *response)
         }
 
         if (response->hasHttpStatusCode()) {
-            const QString type = response->header("Content-Type");
-            if (type.startsWith("application/json")) {
-                const QJsonValue value = response->readJson();
-                QJsonDocument doc;
-                if (value.isObject())
-                    doc.setObject(value.toObject());
-                else if (value.isArray())
-                    doc.setArray(value.toArray());
-                m_out << doc.toJson(QJsonDocument::Indented);
-            } else {
-                m_out << response->readBody();
+            if (!m_parser.isSet(HEADERSONLY_OPTION)) {
+                const QString type = response->header("Content-Type");
+                if (type.startsWith("application/json")) {
+                    const QJsonValue value = response->readJson();
+                    QJsonDocument doc;
+                    if (value.isObject())
+                        doc.setObject(value.toObject());
+                    else if (value.isArray())
+                        doc.setArray(value.toArray());
+                    m_out << doc.toJson(QJsonDocument::Indented);
+                } else {
+                    m_out << response->readBody();
+                }
             }
         } else if (response->hasNetworkError()) {
             m_out << response->networkErrorString();
