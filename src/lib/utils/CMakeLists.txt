@@ -29,3 +29,8 @@ set_target_properties(zlibstatic PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_link_libraries(RestLink PRIVATE zlibstatic)
 target_compile_definitions(RestLink PUBLIC RESTLINK_SUPPORT_ZLIB)
+
+install(
+    TARGETS zlibstatic
+    EXPORT RestLinkTargets
+)
