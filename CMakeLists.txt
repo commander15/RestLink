@@ -9,15 +9,10 @@ project(RestLink
 
 option(RESTLINK_BUILD_CLI          ON  "Build CLI tool")
 option(RESTLINK_BUILD_QML          ON  "Build QML Plugin")
-option(RESTLINK_BUILD_TESTS        OFF "Build RestLink tests")
+option(RESTLINK_BUILD_TESTS        ON  "Build RestLink tests")
 option(RESTLINK_BUILD_DOC          OFF "Build RestLink documentation")
-option(RESTLINK_BUILD_TRANSLATIONS OFF "Build RestLink translations")
+option(RESTLINK_BUILD_TRANSLATIONS ON  "Build RestLink translations")
 option(RESTLINK_BUILD_EXAMPLES     OFF "Build RestLink Examples")
-
-if (NOT WASM)
-    option(RESTLINK_SUPPORT_SQL   OFF "Enable SQL support")
-    option(RESTLINK_SUPPORT_EXCEL OFF "Enable EXCEL support")
-endif()
 
 set(RESTLINK_LOCALES en fr)
 
@@ -67,6 +62,7 @@ if (RESTLINK_BUILD_QML)
 endif()
 
 if (RESTLINK_BUILD_TESTS)
+    enable_testing()
     list(APPEND Qt_MODULES Test)
 endif()
 
@@ -94,8 +90,6 @@ endif()
 qt_policy(SET QTP0002 NEW)
 qt_policy(SET QTP0003 NEW)
 
-find_package(ZLIB)
-
 add_subdirectory(src)
 
 if (PROJECT_IS_TOP_LEVEL)
@@ -111,6 +105,8 @@ if (PROJECT_IS_TOP_LEVEL)
     if (RESTLINK_BUILD_EXAMPLES)
         add_subdirectory(examples)
     endif()
+
+    add_subdirectory(plugins)
 
     # Packaging
     set(CPACK_PACKAGE_VENDOR "Amadou Benjamain")

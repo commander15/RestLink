@@ -10,13 +10,10 @@ if (${CMAKE_BUILD_TYPE} STREQUAL "Debug" AND FALSE)
     string(PREPEND CMAKE_SHARED_MODULE_SUFFIX  "d")
 endif()
 
-set(RESTLINK_MODULES Core)
-
 add_subdirectory(lib)
 
 # QML Plugin
 if (RESTLINK_BUILD_QML)
-    list(APPEND RESTLINK_MODULES Qml)
     add_subdirectory(import)
 endif()
 
@@ -25,48 +22,17 @@ if (RESTLINK_BUILD_CLI)
     add_subdirectory(cli)
 endif()
 
-# Plugins
-
-include(FetchContent)
-set(RESTLINK_PLUGINS)
-
-macro(fetch_plugin name macro repo tag enabled_var)
-    if (${enabled_var})
-        FetchContent_Declare(
-            ${name}
-            GIT_REPOSITORY "https://github.com/${repo}.git"
-            GIT_TAG "${tag}"
-        )
-
-        set(${macro}_BUILD_TESTS ON)
-
-        list(APPEND RESTLINK_PLUGINS ${name})
-    endif()
-endmacro()
-
-fetch_plugin(
-    RestLinkSQL RESTLINK_SQL
-    "commander15/RestLinkSQL"
-    "49447dcfb515bb5b4d3d2eafb9f36625d6f3740c"
-    RESTLINK_SUPPORT_SQL
-)
-
-fetch_plugin(
-    RestLinkExcel RESTLINK_EXCEL
-    "commander15/RestLinkExcel"
-    "d4619af9537e10cc9601a8dfc39b483bddd0e147"
-    RESTLINK_SUPPORT_EXCEL
-)
-
-include(RestLinkMacros.cmake)
-
-FetchContent_MakeAvailable(${RESTLINK_PLUGINS})
-
 # CMake Package
 
 include(CMakePackageConfigHelpers)
 
 set(ROOT .)
+
+set(RESTLINK_MODULES)
+
+if (RESTLINK_BUILD_TESTS)
+    list(APPEND RESTLINK_MODULES Test)
+endif()
 
 configure_package_config_file(
     RestLinkConfig.cmake.in RestLinkConfig.cmake
@@ -86,6 +52,7 @@ install(
     ${CMAKE_CURRENT_BINARY_DIR}/RestLinkConfig.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/RestLinkConfigVersion.cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/RestLinkMacros.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/RestLinkGTest.cmake
     DESTINATION lib/cmake/RestLink
 )
 

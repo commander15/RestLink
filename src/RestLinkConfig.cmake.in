@@ -5,11 +5,14 @@
 set(RESTLINK_ROOT "@PACKAGE_ROOT@")
 set(RESTLINK_LIB_DIR "${RESTLINK_ROOT}/lib")
 
+# Importing targets
+include(${CMAKE_CURRENT_LIST_DIR}/RestLinkTargets.cmake)
+
+# Include macros
+include(${CMAKE_CURRENT_LIST_DIR}/RestLinkMacros.cmake)
+
 # Available modules
 set(RESTLINK_MODULES @RESTLINK_MODULES@)
-
-# Finding ZLIB
-find_package(ZLIB)
 
 # Find components
 foreach (Module ${RestLink_FIND_COMPONENTS})
@@ -18,11 +21,11 @@ foreach (Module ${RestLink_FIND_COMPONENTS})
     if (INDEX EQUAL -1)
         message("RestLink: ${Module} module not found")
         set(RestLink_FOUND FALSE)
+        break()
+    endif()
+
+    if (${Module} STREQUAL "Test")
+        include(${CMAKE_CURRENT_LIST_DIR}/RestLinkGTest.cmake)
+        include(${CMAKE_CURRENT_LIST_DIR}/RestLinkTestTargets.cmake)
     endif()
 endforeach()
-
-# Importing targets
-include(${CMAKE_CURRENT_LIST_DIR}/RestLinkTargets.cmake)
-
-# Include macros
-include(${CMAKE_CURRENT_LIST_DIR}/RestLinkMacros.cmake)

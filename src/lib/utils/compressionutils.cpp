@@ -3,7 +3,7 @@
 #include <QtCore/qbytearray.h>
 #include <QtCore/qbytearraylist.h>
 
-#ifdef ZLIB_LIB
+#ifdef RESTLINK_SUPPORT_ZLIB
 #   include <zlib.h>
 #endif
 
@@ -32,7 +32,7 @@ QByteArray CompressionUtils::decompress(const QByteArray &input, const QByteArra
 {
     if (algorithm.isEmpty())
         return input;
-#ifdef ZLIB_LIB
+#ifdef RESTLINK_SUPPORT_ZLIB
     else if (algorithm == "gzip")
         return decompressGzip(input);
     else if (algorithm == "deflate")
@@ -42,7 +42,7 @@ QByteArray CompressionUtils::decompress(const QByteArray &input, const QByteArra
         return input;
 }
 
-#ifdef ZLIB_LIB
+#ifdef RESTLINK_SUPPORT_ZLIB
 
 /*!
  * \brief Decompresses the input data using gzip compression.
@@ -117,7 +117,7 @@ QList<QByteArray> CompressionUtils::supportedAlgorithms()
 {
     QByteArrayList algorithms;
 
-#ifdef ZLIB_LIB
+#ifdef RESTLINK_SUPPORT_ZLIB
     algorithms << "gzip" << "deflate";
 #endif
 

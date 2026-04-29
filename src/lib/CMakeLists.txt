@@ -20,11 +20,6 @@ target_compile_definitions(RestLink
 
 target_link_libraries(RestLink PUBLIC Qt::Core Qt::Network)
 
-if (ZLIB_FOUND)
-    target_compile_definitions(RestLink PUBLIC ZLIB_LIB)
-    target_link_libraries(RestLink PUBLIC ZLIB::ZLIB)
-endif()
-
 configure_file(core/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/core/config.h @ONLY)
 
 target_headers(RestLink
@@ -44,7 +39,7 @@ install(TARGETS RestLink
     LIBRARY        DESTINATION lib
     RUNTIME        DESTINATION bin
     PUBLIC_HEADER  DESTINATION include/RestLink
-    #PRIVATE_HEADER DESTINATION include/RestLink/private
+    PRIVATE_HEADER DESTINATION include/RestLink/private
 )
 
 generate_target_headers(RestLink FOLDER RestLink)

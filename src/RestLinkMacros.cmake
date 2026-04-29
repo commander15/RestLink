@@ -44,3 +44,9 @@ function(restlink_install_plugin target)
         RUNTIME DESTINATION ${INSTALL_DIR}
     )
 endfunction()
+
+function(restlink_add_test name)
+    qt_add_executable(${name} ${ARGN})
+    target_link_libraries(${name} PRIVATE RestLink::RestLinkTest)
+    add_test(NAME ${name} COMMAND ${name})
+endfunction()

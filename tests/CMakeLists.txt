@@ -1,14 +1,22 @@
-enable_testing()
+include(../src/RestLinkGTest.cmake)
 
-find_package(GTest REQUIRED)
+add_library(RestLinkTest STATIC main.cpp main.h)
+target_headers(RestLinkTest PUBLIC main.h)
+target_link_libraries(RestLinkTest PUBLIC GTest::gtest Qt::Core INTERFACE Qt::Test RestLink)
 
-add_library(RestLinkTest STATIC main.cpp)
-target_compile_definitions(RestLinkTest INTERFACE DATA_DIR="${PROJECT_SOURCE_DIR}/testdata")
-target_link_libraries(RestLinkTest PUBLIC GTest::gtest Qt::Core INTERFACE Qt::Test RestLink::RestLink)
-link_libraries(RestLinkTest)
+install(
+    TARGETS RestLinkTest
+    EXPORT RestLinkTestTargets
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+    PUBLIC_HEADER DESTINATION include/RestLinkTest
+)
 
-# add_subdirectory(core)
+install(
+    EXPORT RestLinkTestTargets
+    NAMESPACE RestLink::
+    DESTINATION lib/cmake/RestLink
+)
 
-if (RESTLINK_SUPPORT_SQL)
-    add_subdirectory(sql)
-endif()
+add_library(RestLink::RestLinkTest ALIAS RestLinkTest)
