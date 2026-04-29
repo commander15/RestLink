@@ -23,3 +23,6 @@ endforeach()
 
 # Importing targets
 include(${CMAKE_CURRENT_LIST_DIR}/RestLinkTargets.cmake)
+
+# Include macros
+include(${CMAKE_CURRENT_LIST_DIR}/RestLinkMacros.cmake)

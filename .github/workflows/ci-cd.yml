@@ -7,7 +7,7 @@ on:
 
 env:
   PACKAGE_NAME: RestLink
-  PACKAGE_VERSION: 2.3.0
+  PACKAGE_VERSION: 2.3.1
   BUILD_DIR: ${{github.workspace}}/build
   QT_VERSION: 6.9.0
 

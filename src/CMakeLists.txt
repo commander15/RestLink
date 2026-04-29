@@ -58,6 +58,8 @@ fetch_plugin(
     RESTLINK_SUPPORT_EXCEL
 )
 
+include(RestLinkMacros.cmake)
+
 FetchContent_MakeAvailable(${RESTLINK_PLUGINS})
 
 # CMake Package
@@ -83,6 +85,7 @@ install(
     FILES
     ${CMAKE_CURRENT_BINARY_DIR}/RestLinkConfig.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/RestLinkConfigVersion.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/RestLinkMacros.cmake
     DESTINATION lib/cmake/RestLink
 )
 

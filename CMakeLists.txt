@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.30)
 
 project(RestLink
     DESCRIPTION  "Powerfull Rest Client for Qt"
-    VERSION      2.3.0
+    VERSION      2.3.1
     LANGUAGES    CXX C
     HOMEPAGE_URL "commander15.github.io/RestLink-Docs"
 )
