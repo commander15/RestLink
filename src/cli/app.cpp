@@ -18,10 +18,12 @@
 #define LIST_PLUGINS_OPTIONS "list-plugins"
 
 // Config options
-#define CONFIG_OPTION   "config"
-#define VERBOSE_OPTION  "verbose"
-#define BODYONLY_OPTION "body-only"
-#define TIMING_OPTION   "timing"
+#define API_URL_OPTION   "api-url"
+#define BEARER_TOKEN_OPTION "bearer-token"
+#define CONFIG_OPTION    "config"
+#define VERBOSE_OPTION   "verbose"
+#define BODYONLY_OPTION  "body-only"
+#define TIMING_OPTION    "timing"
 
 // HTTP Methods
 #define HEAD_OPTION   "head"
@@ -66,6 +68,18 @@ void App::initParser()
     // List Plugins option
     {
         QCommandLineOption option(LIST_PLUGINS_OPTIONS, "List all loaded plugins.");
+        m_parser.addOption(option);
+    }
+
+    // Api Url option
+    {
+        QCommandLineOption option(API_URL_OPTION, "Set API base url.", "url");
+        m_parser.addOption(option);
+    }
+
+    // Bearer Token option
+    {
+        QCommandLineOption option(BEARER_TOKEN_OPTION, "Set API bearer token.", "token");
         m_parser.addOption(option);
     }
 
@@ -260,6 +274,14 @@ void App::run()
 
         quit();
         return;
+    }
+
+    if (m_parser.isSet(API_URL_OPTION)) {
+        m_api->setUrl(QUrl::fromUserInput(m_parser.value(API_URL_OPTION)));
+    }
+
+    if (m_parser.isSet(BEARER_TOKEN_OPTION)) {
+        m_api->setBearerToken(m_parser.value(BEARER_TOKEN_OPTION));
     }
 
     if (m_parser.isSet(HEAD_OPTION)) {
