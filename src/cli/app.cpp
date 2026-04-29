@@ -196,7 +196,7 @@ void App::initParser()
     // File Data Option
     {
         QCommandLineOption option(FILE_OPTION, "Set the request file data.");
-        option.setValueName("file name");
+        option.setValueName("file-name");
         m_parser.addOption(option);
     }
 }
