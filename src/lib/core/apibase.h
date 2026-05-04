@@ -24,7 +24,15 @@ class RESTLINK_EXPORT ApiBase : public QObject, public RequestInterface
     Q_OBJECT
 
 public:
-    using Method = AbstractRequestHandler::Method;
+    enum Method {
+        HeadMethod = AbstractRequestHandler::HeadMethod,
+        GetMethod = AbstractRequestHandler::Method::GetMethod,
+        PostMethod = AbstractRequestHandler::PostMethod,
+        PutMethod = AbstractRequestHandler::PutMethod,
+        PatchMethod = AbstractRequestHandler::PatchMethod,
+        DeleteMethod = AbstractRequestHandler::DeleteMethod,
+        UnknownMethod = AbstractRequestHandler::Method::UnknownMethod
+    };
 
     virtual ~ApiBase();
 

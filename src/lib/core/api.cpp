@@ -317,7 +317,7 @@ bool Api::configure(const QJsonObject &config)
     return true;
 }
 
-Response *Api::send(AbstractRequestHandler::Method method, const Request &request, const Body &body)
+Response *Api::send(Method method, const Request &request, const Body &body)
 {
     RESTLINK_D(Api);
     d->internalRequestData->api = this;

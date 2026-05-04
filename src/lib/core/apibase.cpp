@@ -70,7 +70,7 @@ void ApiBase::head(const Request &request, const ApiRunCallback &callback)
  */
 Response *ApiBase::head(const Request &request)
 {
-    return send(AbstractRequestHandler::HeadMethod, request, Body());
+    return send(HeadMethod, request, Body());
 }
 
 /**
@@ -94,7 +94,7 @@ void ApiBase::get(const Request &request, const ApiRunCallback &callback)
  */
 Response *ApiBase::get(const Request &request)
 {
-    return send(AbstractRequestHandler::GetMethod, request, Body());
+    return send(GetMethod, request, Body());
 }
 
 /**
@@ -120,7 +120,7 @@ void ApiBase::post(const Request &request, const Body &body, const ApiRunCallbac
  */
 Response *ApiBase::post(const Request &request, const Body &body)
 {
-    return send(AbstractRequestHandler::PostMethod, request, body);
+    return send(PostMethod, request, body);
 }
 
 /**
@@ -146,7 +146,7 @@ void ApiBase::put(const Request &request, const Body &body, const ApiRunCallback
  */
 Response *ApiBase::put(const Request &request, const Body &body)
 {
-    return send(AbstractRequestHandler::PutMethod, request, body);
+    return send(PutMethod, request, body);
 }
 
 /**
@@ -172,7 +172,7 @@ void ApiBase::patch(const Request &request, const Body &body, const ApiRunCallba
  */
 Response *ApiBase::patch(const Request &request, const Body &body)
 {
-    return send(AbstractRequestHandler::PatchMethod, request, body);
+    return send(PatchMethod, request, body);
 }
 
 /**
@@ -196,7 +196,7 @@ void ApiBase::deleteResource(const Request &request, const ApiRunCallback &callb
  */
 Response *ApiBase::deleteResource(const Request &request)
 {
-    return send(AbstractRequestHandler::DeleteMethod, request, Body());
+    return send(DeleteMethod, request, Body());
 }
 
 Response *ApiBase::send(Method method, const Request &request, const Body &body)
@@ -206,7 +206,7 @@ Response *ApiBase::send(Method method, const Request &request, const Body &body)
     finalRequest.setApi(d_ptr->internalRequestData->api);
 
     // Sending request and return response
-    return d_ptr->networkManager()->send(method, finalRequest, body);
+    return d_ptr->networkManager()->send(static_cast<AbstractRequestHandler::Method>(method), finalRequest, body);
 }
 
 /**
