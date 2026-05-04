@@ -199,7 +199,7 @@ Response *ApiBase::deleteResource(const Request &request)
     return send(AbstractRequestHandler::DeleteMethod, request, Body());
 }
 
-Response *ApiBase::send(AbstractRequestHandler::Method method, const Request &request, const Body &body)
+Response *ApiBase::send(Method method, const Request &request, const Body &body)
 {
     // Preprocessing request by adding api url parameters and headers
     Request finalRequest = Request::merge(request, Request(d_ptr->internalRequestData));

@@ -24,6 +24,8 @@ class RESTLINK_EXPORT ApiBase : public QObject, public RequestInterface
     Q_OBJECT
 
 public:
+    using Method = AbstractRequestHandler::Method;
+
     virtual ~ApiBase();
 
     virtual QUrl url() const = 0;
@@ -48,7 +50,7 @@ public:
     void deleteResource(const Request &request, const ApiRunCallback &callback);
     Response *deleteResource(const Request &request);
 
-    virtual Response *send(AbstractRequestHandler::Method method, const Request &request, const Body &body);
+    virtual Response *send(Method method, const Request &request, const Body &body);
 
     virtual QString userAgent() const;
 
